@@ -1,0 +1,14 @@
+{
+  "name": "clouduboy",
+  "version": "0.1.0",
+  "description": "Clouduboy - Arduboy cloud compiler",
+  "main": "server/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "https://twitter.com/slsoftworks",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.13.3"
+  }
+}

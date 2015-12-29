@@ -1,6 +1,6 @@
 {
   "name": "clouduboy",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "description": "Clouduboy - Arduboy cloud compiler",
   "main": "server/app.js",
   "scripts": {
@@ -10,6 +10,7 @@
   "author": "https://twitter.com/slsoftworks",
   "license": "MIT",
   "dependencies": {
+    "child-process-promise": "^1.1.0",
     "express": "^4.13.3"
   }
 }

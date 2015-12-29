@@ -1,0 +1,32 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  background: #080010;
+  color: white;
+
+  padding: 0;
+  margin: 0;
+}
+
+.CodeMirror {
+  height: 100%;
+}
+
+.cm-s-night .CodeMirror-gutters {
+  background: #00000a;
+  border-right: 1px solid #100040;
+}
+.cm-s-night .CodeMirror-linenumber {
+    color: #669;
+}
+
+/* Sprite placeholder */
+.CodeMirror-code .sprite {
+  padding: 0 0.2em;
+  cursor: pointer;
+}
+.CodeMirror-code .sprite:before {
+  content: "👾";
+}

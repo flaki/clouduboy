@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clouduboy Editor</title>
+
+    <link rel="stylesheet" href="/lib/codemirror/codemirror.css">
+    <link rel="stylesheet" href="/lib/codemirror/night.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+  </head>
+
+  <body>
+    <form>
+      <textarea id="codeeditor" contenteditable="true" rows="10" cols="80">#include "Arduboy.h"
+#include &lt;avr/pgmspace.h&gt;
+
+
+Arduboy arduboy;
+
+boolean started = false;
+
+boolean pressed_A = false;
+boolean pressed_B = false;
+
+PROGMEM const unsigned char bat[] = { 0x1c, 0x0e, 0x0c, 0x07, 0x0e, 0x0c, 0x1b, 0x3e, 0x3e, 0x1b, 0x0c, 0x06, 0x0f, 0x1c, 0x0e, 0x1c, 0x38 };
+
+// Setup
+void setup()
+{
+  arduboy.start();
+  arduboy.setFrameRate(60);
+
+  intro();
+}
+      </textarea>
+    </form>
+
+    <script src="/lib/codemirror/codemirror.js"></script>
+    <script src="/lib/codemirror/clike.js"></script>
+
+    <script>
+      var editor;
+
+      editor = CodeMirror.fromTextArea(
+        document.getElementById("codeeditor"),
+        {
+          theme: "night",
+          tabsize: 2,
+          lineNumbers: true,
+          lineWrapping: true
+        }
+      );
+
+      var form = document.querySelector('form');
+      editor.on("changes", function(editor, change) {
+        console.log(change);
+
+        fetch('http://188.166.88.114:3204/build', {
+          method: 'post',
+          body: new FormData(form)
+        });
+
+      })
+
+      var sprite, marker;
+      sprite = document.createElement('span');
+      sprite.className = "sprite";
+
+      marker = editor.markText({ line: 11, ch: 37 },{ line: 11, ch: 139 }, { replacedWith: sprite, clearOnEnter: true });
+      sprite.ondblclick = function() { marker.clear(); };
+    </script>
+  </body>
+</html>

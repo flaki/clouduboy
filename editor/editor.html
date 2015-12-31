@@ -13,7 +13,7 @@
 
   <body>
     <form>
-      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80">loading...</textarea>
+      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>
     </form>
     <div id="servermsgs" class="servermsgs"></div>
 
@@ -36,15 +36,27 @@
       );
 
       // Fetch last build source
-      fetch("/src/build").then(function(r) {
-        return r.text();
+      function load() {
+        fetch("/src/build").then(function(r) {
+          return r.text();
 
-      // Update editor to last build source
-      }).then(function(body) {
-        editor.setValue(body);
+        // Update editor to last build source
+        }).then(function(body) {
+          editor.setValue(body);
 
-      }).catch(function(e) { console.error(e); });
+        // Listen for changes & compile
+        }).then(function() {
+          // Create throttled version to avoid stressing the server & save bandwidth
+          throttleCheckBuild = throttle(checkBuild, 1000);
 
+          // Check builds if document changed
+          editor.on("changes", throttleCheckBuild);
+
+          // Build
+          throttleCheckBuild();
+
+        }).catch(function(e) { console.error(e); });
+      }
 
       function throttle(callback, delay) {
         var lastRequest = null;
@@ -54,7 +66,7 @@
         var fulfill = function() {
           lastRequest = null;
           timeout = null;
-          callback.call(...lastArgs);
+          callback.call(null, ...lastArgs);
         }
 
         return function(...args) {
@@ -71,8 +83,8 @@
       var form = document.querySelector('form');
 
       // Build form document and check for errors, size etc.
-      function checkBuild (editor, change) {
-        console.log(change);
+      function checkBuild(ed, changes) {
+        editor.save();
 
         fetch('/build', {
           method: 'post',
@@ -91,13 +103,11 @@
 
               if (lastBuild.compiler['build.ino'] && lastBuild.compiler['build.ino'].length > 0) {
                 lastBuild.compiler['build.ino'].forEach(function(err) {
-                  var msg = document.createElement("div");
-                  var icon = msg.appendChild(document.createElement("span"));
-                  icon.innerHTML = "!!";
-                  icon.className = "lint-error-icon";
-                  msg.appendChild(document.createTextNode(err.reason));
-                  msg.className = "lint-error";
-                  editor.addLineWidget(err.line - 1, msg, {coverGutter: false, noHScroll: true});
+                  console.log(err);
+                  var blip = document.createElement("div");
+                    blip.appendChild(document.createTextNode(err.msg));
+                    blip.className = "build-error";
+                  editor.addLineWidget(err.line - 1, blip, {coverGutter: false, noHScroll: true});
                 });
               }
           }
@@ -106,18 +116,14 @@
         });
       }
 
-      // Create throttled version to avoid stressing the server & save bandwidth
-      throttleCheckBuild = throttle(checkBuild, 1000);
+      //TODO: Image editor sprite markers
+      //var sprite, marker;
+      //sprite = document.createElement('span');
+      //sprite.className = "sprite";
+      //marker = editor.markText({ line: 11, ch: 37 },{ line: 11, ch: 139 }, { replacedWith: sprite, clearOnEnter: true });
+      //sprite.ondblclick = function() { marker.clear(); };
 
-      // Check builds if document changed
-      editor.on("changes", throttleCheckBuild);
-
-      var sprite, marker;
-      sprite = document.createElement('span');
-      sprite.className = "sprite";
-
-      marker = editor.markText({ line: 11, ch: 37 },{ line: 11, ch: 139 }, { replacedWith: sprite, clearOnEnter: true });
-      sprite.ondblclick = function() { marker.clear(); };
+      setTimeout(load, 0);
     </script>
   </body>
 </html>

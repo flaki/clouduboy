@@ -60,6 +60,10 @@ cdb.get('/src/build', function (req, res) {
 });
 
 // Get last built HEX
+cdb.get('/hex/build', function (req, res) {
+  res.type('application/octet-stream').download(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex', 'build.leonardo.hex');
+});
+
 cdb.get('/build', function (req, res) {
   var hex = fs.readFileSync(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex');
   res.json({

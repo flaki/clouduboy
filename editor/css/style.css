@@ -30,3 +30,17 @@ body {
 .CodeMirror-code .sprite:before {
   content: "👾";
 }
+
+.servermsgs {
+  background: #112 none repeat scroll 0% 0%;
+  font-family: monospace;
+  line-height: 1.5;
+  font-size: 8pt;
+  margin: 0.5em;
+  padding: 0.5em 0.75em;
+  white-space: pre;
+  overflow: auto;
+}
+.servermsgs.error {
+  color: #f22;
+}

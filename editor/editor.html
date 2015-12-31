@@ -13,7 +13,7 @@
 
   <body>
     <form>
-      <textarea id="codeeditor" contenteditable="true" rows="10" cols="80">#include "Arduboy.h"
+      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80">#include "Arduboy.h"
 #include &lt;avr/pgmspace.h&gt;
 
 
@@ -36,12 +36,14 @@ void setup()
 }
       </textarea>
     </form>
+    <div id="servermsgs" class="servermsgs"></div>
 
     <script src="/lib/codemirror/codemirror.js"></script>
     <script src="/lib/codemirror/clike.js"></script>
 
     <script>
       var editor;
+      var lastBuild;
 
       editor = CodeMirror.fromTextArea(
         document.getElementById("codeeditor"),
@@ -53,16 +55,71 @@ void setup()
         }
       );
 
+      function throttle(callback, delay) {
+        var lastRequest = null;
+        var lastArgs = [];
+        var timeout;
+
+        var fulfill = function() {
+          lastRequest = null;
+          timeout = null;
+          callback.call(...lastArgs);
+        }
+
+        return function(...args) {
+          lastArgs = args;
+
+          // Restart throttle
+          if (timeout) clearTimeout(timeout);
+          timeout = setTimeout(fulfill, delay);
+          lastRequest = Date.now();
+        }
+      }
+
+      // Editor form
       var form = document.querySelector('form');
-      editor.on("changes", function(editor, change) {
+
+      // Build form document and check for errors, size etc.
+      function checkBuild (editor, change) {
         console.log(change);
 
         fetch('http://188.166.88.114:3204/build', {
           method: 'post',
           body: new FormData(form)
-        });
 
-      })
+        }).then(function(r) {
+          return r.json();
+
+        }).then(function(res) {
+          lastBuild = res;
+
+          if (lastBuild.error) {
+            var msgs = document.getElementById("servermsgs")
+              msgs.classList.add("error");
+              msgs.textContent = lastBuild.error;
+
+              if (lastBuild.compiler['build.ino'] && lastBuild.compiler['build.ino'].length > 0) {
+                lastBuild.compiler['build.ino'].forEach(function(err) {
+                  var msg = document.createElement("div");
+                  var icon = msg.appendChild(document.createElement("span"));
+                  icon.innerHTML = "!!";
+                  icon.className = "lint-error-icon";
+                  msg.appendChild(document.createTextNode(err.reason));
+                  msg.className = "lint-error";
+                  editor.addLineWidget(err.line - 1, msg, {coverGutter: false, noHScroll: true});
+                });
+              }
+          }
+        }).catch(function(e) {
+          console.error("Error checking build: ", e);
+        });
+      }
+
+      // Create throttled version to avoid stressing the server & save bandwidth
+      throttleCheckBuild = throttle(checkBuild, 1000);
+
+      // Check builds if document changed
+      editor.on("changes", throttleCheckBuild);
 
       var sprite, marker;
       sprite = document.createElement('span');

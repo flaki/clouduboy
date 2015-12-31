@@ -48,6 +48,17 @@ cdb.get('/version', function (req, res) {
 });
 
 
+// Editor
+cdb.get('/editor', function (req, res) {
+  res.sendFile(DIR_EDITOR + '/editor.html');
+});
+
+
+// Get build source
+cdb.get('/src/build', function (req, res) {
+  res.type('text/x-arduino').download(DIR_BUILD + '/src/build.ino', 'build.ino');
+});
+
 // Get last built HEX
 cdb.get('/build', function (req, res) {
   var hex = fs.readFileSync(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex');

@@ -13,28 +13,7 @@
 
   <body>
     <form>
-      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80">#include "Arduboy.h"
-#include &lt;avr/pgmspace.h&gt;
-
-
-Arduboy arduboy;
-
-boolean started = false;
-
-boolean pressed_A = false;
-boolean pressed_B = false;
-
-PROGMEM const unsigned char bat[] = { 0x1c, 0x0e, 0x0c, 0x07, 0x0e, 0x0c, 0x1b, 0x3e, 0x3e, 0x1b, 0x0c, 0x06, 0x0f, 0x1c, 0x0e, 0x1c, 0x38 };
-
-// Setup
-void setup()
-{
-  arduboy.start();
-  arduboy.setFrameRate(60);
-
-  intro();
-}
-      </textarea>
+      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80">loading...</textarea>
     </form>
     <div id="servermsgs" class="servermsgs"></div>
 
@@ -45,6 +24,7 @@ void setup()
       var editor;
       var lastBuild;
 
+      // Set up CodeMirror for editing
       editor = CodeMirror.fromTextArea(
         document.getElementById("codeeditor"),
         {
@@ -54,6 +34,17 @@ void setup()
           lineWrapping: true
         }
       );
+
+      // Fetch last build source
+      fetch("/src/build").then(function(r) {
+        return r.text();
+
+      // Update editor to last build source
+      }).then(function(body) {
+        editor.setValue(body);
+
+      }).catch(function(e) { console.error(e); });
+
 
       function throttle(callback, delay) {
         var lastRequest = null;
@@ -83,7 +74,7 @@ void setup()
       function checkBuild (editor, change) {
         console.log(change);
 
-        fetch('http://188.166.88.114:3204/build', {
+        fetch('/build', {
           method: 'post',
           body: new FormData(form)
 

@@ -56,18 +56,25 @@
 
 
       // Update editor
+      function setEditorContents(v) {
+        editor.setValue(v);
+
+        // Set up markers
+        markSprites(v);
+      }
+
       function updateEditorContents(r) {
         // Response object
         if (typeof r === 'object' && 'text' in r) {
           // TODO: check if returned an error
 
           return r.text().then(function(body) {
-            editor.setValue(body);
+            setEditorContents(body);
           });
 
         // Plain ole' string stuff
         } else {
-          editor.setValue(r);
+          setEditorContents(r);
         }
       }
 
@@ -173,13 +180,30 @@
         load();
       }
 
+      //var RX_SPRITES = /PROGMEM const unsigned char (\w+)\[\][\s\r\n]*=(?:[\s\r\n]|\r?\n\/\/[^\n]*)*{([^\}]+)}/g;
+      var RX_SPRITES = /PROGMEM const unsigned char (\w+)\[\][\s\r\n]*=[^{;]*{([^\}]+)}/g;
 
-      //TODO: Image editor sprite markers
-      //var sprite, marker;
-      //sprite = document.createElement('span');
-      //sprite.className = "sprite";
-      //marker = editor.markText({ line: 11, ch: 37 },{ line: 11, ch: 139 }, { replacedWith: sprite, clearOnEnter: true });
-      //sprite.ondblclick = function() { marker.clear(); };
+      function markSprites(src) {
+        var e;
+        var src = src || editor.getValue();
+        var pS,pE, sprite, markers = [];
+
+        while ((e = RX_SPRITES.exec(src)) !== null) {
+          pE = editor.posFromIndex(RX_SPRITES.lastIndex - 1);
+          pS = editor.posFromIndex(RX_SPRITES.lastIndex - 1 - e[2].length);
+          console.log(RX_SPRITES.lastIndex, pS,pE, e);
+
+          // Image editor sprite markers
+          sprite = document.createElement('span');
+          sprite.className = "sprite";
+          markers.push(
+            editor.markText({ line: pS.line, ch: pS.ch },{ line: pE.line, ch: pE.ch }, { replacedWith: sprite, clearOnEnter: true })
+          );
+
+          // Clear marker on double click - TODO: pop up pixel-editor instead
+          sprite.ondblclick = (function() { this.clear(); }).bind(markers[markers.length-1]);
+        }
+      }
 
       setTimeout(init, 0);
     </script>

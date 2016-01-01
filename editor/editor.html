@@ -12,6 +12,22 @@
   </head>
 
   <body>
+    <aside class="toolbar">
+      <button name="download">⏬</button>
+      <select name="load">
+        <option value="" default>---</option>
+
+        <optgroup label="Load:">
+          <option value="rundino">Rund.ino</option>
+          <option value="rundino/halloween">Rund.ino Halloween Ed.</option>
+        </optgroup>
+
+        <optgroup label="Templates:">
+          <option value="templates/minimal">Minimal</option>
+        </optgroup>
+      </select>
+    </aside>
+
     <form>
       <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>
     </form>
@@ -24,6 +40,9 @@
       var editor;
       var lastBuild;
 
+      // Editor form
+      var form;
+
       // Set up CodeMirror for editing
       editor = CodeMirror.fromTextArea(
         document.getElementById("codeeditor"),
@@ -35,17 +54,31 @@
         }
       );
 
+
+      // Update editor
+      function updateEditorContents(r) {
+        // Response object
+        if (typeof r === 'object' && 'text' in r) {
+          // TODO: check if returned an error
+
+          return r.text().then(function(body) {
+            editor.setValue(body);
+          });
+
+        // Plain ole' string stuff
+        } else {
+          editor.setValue(r);
+        }
+      }
+
       // Fetch last build source
       function load() {
-        fetch("/src/build").then(function(r) {
-          return r.text();
-
-        // Update editor to last build source
-        }).then(function(body) {
-          editor.setValue(body);
+        fetch("/src/build").then(
+          // Update editor to last build source
+          updateEditorContents
 
         // Listen for changes & compile
-        }).then(function() {
+        ).then(function() {
           // Create throttled version to avoid stressing the server & save bandwidth
           throttleCheckBuild = throttle(checkBuild, 1000);
 
@@ -79,12 +112,12 @@
         }
       }
 
-      // Editor form
-      var form = document.querySelector('form');
 
       // Build form document and check for errors, size etc.
       function checkBuild(ed, changes) {
         editor.save();
+
+        form = form || document.querySelector('form');
 
         fetch('/build', {
           method: 'post',
@@ -116,6 +149,31 @@
         });
       }
 
+
+      function init() {
+
+        // Load switch handler
+        toolbarLoad = document.querySelector('select[name="load"]');
+        toolbarLoad.addEventListener('change', function(e) {
+          var data = { 'load': e.target.value };
+          console.log(e.target, e.target.value, data);
+
+          if (data.load) {
+            fetch('/load', {
+              method: 'post',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            }).then(updateEditorContents).then(function() {
+              toolbarLoad.value = '';
+            });
+          }
+        });
+
+        // Load editor contents
+        load();
+      }
+
+
       //TODO: Image editor sprite markers
       //var sprite, marker;
       //sprite = document.createElement('span');
@@ -123,7 +181,7 @@
       //marker = editor.markText({ line: 11, ch: 37 },{ line: 11, ch: 139 }, { replacedWith: sprite, clearOnEnter: true });
       //sprite.ondblclick = function() { marker.clear(); };
 
-      setTimeout(load, 0);
+      setTimeout(init, 0);
     </script>
   </body>
 </html>

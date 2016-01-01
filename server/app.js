@@ -7,15 +7,26 @@ let fs = require('fs');
 let express = require('express'),
     cors = require('cors'),
     formidable = require('formidable'),
-    vhost = require('vhost');
+    vhost = require('vhost'),
+    bodyParser = require('body-parser');
+
+let bodyParserJSON = bodyParser.json()
 
 let exec = require('child-process-promise').exec;
 
 const DIR_ROOT = require('path').normalize(__dirname+"/..");
 const DIR_SOURCES = DIR_ROOT + "/sources";
+const DIR_TEMPLATES = DIR_ROOT + "/templates";
 const DIR_BUILD = DIR_ROOT + "/build";
 const DIR_EDITOR = DIR_ROOT + "/editor";
 
+const BUILDFILE = DIR_BUILD + '/src/build.ino';
+
+const LOADSOURCES = {
+  'rundino': DIR_SOURCES + '/arduboy-rund-ino/rund/rund.ino',
+  'rundino/halloween': DIR_SOURCES + '/arduboy-rund-ino/halloweend/halloweend.ino',
+  'templates/minimal': DIR_TEMPLATES + '/minimal.ino'
+}
 
 // App
 let app = express();
@@ -56,7 +67,7 @@ cdb.get('/editor', function (req, res) {
 
 // Get build source
 cdb.get('/src/build', function (req, res) {
-  res.type('text/x-arduino').download(DIR_BUILD + '/src/build.ino', 'build.ino');
+  res.type('text/x-arduino').download(BUILDFILE, 'build.ino');
 });
 
 // Get last built HEX
@@ -70,6 +81,28 @@ cdb.get('/build', function (req, res) {
     "result": {
       hex: hex.toString()
     }
+  });
+});
+
+
+// Load app as build source
+cdb.post('/load', bodyParserJSON, function (req, res) {
+  let source;
+
+  // Ignore invalid sources
+  if (!req.body || req.body.load in LOADSOURCES === false) {
+    return res.sendStatus(403);
+  };
+
+  // Load source
+  console.log('Loading', req.body.load);
+  source = LOADSOURCES[req.body.load];
+  let copy = fs.createReadStream(source);
+    copy.pipe(fs.createWriteStream(BUILDFILE));
+
+  copy.on('end', function() {
+    console.log("Loaded '%s' into build.ino.", source);
+    res.type('text/x-arduino').download(BUILDFILE, 'build.ino');
   });
 });
 

@@ -10,6 +10,7 @@
   "author": "https://twitter.com/slsoftworks",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.14.2",
     "child-process-promise": "^1.1.0",
     "cors": "^2.7.1",
     "express": "^4.13.3",

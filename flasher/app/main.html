@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Clouduboy Flasher</title>
+</head>
+<body>
+  <div>Searching for connected Arduboy device...</div>
+  <script>
+  var sp = require('serialport');
+
+  sp.list(function(err, ports) {
+    ports.forEach(function(e,n) {
+      document.body.insertAdjacentHTML('beforeend','<p>('+n+'): '+e.comName+'</p>');
+    });
+  });
+</script>
+</body>
+</html>

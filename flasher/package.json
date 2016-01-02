@@ -1,0 +1,23 @@
+{
+  "name": "clouduboy-flasher",
+  "version": "0.1.0",
+  "description": "Add-on for flashing Arduboy apps from the Clouduboy IDE",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Flaki",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^1.5.0",
+    "avrgirl-arduino": "^1.5.6",
+    "chip.avr.avr109": "^1.0.4",
+    "intel-hex": "^0.1.1",
+    "menubar": "^3.0.0",
+    "serialport": "^2.0.5",
+    "tmp": "0.0.28"
+  },
+  "devDependencies": {
+    "electron-rebuild": "^1.0.2"
+  }
+}

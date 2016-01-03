@@ -5,7 +5,9 @@ body {
 .keyboard {
   width: 100%;
   overflow: auto;
+  transition: all .6s ease;
 }
+
 .keys {
   display: inline-flex;
   background: #111;
@@ -35,7 +37,6 @@ body {
   cursor: pointer;
 }
 
-
 /* Mobile keyboard */
 @media (orientation: landscape) and (max-height: 540px) {
   .keys {
@@ -49,5 +50,22 @@ body {
     height: 70vh;
     font-size: 6vh;
   }
-
 }
+
+/* Full keyboard for playback */
+@media (max-width: 800px) {
+  .keyboard.full .keys {
+    font-size: 50%;
+  }
+}
+
+.keyboard.full .keys {
+  display: flex;
+}
+.keyboard.full .key {
+  flex: 1 1 auto;
+}
+
+.key.ch0 { background-color: orange; }
+.key.ch1 { background-color: lime; }
+.key.ch2 { background-color: red; }

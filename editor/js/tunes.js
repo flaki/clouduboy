@@ -98,24 +98,60 @@
       score_cursor = score_start = playhead = 0;
     //}
 
+    var tab = [],
+        tabch = [];
+
+    var speed = 1;
+
     function pgm_read_byte(i) {
       //console.log(((1*score[i])<16?'0':'')+(1*score[i]).toString(16)); //, 'pgm['+i+'] = '+score[i]);
       return score[i];
     }
+
     function playNote(channel, note) {
       var freq = _midi_note_frequencies[note>127?127:note]/2;
       chn[channel] = ctxPlayNote(freq, playhead);
+
+      // Save tab
       //console.log('   #'+channel+'  |> ', note, freq);
+      tab.push(
+        { op: "play-note", note: note, freq: freq, ch: channel, score: [score_cursor-2, score_cursor-1], time: playhead, ctxtime: delay+playhead/1000 }
+      );
+
+      // latest note in channel
+      tabch[ channel ] = tab[ tab.length-1 ];
     }
+
     function stopNote(channel) {
       if (chn[channel]) ctxStopNote(chn[channel], playhead);
       chn[channel] = null;
+
+      // Save tab
       //console.log('   #'+channel+'  -- ');
+      tab.push(
+        { op: "stop-note", start: tabch[channel], ch: channel, score: [score_cursor-1, score_cursor-1], time: playhead, ctxtime: delay+playhead/1000 }
+      );
+
+      // link stop-note to the start-note
+      if (tabch[channel]) {
+        tabch[channel].stop = tab[tab.length-1];
+        tabch[channel] = null;
+      }
     }
+
     function wait(ms) {
-      playhead += ms;
+      ms *= speed; // speed up/slow down TODO: expose this
+
+      // Save tab
       //console.log('   (+'+ms+')', playhead);
+      tab.push(
+        { op: "wait", duration: ms, score: [score_cursor-2, score_cursor-1], time: playhead }
+      );
+
+      // Advance playhead
+      playhead += ms;
     }
+
     function step() {
       var command, opcode, chan;
       var duration;
@@ -153,7 +189,8 @@
     }
 
     // Total duration
-    return playhead;
+    console.log(tab);
+    return tab;
   }
 
   ClouduboyTunes.play = function(scoreString) {
@@ -185,21 +222,52 @@
       var p = this.find(),
           tunes = editor.getRange(p.from, p.to);
 
-      var duration = ClouduboyTunes.play(tunes);
+      var tab = ClouduboyTunes.play(tunes);
+      var duration = tab[tab.length-1].playhead;
 
       var marker = this.replacedWith,
           markerbg = marker.lastElementChild;
 
+      var keyboard = document.querySelector('.keyboard');
+      var keys = document.querySelector('.keyboard .keys');
+
       marker.classList.add('play');
       markerbg.style.transition = duration+"ms all linear";
 
+      // Show played notes on the keyboard
+      var t = 0;
+      var cue = function cue() {
+        var ct = audioCtx.currentTime;
+
+        while (tab[t]) { // end of score?
+          if (!tab[t].ctxtime && ++t) continue; // skip nodes with no contexttime
+          if (tab[t].ctxtime > ct) break; // too early to play this
+
+          // Start note
+          if (tab[t].freq) {
+            keys.children[ tab[t].note ].classList.add('ch'+tab[t].ch);
+          // Stop note
+          } else if (tab[t].start) {
+            keys.children[ tab[t].start.note ].classList.remove('ch'+tab[t].ch);
+          }
+
+          ++t;
+        }
+        window.requestAnimationFrame(cue);
+      }
+      cue();
+
       setTimeout(function() {
         markerbg.classList.add('playing');
+
+        if (keyboard) keyboard.classList.add('full');
       }, 200);
       setTimeout(function() {
         markerbg.style.transition = "";
         marker.classList.remove('play');
         markerbg.classList.remove('playing');
+
+        if (keyboard) keyboard.classList.remove('full');
       }, duration+500);
     };
     var unfold = function() {

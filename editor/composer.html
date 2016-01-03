@@ -1,9 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Clouduboy Composer</title>
+  <title>Clouduboy Composer</title>
+
+  <link rel="stylesheet" href="/lib/codemirror/codemirror.css">
+  <link rel="stylesheet" href="/lib/codemirror/night.css">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/composer.css">
 </head>
 <body>
+  <div class="code">
+    <form>
+      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>
+    </form>
+  </div>
+  <div class="keyboard">
+    <div class="keys">
+      <div data-note="C0 " class="key"></div>
+      <div data-note="C0#" class="key sh"></div>
+      <div data-note="D0 " class="key"></div>
+      <div data-note="D0#" class="key sh"></div>
+      <div data-note="E0 " class="key"></div>
+      <div data-note="F0 " class="key"></div>
+      <div data-note="F0#" class="key sh"></div>
+      <div data-note="G0 " class="key"></div>
+      <div data-note="G0#" class="key sh"></div>
+      <div data-note="A0 " class="key"></div>
+      <div data-note="A0#" class="key sh"></div>
+      <div data-note="B0 " class="key"></div>
+
+      <div data-note="C1 " class="key"></div>
+      <div data-note="C1#" class="key sh"></div>
+      <div data-note="D1 " class="key"></div>
+      <div data-note="D1#" class="key sh"></div>
+      <div data-note="E1 " class="key"></div>
+      <div data-note="F1 " class="key"></div>
+      <div data-note="F1#" class="key sh"></div>
+      <div data-note="G1 " class="key"></div>
+      <div data-note="G1#" class="key sh"></div>
+      <div data-note="A1 " class="key"></div>
+      <div data-note="A1#" class="key sh"></div>
+      <div data-note="B1 " class="key"></div>
+
+      <div data-note="C2 " class="key"></div>
+      <div data-note="C2#" class="key sh"></div>
+      <div data-note="D2 " class="key"></div>
+      <div data-note="D2#" class="key sh"></div>
+      <div data-note="E2 " class="key"></div>
+      <div data-note="F2 " class="key"></div>
+      <div data-note="F2#" class="key sh"></div>
+      <div data-note="G2 " class="key"></div>
+      <div data-note="G2#" class="key sh"></div>
+      <div data-note="A2 " class="key"></div>
+      <div data-note="A2#" class="key sh"></div>
+      <div data-note="B2 " class="key"></div>
+
+      <div data-note="C3 " class="key"></div>
+      <div data-note="C3#" class="key sh"></div>
+      <div data-note="D3 " class="key"></div>
+      <div data-note="D3#" class="key sh"></div>
+      <div data-note="E3 " class="key"></div>
+      <div data-note="F3 " class="key"></div>
+      <div data-note="F3#" class="key sh"></div>
+      <div data-note="G3 " class="key"></div>
+      <div data-note="G3#" class="key sh"></div>
+      <div data-note="A3 " class="key"></div>
+      <div data-note="A3#" class="key sh"></div>
+      <div data-note="B3 " class="key"></div>
+
+      <div data-note="C4 " class="key"></div>
+      <div data-note="C4#" class="key sh"></div>
+      <div data-note="D4 " class="key"></div>
+      <div data-note="D4#" class="key sh"></div>
+      <div data-note="E4 " class="key"></div>
+      <div data-note="F4 " class="key"></div>
+      <div data-note="F4#" class="key sh"></div>
+      <div data-note="G4 " class="key"></div>
+      <div data-note="G4#" class="key sh"></div>
+      <div data-note="A4 " class="key"></div>
+      <div data-note="A4#" class="key sh"></div>
+      <div data-note="B4 " class="key"></div>
+
+      <div data-note="C5 " class="key"></div>
+      <div data-note="C5#" class="key sh"></div>
+      <div data-note="D5 " class="key"></div>
+      <div data-note="D5#" class="key sh"></div>
+      <div data-note="E5 " class="key"></div>
+      <div data-note="F5 " class="key"></div>
+      <div data-note="F5#" class="key sh"></div>
+      <div data-note="G5 " class="key"></div>
+      <div data-note="G5#" class="key sh"></div>
+      <div data-note="A5 " class="key"></div>
+      <div data-note="A5#" class="key sh"></div>
+      <div data-note="B5 " class="key"></div>
+
+      <div data-note="C6 " class="key"></div>
+      <div data-note="C6#" class="key sh"></div>
+      <div data-note="D6 " class="key"></div>
+      <div data-note="D6#" class="key sh"></div>
+      <div data-note="E6 " class="key"></div>
+      <div data-note="F6 " class="key"></div>
+      <div data-note="F6#" class="key sh"></div>
+      <div data-note="G6 " class="key"></div>
+      <div data-note="G6#" class="key sh"></div>
+      <div data-note="A6 " class="key"></div>
+      <div data-note="A6#" class="key sh"></div>
+      <div data-note="B6 " class="key"></div>
+
+      <div data-note="C7 " class="key"></div>
+      <div data-note="C7#" class="key sh"></div>
+      <div data-note="D7 " class="key"></div>
+      <div data-note="D7#" class="key sh"></div>
+      <div data-note="E7 " class="key"></div>
+      <div data-note="F7 " class="key"></div>
+      <div data-note="F7#" class="key sh"></div>
+      <div data-note="G7 " class="key"></div>
+      <div data-note="G7#" class="key sh"></div>
+      <div data-note="A7 " class="key"></div>
+      <div data-note="A7#" class="key sh"></div>
+      <div data-note="B7 " class="key"></div>
+    </div>
+  </div>
+
+  <script src="/lib/codemirror/codemirror.js"></script>
+  <script src="/lib/codemirror/clike.js"></script>
+
+  <script src="js/main.js"></script>
   <script src="js/tunes.js"></script>
 </body>
 </html>

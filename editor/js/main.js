@@ -72,20 +72,22 @@
     return new Promise(function(resolve, reject) {
       // Set up source/template switch handler
       toolbarLoad = document.querySelector('select[name="load"]');
-      toolbarLoad.addEventListener('change', function(e) {
-        var data = { 'load': e.target.value };
-        //console.log(e.target, e.target.value, data);
+      if (toolbarLoad) {
+        toolbarLoad.addEventListener('change', function(e) {
+          var data = { 'load': e.target.value };
+          //console.log(e.target, e.target.value, data);
 
-        if (data.load) {
-          fetch('/load', {
-            method: 'post',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          }).then(updateEditorContents).then(function() {
-            toolbarLoad.value = '';
-          });
-        }
-      });
+          if (data.load) {
+            fetch('/load', {
+              method: 'post',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            }).then(updateEditorContents).then(function() {
+              toolbarLoad.value = '';
+            });
+          }
+        });
+      }
 
       // Run init callbacks
       runCallbacksFor('init');

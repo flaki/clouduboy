@@ -1,0 +1,53 @@
+body {
+  background: #999;
+}
+
+.keyboard {
+  width: 100%;
+  overflow: auto;
+}
+.keys {
+  display: inline-flex;
+  background: #111;
+  border: .1em solid #111;
+}
+.key {
+  flex: none;
+  width: 1.5em;
+  height: 7em;
+  background: white;
+  border: .1em solid #EEE;
+  margin: 0 .1em 0 0;
+}
+.key.sh {
+  background: #223;
+  border: .1em solid #113;
+  width: .9em;
+  height: 3.3em;
+  margin: 0 -.6em;
+  z-index: 1;
+  border-radius: 0 0 .2em .2em;
+}
+
+.key.dn,
+.key:hover {
+  box-shadow: 0 0 .5em .2em #08f inset;
+  cursor: pointer;
+}
+
+
+/* Mobile keyboard */
+@media (orientation: landscape) and (max-height: 540px) {
+  .keys {
+    padding-top: 2.5em;
+  }
+
+  .keyboard {
+    position: fixed;
+    z-index: 10;
+    bottom: 0;
+    height: 70vh;
+    font-size: 6vh;
+  }
+
+}

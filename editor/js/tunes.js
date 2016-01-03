@@ -1,4 +1,7 @@
-function ClouduboyTunes() {
+(function(exports) {
+  function ClouduboyTunes() {
+  }
+
   // create web audio api context
   var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -6,7 +9,7 @@ function ClouduboyTunes() {
   var gainNode = audioCtx.createGain();
 
   gainNode.connect(audioCtx.destination);
-  gainNode.gain.value = .4;
+  gainNode.gain.value = .33;
 
   // Context delay the main score (ms)
   var delay = 0;
@@ -22,17 +25,17 @@ function ClouduboyTunes() {
     // schedule note
     osc.frequency.value = freq;
 
-    osc.start((delay + at)/1000);
+    osc.start(delay + at/1000);
 
     if (typeof length !== 'undefined') {
-      osc.stop((delay + at + length)/1000);
+      osc.stop(delay + (at+length)/1000);
     }
 
     return osc;
   }
 
   function ctxStopNote(osc, at) {
-    osc.stop((delay + at)/1000);
+    osc.stop(delay + at/1000);
   }
 
 
@@ -67,9 +70,6 @@ function ClouduboyTunes() {
 
     // Concurrent channels (2)
     var chn = [];
-
-    // Update delay
-    delay = audioCtx.currentTime + 100;
 
     function pgm_read_byte(i) {
       //console.log(((1*score[i])<16?'0':'')+(1*score[i]).toString(16)); //, 'pgm['+i+'] = '+score[i]);
@@ -120,15 +120,89 @@ function ClouduboyTunes() {
       }
     }
 
+    // Play whole song
     while (score_cursor < score.length) {
       step();
     }
+
+    // Total duration
+    return playhead;
   }
 
-  return {
-    play: function(scoreString) {
-      score = scoreString.split(/,/).map(function(n) { return parseInt(n); });
-      ArduboyTunes(score);
+  ClouduboyTunes.play = function(scoreString) {
+    // Parse score data
+    var score = scoreString.split(/,/).map(function(n) {
+      return parseInt(n);
+    });
+
+    // Update delay
+    delay = audioCtx.currentTime + .1;
+
+    // Let's rock!
+    return ArduboyTunes(score);
+  }
+
+
+  // Mark tunes and let the user play them
+  var RX_TUNES = /const byte PROGMEM (\w+)\s*\[\][\s\r\n]*=[^{;]*{([^\}]+)}/g;
+  var markers = [];
+
+  function markTunes() {
+    var e;
+    var editor = Clouduboy.editor;
+    var src = src || editor.getValue();
+    var pS,pE, marker;
+    var rx = RX_TUNES;
+
+    var play = function() {
+      var p = this.find(),
+          tunes = editor.getRange(p.from, p.to);
+
+      var duration = ClouduboyTunes.play(tunes);
+
+      var marker = this.replacedWith,
+          markerbg = marker.lastElementChild;
+
+      marker.classList.add('play');
+      markerbg.style.transition = duration+"ms all linear";
+
+      setTimeout(function() {
+        markerbg.classList.add('playing');
+      }, 0);
+      setTimeout(function() {
+        markerbg.style.transition = "";
+        marker.classList.remove('play');
+        markerbg.classList.remove('playing');
+      }, duration+500);
+    };
+    var unfold = function() {
+      this.clear();
+    };
+
+    while ((e = rx.exec(src)) !== null) {
+      pE = editor.posFromIndex(rx.lastIndex - 1);
+      pS = editor.posFromIndex(rx.lastIndex - 1 - e[2].length);
+      //console.log(RX_SPRITES.lastIndex, pS,pE, e);
+
+      // Arduboy audio music data markers
+      marker = document.createElement('span');
+      marker.className = "tune";
+      marker.innerHTML = '<i class="bg"></i>'
+      markers.push(
+        editor.markText({ line: pS.line, ch: pS.ch },{ line: pE.line, ch: pE.ch }, { replacedWith: marker, clearOnEnter: true })
+      );
+
+      // Play tune on click
+      marker.onclick = play.bind(markers[markers.length-1]);
+
+      // Clear marker on double click - TODO: pop up composer instead
+      marker.ondblclick = unfold.bind(markers[markers.length-1]);
     }
   }
-}
+
+  // Expose
+  exports.ClouduboySprites = ClouduboySprites;
+
+  // Add plugin
+  Clouduboy.on("contentloaded", markTunes);
+})(window);

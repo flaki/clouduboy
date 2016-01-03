@@ -25,6 +25,9 @@ const BUILDFILE = DIR_BUILD + '/src/build.ino';
 const LOADSOURCES = {
   'rundino': DIR_SOURCES + '/arduboy-rund-ino/rund/rund.ino',
   'rundino/halloween': DIR_SOURCES + '/arduboy-rund-ino/halloweend/halloweend.ino',
+  'examples/ardubreakout': DIR_SOURCES + '/Arduboy/examples/ArduBreakout/ArduBreakout.ino',
+  'examples/floatyball': DIR_SOURCES + '/Arduboy/examples/FloatyBall/FloatyBall.ino',
+  'examples/tunes': DIR_SOURCES + '/Arduboy/examples/Tunes/Tunes.ino',
   'templates/empty': DIR_TEMPLATES + '/empty.ino',
   'templates/minimal': DIR_TEMPLATES + '/minimal.ino',
   'templates/sprites': DIR_TEMPLATES + '/sprites.ino',

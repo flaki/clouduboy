@@ -168,7 +168,7 @@
 
       setTimeout(function() {
         markerbg.classList.add('playing');
-      }, 0);
+      }, 200);
       setTimeout(function() {
         markerbg.style.transition = "";
         marker.classList.remove('play');
@@ -201,7 +201,7 @@
   }
 
   // Expose
-  exports.ClouduboySprites = ClouduboySprites;
+  exports.ClouduboyTunes = ClouduboyTunes;
 
   // Add plugin
   Clouduboy.on("contentloaded", markTunes);

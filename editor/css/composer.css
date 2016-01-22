@@ -39,16 +39,21 @@ body {
 
 /* Mobile keyboard */
 @media (orientation: landscape) and (max-height: 540px) {
-  .keys {
-    padding-top: 2.5em;
-  }
-
   .keyboard {
     position: fixed;
     z-index: 10;
     bottom: 0;
-    height: 70vh;
-    font-size: 6vh;
+    height: 80vh;
+    font-size: 7vh;
+    /* for proper vertical positioning*/
+    display: flex;
+  }
+
+  .keys {
+    /* touch here to drag left/right */
+    padding-top: 2.5em;
+    /* align to screen bottom */
+    align-self: flex-end;
   }
 }
 

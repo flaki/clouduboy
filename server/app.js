@@ -71,6 +71,21 @@ cdb.get('/editor', function (req, res) {
 });
 
 
+// Sprite Editor
+let currentSprite = null;
+cdb.get('/sprite', function (req, res) {
+  res.json(currentSprite);
+});
+// Editor
+cdb.post('/sprite', bodyParserJSON, function (req, res) {
+  console.log(req.body);
+  if (req.body && req.body.sprite) {
+    currentSprite = req.body.sprite;
+  }
+  res.send("Ok");
+});
+
+
 // Get build source
 cdb.get('/src/build', function (req, res) {
   res.type('text/x-arduino').download(BUILDFILE, 'build.ino');

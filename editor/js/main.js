@@ -117,7 +117,7 @@
 
   // Create instance, initialize & load
   function start() {
-    return init().then(load).catch(function(error) {
+    return init().then(load).catch(function(error) {console.log(error);
       console.log('Failed to initialize: ', error.stack||error);
     });
   }

@@ -1,6 +1,11 @@
 'use strict';
 
 (function () {
+  // Synth control command constants (from audio.h)
+  var TUNE_OP_PLAYNOTE = 0x90;  /* play a note: low nibble is generator #, note is next byte */
+  var TUNE_OP_STOPNOTE = 0x80;  /* stop a note: low nibble is generator # */
+  var TUNE_OP_RESTART  = 0xe0;  /* restart the score from the beginning */
+  var TUNE_OP_STOP     = 0xf0;  /* stop playing */
 
   // Ported from: Arduboy's audio.cpp & audio.h
   // https://github.com/Arduboy/Arduboy/blob/master/audio.h @ 7ddb720 on Dec 3 2015
@@ -41,12 +46,6 @@
       }
 
       // TODO: create index for source data
-
-      // Synth control commands (from audio.h)
-      var TUNE_OP_PLAYNOTE = 0x90;  /* play a note: low nibble is generator #, note is next byte */
-      var TUNE_OP_STOPNOTE = 0x80;  /* stop a note: low nibble is generator # */
-      var TUNE_OP_RESTART  = 0xe0;  /* restart the score from the beginning */
-      var TUNE_OP_STOP     = 0xf0;  /* stop playing */
 
       // Current score position
       var score_cursor, score_start, tune_playing;
@@ -180,6 +179,39 @@
   }
   ArduboyScore.prototype.stop = function() {
     this.synth.stop();
+  }
+
+  // Global non-instance methods
+  ArduboyScore.make = function(inputs) {
+    var score = [];
+    var PLAY = "0x"+TUNE_OP_PLAYNOTE.toString(16);
+    var STOP = "0x"+TUNE_OP_STOPNOTE.toString(16);
+    var END = "0x"+TUNE_OP_STOP.toString(16);
+
+    var basetime, time, d;
+
+    if (!inputs.length) return "";
+    basetime = inputs[0].t;
+    time = basetime;
+
+    for (var i of inputs) {
+      if (i.t > time) {
+        d = Math.round(i.t - time);
+        score.push(d >> 8, d & 255);
+      }
+      time = i.t;
+
+      if (i.state) {
+        score.push(PLAY);
+        score.push(i.note);
+      } else {
+        score.push(STOP);
+      }
+    }
+
+    score.push(END);
+    console.log( score.join(', ') );
+    return JSON.stringify(inputs);
   }
 
   // Expose

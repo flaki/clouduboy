@@ -135,6 +135,7 @@
     var keys = document.querySelector('.keys');
     var osc = [], ckey = [];
     var synth = new ClouduboySynth();
+    var score = [], basetime, lasttime;
 
     // Editable
     //s = document.createElement('span');
@@ -145,6 +146,8 @@
     function start(e) {
       var n = [].indexOf.call(e.target.parentNode.children, e.target);
       var ch = (e.changedTouches ? e.changedTouches[0].identifier+1 : 0);
+      var time = performance.now();
+
       if (n) {
         e.preventDefault();
         //console.log('start', e.target.dataset.note, n);
@@ -152,13 +155,24 @@
 
         ckey[ch] = e.target;
         ckey[ch].classList.add('dn');
+
+        if (!basetime || (time - lasttime) > 3000) { // reset recorder
+          console.log(ArduboyScore.make(score));
+          basetime = time;
+          score = [];
+        }
+        lasttime = time;
+        score.push({ note: n, state: true, t: time });
       }
 
       console.log(n, '@', ch, e);
     }
 
     function stop(e) {
+      var n = [].indexOf.call(e.target.parentNode.children, e.target);
       var ch = (e.changedTouches ? e.changedTouches[0].identifier+1 : 0);
+      var time = performance.now();
+
 
       //console.log('stop', e.target.dataset.note);
       if (osc[ch]) {
@@ -168,6 +182,9 @@
 
         ckey[ch] = e.target;
         ckey[ch].classList.remove('dn');
+
+        lasttime = time;
+        score.push({ note: n, state: false, t: time });
       }
     }
 

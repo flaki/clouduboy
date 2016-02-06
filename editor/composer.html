@@ -13,6 +13,23 @@
   <link rel="icon" type="image/png" href="/res/composer.png" />
 </head>
 <body>
+  <aside class="toolbar">
+    <select name="load">
+      <option value="" default>---</option>
+
+      <optgroup label="Load:">
+        <option value="rundino">Rund.ino</option>
+      </optgroup>
+      <optgroup label="Arduboy Examples:">
+        <option value="examples/tunes">Tunes Demo</option>
+      </optgroup>
+
+      <optgroup label="Templates:">
+        <option value="templates/empty">Empty</option>
+        <option value="templates/minimal">Minimal</option>
+        <option value="templates/sprites">Sprite Demo</option>
+      </optgroup>
+    </select>
   <div class="code">
     <form>
       <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>

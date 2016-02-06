@@ -10,14 +10,18 @@
 
     <link rel="stylesheet" href="/css/style.css">
     <style>
+    body.pixel-editor {
+      overflow: hidden;
+    }
     iframe {
       width: 80vmin;
       height: 80vmin;
-      position: absolute;
+      position: fixed;
       z-index: 1000;
       top: calc((100vh - 80vmin) / 2);
       left: calc((100vw - 80vmin) / 2);
       border: none;
+      box-shadow: 0 0 5px 1px black;
     }
     </style>
   </head>

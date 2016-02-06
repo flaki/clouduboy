@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ARDUBOY SpriteEditor</title>
     <style>
-      body { padding: 0; margin: 0; }
+      body { padding: 0; margin: 0; width: 100vw; height: 100vh; overflow: hidden; }
       canvas {
-        border: 1px solid #999;
-        background: #F0F0F0;
+        border: none; /*1px solid #999;*/
+        background: #111;
       }
       textarea {
         font-size: 8px;
@@ -87,6 +87,7 @@
       function display() {
         var x,y;
         C.clearRect(0,0,canvas.width,canvas.height);
+        C.fillStyle = "#eee";
 
         y = 0;
         while (y < pixels.h) {
@@ -135,7 +136,9 @@
           // Update canvas dimensions/blocksize
           if (pixels.w !== update.w || pixels.h !== update.h) {
             // Update blocksize
-            bs = Math.floor( canvas.width / update.w );
+            bs = update.w > update.h
+              ? Math.floor( canvas.width / update.w )
+              : Math.floor( canvas.height / update.h );
 
             // Update canvas proportions
             canvas.height = canvas.width * (update.h / update.w);

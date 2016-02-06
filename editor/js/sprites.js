@@ -42,11 +42,15 @@
               { sprite: new PixelData(e.target.dataset.pif).serialize() }
             )
           }).then(function() {
+            sprite.classList.add("editing");
+            document.body.classList.add("pixel-editor");
             document.querySelector("iframe").style.display="block";
             document.querySelector("iframe").src="/painter-window.html";
 
             sprite.onclick = function() {
+              document.body.classList.remove("pixel-editor");
               document.querySelector("iframe").style.display="none";
+              console.log(marker.find(),start,end);
               marker.clear();
 
               fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {

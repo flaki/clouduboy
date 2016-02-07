@@ -4,8 +4,8 @@
 var mb = require('menubar')({
   dir: __dirname,
   index: 'main.html',
-  width: 240,
-  height: 400,
+  width: 1,
+  height: 1,
   preloadWindow: true
 });
 
@@ -40,9 +40,24 @@ mb.on('after-create-window', function () {
 function flashBuild () {
   let flashBuild = require('../index.js');
 
+  var flashing = setInterval( (function() {
+    this.current++;
+    mb.tray.setImage(__dirname + '/'+this.images[ this.current % 2 ]+'.png');
+
+  }).bind({ current: 0, images: [ 'IconTemplate', 'boltTemplate' ]}), 333);
+  mb.tray.setToolTip("Flashing Arduboy image...");
+
   flashBuild().then(function() {
     console.log('Flashing done!');
+
+    return 'Success!';
   }).catch(function (e) {
     console.log('Flashing failed: ', e);
+
+    return 'Failed: '+e.toString();
+  }).then(function(msg) {
+    clearInterval(flashing);
+    mb.tray.setImage(__dirname + '/IconTemplate.png');
+    mb.tray.setToolTip(msg);
   });
 }

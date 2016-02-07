@@ -81,6 +81,9 @@ PixelData.prototype = {
   get bytes() {
     return bitmap2bytes(this.bitmap);
   },
+  get rgba() {
+    return bitmap2rgba(this.bitmap)
+  },
   get sprite() {
     return this.bytes.reduce(function(sprite, v) {
       return sprite += (sprite === '' ? '' : ', ') + ( v<16 ? '0x0' : '0x' ) + v.toString(16);
@@ -162,6 +165,33 @@ function bitmap2bytes(bitmap) {
 
   return bytes;
 }
+
+function bitmap2rgba(bitmap, fg, bg) {
+  var w = bitmap[0].length, h = bitmap.length;
+  var rgba = new Uint8ClampedArray(w * h * 4);
+  var bg = bg || [0,0,0,0];
+  var fg = fg || [255,255,255,255];
+  var cc;
+
+
+  var y = 0;
+  while (y < h) {
+
+    for (x = 0; x < w; ++x) {
+      cc = (bitmap[y][x] ? fg : bg);
+
+      rgba[ (y*w + x)*4 + 0 ] = cc[0];
+      rgba[ (y*w + x)*4 + 1 ] = cc[1];
+      rgba[ (y*w + x)*4 + 2 ] = cc[2];
+      rgba[ (y*w + x)*4 + 3 ] = cc[3];
+    }
+
+    ++y;
+  }
+
+  return rgba;
+}
+
 
 function bytes2bitmap(bytes,w,h) {
   // Width / height optional, assume square image @ 8x8 or multiples

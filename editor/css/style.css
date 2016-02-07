@@ -85,7 +85,62 @@ body {
   border: 1px solid #000;
 }
 
+/* Painter */
+body.pixel-editor {
+  overflow: hidden;
+}
+iframe {
+  width: 80vmin;
+  height: 80vmin;
+  position: fixed;
+  z-index: 1000;
+  top: calc((100vh - 80vmin) / 2);
+  left: calc((100vw - 80vmin) / 2);
+  border: none;
+  box-shadow: 0 0 5px 1px black;
+}
+
+.CodeMirror-widget .sprite:before {
+  display: none;
+}
+.CodeMirror-widget .sprite canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: crisp-edges;
+
+  margin: -.15em .25em -.15em .25em;
+  border: .25em solid black;
+  background: black;
+  padding: .1em;
+  border-radius: 0.25em;
+  vertical-align: middle;
+  box-shadow: 0 0 .5em #555;
+  height: .66em;
+  transition: height 0s linear;
+}
+
+.CodeMirror-line:hover {
+  z-index: 10;
+}
+.CodeMirror-widget .sprite canvas:hover {
+  position: absolute;
+  z-index: 10;
+  height: 12em;
+  transition: height .2s ease;
+}
+
 /* Being edited */
+.CodeMirror-line .open-marker {
+  background-color: rgba(0,0,0,.5);
+  padding: .2em 0 .1em;
+  font-style: italic;
+  border-bottom: .2em solid #222;
+}
+
+/* Being painted at */
+.CodeMirror-code .sprite.editing:before {
+  display: block;
+}
 .CodeMirror-code .sprite.editing {
   position: fixed;
   top: 12px;
@@ -93,4 +148,7 @@ body {
   padding: 0; margin: 0;
   font-size: 4em;
   text-shadow: 1px 0 1px white, -1px 0 1px white;
+}
+.CodeMirror-code .sprite.editing canvas {
+  display: none;
 }

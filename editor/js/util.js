@@ -1,7 +1,7 @@
 (function() {
-  var RX_CLEANCOMMENTS = /\/\/[^\n]*\n/g
+  var RX_CLEANCOMMENTS = /(\/\/[^\n]*\n|\/\*(.*?\*\/))/g;
 
-  // Removes line comments, without changing the length of the string
+  // Removes line & block comments, without changing the length of the string
   // (replaces them with spaces)
   function cleanComments(str) {
     return str.replace(

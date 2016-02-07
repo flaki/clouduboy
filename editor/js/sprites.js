@@ -2,6 +2,104 @@
   function ClouduboySprites() {
   }
 
+  function replaceSprite(start, end, sObj) {
+    var sid;
+    var repl;
+    var sprite;
+    var pdata;
+    var canvas;
+
+    // Create replacement element
+    sprite = document.createElement('span');
+    canvas = document.createElement("canvas");
+    sprite.appendChild(canvas);
+
+    // Create marker
+    repl = new CodePlugin(Clouduboy.editor, start,end, { element: sprite, title: sObj.id+' - click to edit sprite' });
+
+    // Set marker initial data
+    pdata = sObj instanceof PixelData ? sObj : new PixelData(sObj);
+    sid = pdata.id;
+
+
+    // Customize replacement element
+    repl.onchange = function() {
+      pdata = new PixelData(codeToPif(repl.editor.getRange(repl.pos.start,repl.pos.end), sid));
+      console.log("PData changed", pdata.pif);
+    }
+
+    repl.onseal = function() {
+      /* Replacement element customization */
+      sprite.className = "sprite";
+      sprite.dataset.width = pdata.w;
+      sprite.dataset.height = pdata.h;
+      sprite.dataset.pif = pdata.pif;
+
+      /* Canvas thumbnail previews */
+      canvas.width = pdata.w;
+      canvas.height = pdata.h;
+      canvas.getContext("2d").putImageData(new ImageData(pdata.rgba, pdata.w,pdata.h) ,0,0);
+      console.log("Seal sprite updated", sid);
+    }
+
+    repl.onchange();
+    repl.onseal();
+
+
+    function editSprite(e) {
+      fetch('/sprite', {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+          { sprite: pdata.serialize() }
+        )
+      }).then(function() {
+        sprite.classList.add("editing");
+        document.body.classList.add("pixel-editor");
+        document.querySelector("iframe").style.display="block";
+        document.querySelector("iframe").src="/painter-window.html";
+
+        sprite.removeEventListener("click", editSprite);
+        sprite.addEventListener("click", editSaveSprite);
+      }).catch(function(e) {
+        console.error(e);
+      });
+    }
+
+    function editSaveSprite(e) {
+      document.body.classList.remove("pixel-editor");
+      document.querySelector("iframe").style.display="none";
+
+      sprite.removeEventListener("click", editSaveSprite);
+      sprite.addEventListener("click", editSprite);
+
+      fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {
+        var pdata = new PixelData(sprite);
+        var sdata = ' /*'+pdata.w+'x'+pdata.h+'*/ '+pdata.bytes.map(function(i) { return '0x'+i.toString(16); }).join(', ')+' ';
+
+        // Update editor contents
+        repl.editor.operation(function() {
+          // Remove outdated marker
+          repl.marker.clear();
+
+          // Change code contents
+          repl.editor.replaceRange(sdata, repl.pos.start, repl.pos.end);
+
+          // Recreate marker widget
+          var newstart = repl.editor.indexFromPos(repl.pos.start);
+          replaceSprite(newstart, newstart+sdata.length, pdata);
+        });
+      });
+    }
+
+    // Event handling
+    sprite.addEventListener("click", editSprite);
+
+    return repl;
+  }
+
   //var RX_SPRITES = /PROGMEM const unsigned char (\w+)\[\][\s\r\n]*=(?:[\s\r\n]|\r?\n\/\/[^\n]*)*{([^\}]+)}/g;
   var RX_SPRITES = /(?:\/\/[^\n]+\n)?PROGMEM const unsigned char (\w+)\[\][\s\r\n]*=[^{;]*{([^\}]+)}/g;
 
@@ -9,63 +107,51 @@
     var e;
     var editor = Clouduboy.editor;
     var src = src || editor.getValue();
-    var pS,pE, sprite, markers = [];
+    var pdata, markers = [];
 
     while ((e = RX_SPRITES.exec(src)) !== null) {
-      var data = e[2].split(',').map(function(n) { return parseInt(n) });
-      var w = parseInt( (e[0].match(/w\:\s*(\d+)[^\n]+/) || [])[1] );
-      var h = Math.floor(data.length / w) * 8;
+      pdata = codeToPif(e[2], e[1], e[0]);
 
-      pE = editor.posFromIndex(RX_SPRITES.lastIndex - 1);
-      pS = editor.posFromIndex(RX_SPRITES.lastIndex - 1 - e[2].length);
-      //console.log(RX_SPRITES.lastIndex, pS,pE, e);
-
-      // Image editor sprite markers
-      sprite = document.createElement('span');
-      sprite.className = "sprite";
-      sprite.dataset.width = w;
-      sprite.dataset.pif = new PixelData( {id:e[1],data:data,w:w,h:h} ).pif;
-      var lastMarker = editor.markText({ line: pS.line, ch: pS.ch },{ line: pE.line, ch: pE.ch }, { replacedWith: sprite, clearOnEnter: true })
-      markers.push(lastMarker);
-
-      // Clear marker on double click - TODO: pop up pixel-editor instead
-      sprite.ondblclick = (function() { this.clear(); }).bind(markers[markers.length-1]);
-
-      (function(sprite, start, end, marker) {
-        sprite.onclick = function(e) {
-          fetch('/sprite', {
-            method: 'post',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-              { sprite: new PixelData(e.target.dataset.pif).serialize() }
-            )
-          }).then(function() {
-            sprite.classList.add("editing");
-            document.body.classList.add("pixel-editor");
-            document.querySelector("iframe").style.display="block";
-            document.querySelector("iframe").src="/painter-window.html";
-
-            sprite.onclick = function() {
-              document.body.classList.remove("pixel-editor");
-              document.querySelector("iframe").style.display="none";
-              console.log(marker.find(),start,end);
-              marker.clear();
-
-              fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {
-                console.log("updated!", sprite);
-                editor.replaceRange(new PixelData(sprite).bytes.join(', '), start, end);
-              });
-            }
-            console.log(e.target.dataset.pif);
-          }).catch(function(e) {
-            console.error(e);
-          });
-        }
-      })(sprite, { line: pS.line, ch: pS.ch }, { line: pE.line, ch: pE.ch }, lastMarker);
+      // Add marker
+      markers.push(replaceSprite(
+        (RX_SPRITES.lastIndex - 1 - e[2].length),
+        (RX_SPRITES.lastIndex - 1),
+        pdata
+      ));
     }
   }
+
+  // Translate source code into Pixelsprite image descriptor
+  function codeToPif(contents, label, statement) {
+    var pdata = {};
+    statement = statement || contents;
+
+    // Pixelsprite id (label)
+    pdata.id = label;
+
+    // Serialized binary Pixelsprite data in PROGMEM format
+    pdata.data = util.cleanComments(contents).split(',').map(function(n) { return parseInt(n); });
+
+    // Try to guess image width/height
+    pdata.w = parseInt( (statement.match(/w\:\s*(\d+)[^\n]+/) || [])[1] );
+    pdata.h = Math.floor(pdata.data.length / pdata.w) * 8;
+    pdata.ambiguous = true;
+
+    // Pixelsprite dimensions can be declared in comments besides the
+    // binary pixeldata in the format WWWxHHH where WWW and HHH are both
+    // integer pixel values for width/height
+    // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
+    var m = statement.match(/(?:\/\/|\/\*)\s*(\d+)x(\d+)/);
+    if (m && m[1] && m[2]) {
+      pdata.w = parseInt(m[1],10);
+      pdata.h = parseInt(m[2],10);
+      pdata.ambiguous = false;
+    }
+
+    console.log(pdata);
+    return pdata;
+  }
+
 
   // Expose
   exports.ClouduboySprites = ClouduboySprites;

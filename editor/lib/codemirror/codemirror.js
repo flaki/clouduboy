@@ -4283,7 +4283,7 @@
 
   // Adjust a position to refer to the post-change position of the
   // same text, or the end of the change if the change covers it.
-  function adjustForChange(pos, change) {
+  var adjustForChange = CodeMirror.adjustForChange = function(pos, change) {
     if (cmp(pos, change.from) < 0) return pos;
     if (cmp(pos, change.to) <= 0) return changeEnd(change);
 

@@ -1,5 +1,8 @@
 'use strict';
 
+// Fetch API
+var fetch = require('node-fetch');
+
 // Create menubar app
 var mb = require('menubar')({
   dir: __dirname,
@@ -19,6 +22,26 @@ mb.on('ready', function () {
 
   // Flash latest build when menubar tray icon is clicked
   mb.tray.on('click', flashBuild);
+
+  // Flasher polling
+  function pollFlasher() {
+    fetch("http://clouduboy.slsw.hu/hex/flash").then(function(r) {
+      if (r.status === 204) throw "Nothing to flash";
+
+      // TODO: use HEX returned here, avoid refetching
+      flashBuild().then(function() {
+        setTimeout(pollFlasher, 2000);
+      });
+
+    }).catch(function(e) {
+      console.log(e);
+
+      return setTimeout(pollFlasher, 2000);
+    });
+  }
+
+  setTimeout(pollFlasher, 1000);
+
 });
 
 
@@ -47,7 +70,7 @@ function flashBuild () {
   }).bind({ current: 0, images: [ 'IconTemplate', 'boltTemplate' ]}), 333);
   mb.tray.setToolTip("Flashing Arduboy image...");
 
-  flashBuild().then(function() {
+  return flashBuild().then(function() {
     console.log('Flashing done!');
 
     return 'Success!';

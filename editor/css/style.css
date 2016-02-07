@@ -22,6 +22,25 @@ body {
     color: #669;
 }
 
+/* Toolbar */
+.toolbar button {
+  margin: .2em;
+  width: 3em;
+  height: 2em;
+  border: .1em solid #222;
+  border-radius: .5em;
+  background: #222 linear-gradient(to bottom, rgba(100,0,176,0), rgba(100,0,176,1));
+  transition: color .4s ease;
+  box-shadow: 0 0 6px rgba(150,0,255,.5) inset;
+  cursor: pointer;
+  color: white; font-weight: bold;
+}
+
+.toolbar button:hover {
+  background-color: yellow;
+}
+
+
 /* Sprite placeholder */
 .CodeMirror-code .sprite,
 .CodeMirror-code .tune {
@@ -132,7 +151,7 @@ iframe {
 /* Being edited */
 .CodeMirror-line .open-marker {
   background-color: rgba(0,0,0,.5);
-  padding: .2em 0 .1em;
+  padding: .1em 0 .1em;
   font-style: italic;
   border-bottom: .2em solid #222;
 }

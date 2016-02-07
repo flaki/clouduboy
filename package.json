@@ -1,6 +1,6 @@
 {
   "name": "clouduboy",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Clouduboy - Arduboy cloud compiler",
   "main": "server/app.js",
   "scripts": {

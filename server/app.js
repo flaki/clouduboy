@@ -96,6 +96,22 @@ cdb.get('/hex/build', function (req, res) {
   res.type('application/octet-stream').download(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex', 'build.leonardo.hex');
 });
 
+// Get last built HEX for flashing (only returns with the HEX if flashing isrequested from the IDE)
+var doFlash = false;
+cdb.get('/hex/flash', function (req, res) {
+  if (!doFlash) {
+    return res.sendStatus(204);
+  }
+
+  doFlash = false;
+  res.type('application/octet-stream').download(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex', 'build.leonardo.hex');
+});
+cdb.post('/do/flash', function (req, res) {
+  doFlash = true;
+  res.send("Ok");
+})
+
+
 cdb.get('/build', function (req, res) {
   var hex = fs.readFileSync(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex');
   res.json({

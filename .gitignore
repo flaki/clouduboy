@@ -3,3 +3,6 @@ node_modules
 sources/*
 npm-debug.log
 .pioenvs
+
+# Server databases
+server/data/*.db

@@ -1,6 +1,10 @@
-"use strict";
+'use strict';
 
 const APP_VERSION = process.env.npm_package_version || (require('../package.json').version);
+
+const log = function(label, log) {
+  return console.log('['+label+']', [].splice.call(arguments,1));
+}
 
 let fs = require('fs');
 
@@ -14,11 +18,11 @@ let bodyParserJSON = bodyParser.json()
 
 let exec = require('child-process-promise').exec;
 
-const DIR_ROOT = require('path').normalize(__dirname+"/..");
-const DIR_SOURCES = DIR_ROOT + "/sources";
-const DIR_TEMPLATES = DIR_ROOT + "/templates";
-const DIR_BUILD = DIR_ROOT + "/build";
-const DIR_EDITOR = DIR_ROOT + "/editor";
+const DIR_ROOT = require('path').normalize(__dirname+'/..');
+const DIR_SOURCES = DIR_ROOT + '/sources';
+const DIR_TEMPLATES = DIR_ROOT + '/templates';
+const DIR_BUILD = DIR_ROOT + '/build';
+const DIR_EDITOR = DIR_ROOT + '/editor';
 
 const BUILDFILE = DIR_BUILD + '/src/build.ino';
 
@@ -42,7 +46,6 @@ let app = express();
 let root = express();
 app.use(vhost('slsw.hu', root));
 
-// Print app version
 root.get('/', function (req, res) {
   res.send('Welcome to slsw.hu');
 });
@@ -56,17 +59,58 @@ app.use(vhost('clouduboy.slsw.hu', cdb));
 // Enable CORS for all endpoints (TODO: may want to further refine this later)
 cdb.use(cors());
 
-// Serve static
-cdb.use(express.static(DIR_EDITOR));
-
 // Print app version
 cdb.get('/version', function (req, res) {
   res.send('Clouduboy Cloud Compiler ' + APP_VERSION);
 });
 
+// No path info (server root), create new session
+let Session = require(__dirname+'/session.js');
+let sess;
+let sesslog = log.bind(log,'session');
+
+cdb.get('/', function (req, res) {
+  console.log('New session...');
+  // TODO: handle session cookies (res.cookies)
+  // https://github.com/expressjs/cookie-parser
+
+  // Create new session and redirect
+  Session.create().then(function(session) {
+    sess = session;
+
+    sesslog('Created: ', sess);
+
+    res
+      .cookie('session', sess.tag)
+      .redirect('/editor/'+sess.tag);
+
+  // Session creation error
+  }).catch(function(err) {
+    sesslog('[!] Failed to create session! ', err);
+
+    res.send('Cannot create session: '+err.toString()).sendStatus(500);
+  });
+});
+
+// Handle SID tag in urls
+cdb.param('sid',function(req, res, next, sid) {
+  // Try to load provided session
+  Session.load(sid).then(function(session) {
+    sess = session;
+
+    sesslog('Loaded: ', sess);
+    next();
+
+  // Error loading session
+  }).catch(function(err) {
+    sesslog('[!] Failed to load session!', err);
+  });
+
+});
+
 
 // Editor
-cdb.get('/editor', function (req, res) {
+cdb.get('/editor/:sid', function (req, res) {
   res.sendFile(DIR_EDITOR + '/editor.html');
 });
 
@@ -82,7 +126,7 @@ cdb.post('/sprite', bodyParserJSON, function (req, res) {
   if (req.body && req.body.sprite) {
     currentSprite = req.body.sprite;
   }
-  res.send("Ok");
+  res.send('Ok');
 });
 
 
@@ -106,16 +150,18 @@ cdb.get('/hex/flash', function (req, res) {
   doFlash = false;
   res.type('application/octet-stream').download(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex', 'build.leonardo.hex');
 });
+
+// Request flashing
 cdb.post('/do/flash', function (req, res) {
   doFlash = true;
-  res.send("Ok");
+  res.send('Ok');
 })
 
 
 cdb.get('/build', function (req, res) {
   var hex = fs.readFileSync(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex');
   res.json({
-    "result": {
+    'result': {
       hex: hex.toString()
     }
   });
@@ -123,7 +169,27 @@ cdb.get('/build', function (req, res) {
 
 
 // Load app as build source
-cdb.post('/load', bodyParserJSON, function (req, res) {
+cdb.post('/load', bodyParserJSON, reqPostLoad);
+
+// Build & report errors on posted document
+cdb.post('/build', reqPostBuild);
+
+
+// Serve static
+cdb.use(express.static(DIR_EDITOR));
+
+
+
+
+var server = app.listen(80, function () {
+  var host = server.address().address;
+  var port = server.address().port;
+
+  console.log('Clouduboy %s at http://%s:%s', APP_VERSION, host, port);
+});
+
+
+function reqPostLoad(req, res) {
   let source;
 
   // Ignore invalid sources
@@ -138,14 +204,12 @@ cdb.post('/load', bodyParserJSON, function (req, res) {
     copy.pipe(fs.createWriteStream(BUILDFILE));
 
   copy.on('end', function() {
-    console.log("Loaded '%s' into build.ino.", source);
+    console.log('Loaded "%s" into build.ino.', source);
     res.type('text/x-arduino').download(BUILDFILE, 'build.ino');
   });
-});
+}
 
-
-// Build & report errors on posted document
-cdb.post('/build', function (req, res) {
+function reqPostBuild (req, res) {
   // parse a file upload
   (new Promise(function(resolve, reject) {
     var form = new formidable.IncomingForm();
@@ -174,19 +238,10 @@ cdb.post('/build', function (req, res) {
     console.error('Failed to build: ', e);
 
     res.json({
-      "error": e.toString()
+      'error': e.toString()
     });
   });
-});
-
-
-
-var server = app.listen(80, function () {
-  var host = server.address().address;
-  var port = server.address().port;
-
-  console.log('Clouduboy %s at http://%s:%s', APP_VERSION, host, port);
-});
+}
 
 
 const RX_BUILD_PROGMEM = /Program:\s*(\d+) bytes \(([\d\.]+)\%/;
@@ -201,7 +256,7 @@ function build() {
 
   return exec('platformio run -d "' + DIR_BUILD + '" --disable-auto-clean')
     .catch(function (failed) {
-      console.log("Build failed with code "+ failed.code +": ", failed.stderr)
+      console.log('Build failed with code '+ failed.code +': ', failed.stderr)
       return failed;
 
     }).then(function (result) {
@@ -256,7 +311,7 @@ function build() {
       return r;
     })
     .catch(function (err) {
-      console.log("Build error in exec: ", err);
+      console.log('Build error in exec: ', err);
       throw(err);
     });
 }

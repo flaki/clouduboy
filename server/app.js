@@ -2,6 +2,8 @@
 
 const APP_VERSION = process.env.npm_package_version || (require('../package.json').version);
 
+const APP_CONFIG = require('../config.json');
+
 
 // APP DEPENDENCIES
 
@@ -53,21 +55,14 @@ const DIR_EDITOR = DIR_ROOT + '/editor';
 
 const BUILDFILE = DIR_BUILD + '/src/build.ino';
 
-const LOADSOURCES = { // TODO: load these from a JSON (also, automate editor dropdown)
-  'rundino': DIR_SOURCES + '/arduboy-rund-ino/rund/rund.ino',
-  'rundino/halloween': DIR_SOURCES + '/arduboy-rund-ino/halloweend/halloweend.ino',
-  'examples/ardubreakout': DIR_SOURCES + '/Arduboy/examples/ArduBreakout/ArduBreakout.ino',
-  'examples/floatyball': DIR_SOURCES + '/Arduboy/examples/FloatyBall/FloatyBall.ino',
-  'examples/tunes': DIR_SOURCES + '/Arduboy/examples/Tunes/Tunes.ino',
-  'templates/empty': DIR_TEMPLATES + '/empty/empty.ino',
-  'templates/minimal': DIR_TEMPLATES + '/minimal/minimal.ino',
-  'templates/sprites': DIR_TEMPLATES + '/sprites/sprites.ino',
-  'templates/tunes': DIR_TEMPLATES + '/tunes/tunes.ino',
-  'templates/scene': DIR_TEMPLATES + '/scene/scene.ino',
-  'teamarg/shadowrun-devkit': DIR_SOURCES+'/SHRUN-DEV_v15/SHRUN-DEV_v15.ino',
-  'teamarg/epiccrates-devkit': DIR_SOURCES+'/ECOMD_DEV_v10/ECOMD_DEV_v10.ino'
-};
-const DEFAULT_TEMPLATE = 'templates/empty';
+const LOADSOURCES = APP_CONFIG.sources; // TODO: load these from a JSON (also, automate editor dropdown)
+const DEFAULT_TEMPLATE = LOADSOURCES[0];
+
+const LIBVERSIONS = APP_CONFIG.arduboyLibs;
+const DEFAULT_ARDUBOY = LIBVERSIONS[0];
+
+const SOURCEGROUPS = APP_CONFIG.sourceGroups;
+
 
 // App
 let app = express();
@@ -142,9 +137,9 @@ cdb.all('/init', function (req, res) {
 
     // Initialize build sources (async)
     return build.init(
-      'sources/ArduBreakout',
-      Build.sources(LOADSOURCES['sources/ArduBreakout']),
-      'Arduboy-0.9'//'Arduboy-dev' //TODO: selection UI & setting for Arduboy lib version
+      DEFAULT_TEMPLATE.id,
+      Build.sources(DIR_ROOT+'/'+DEFAULT_TEMPLATE.src),
+      DEFAULT_ARDUBOY //TODO: selection UI & setting for Arduboy lib version
     );
 
   // Save build info into the session
@@ -190,6 +185,15 @@ cdb.param('sid', function(req, res, next, sid) {
 // Editor
 cdb.get('/editor/:sid', function (req, res) {
   res.sendFile(DIR_EDITOR + '/editor.html');
+});
+
+// List installed sources/source groups/arduboy lib versions
+cdb.get('/sources', function (req,res) {
+  res.json({
+    sources: LOADSOURCES,
+    groups: SOURCEGROUPS,
+    libs: LIBVERSIONS
+  });
 });
 
 
@@ -288,25 +292,33 @@ var server = app.listen(80, function () {
 
 // Load new template/document source for editing
 function reqPostLoad(req, res) {
-  let source;
+  // Check for posted template source existence
+  let template = req.body && req.body.load;
+  let source = template && LOADSOURCES.find(function(i) {
+    return (i.id === template);
+  });
 
-  // Ignore invalid sources
-  if (!req.body || req.body.load in LOADSOURCES === false) {
+  // No source or invalid source file requested
+  if (!source) {
     return res.sendStatus(403);
   };
 
+  // Library version
+  let arduboyLib = req.body && req.body.lib;
 
-  // Load source
-  let template = req.body.load;
-
+  // Unknown Arduboy lib version was requested, use default
+  if (LIBVERSIONS.indexOf(arduboyLib) === -1) {
+    arduboyLib = DEFAULT_ARDUBOY;
+  }
 
   // Copy build sources
   let build = new cdbBuild(cSess);
+  let buildSources = cdbBuild.sources(DIR_ROOT+'/'+source.src);
 
   return build.init(
     template,
-    cdbBuild.sources(LOADSOURCES[template]),
-    'Arduboy-dev' //TODO: selection UI & setting for Arduboy lib version
+    buildSources,
+    arduboyLib //TODO: selection UI & setting for Arduboy lib version
   )
 
   // Update buildfile in session data
@@ -318,7 +330,7 @@ function reqPostLoad(req, res) {
 
   // Finished!
   .then(function() {
-    console.log('Loaded new template: ', template);
+    console.log('Loaded new template: ', template, arduboyLib);
     res.type('text/x-arduino').download(cSess.builddir+'/src/'+cSess.buildfile, cSess.buildFile);
   })
 

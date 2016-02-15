@@ -70,24 +70,46 @@
   // Initialize
   function init() {
     return new Promise(function(resolve, reject) {
-      // Set up source/template switch handler
-      toolbarLoad = document.querySelector('select[name="load"]');
-      if (toolbarLoad) {
-        toolbarLoad.addEventListener('change', function(e) {
-          var data = { 'load': e.target.value };
-          //console.log(e.target, e.target.value, data);
+      // Fetch loadable sources
+      fetch("/sources").then(function(r) {
+        return r.json();
 
-          if (data.load) {
-            fetch('/load', {
-              method: 'post',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data)
-            }).then(updateEditorContents).then(function() {
-              toolbarLoad.value = '';
-            });
-          }
+      // Populate selector & set up event handlers
+      }).then(function(data) {
+        console.log(data);
+
+        // Load selector
+        toolbarLoad = document.querySelector('select[name="load"]');
+
+        // Add options
+        data.groups.forEach(function(group) {
+          toolbarLoad.insertAdjacentHTML("beforeend",
+            '<optgroup label="'+group.title+'":>'
+            + data.sources
+                    .filter( (i) => i.id.match( new RegExp("^"+group.id) ) )
+                    .map(    (i) => '<option value="'+i.id+'">'+i.title+'</option>' )
+            +'</optgroup>'
+          );
         });
-      }
+
+        // Set up source/template switch handler
+        if (toolbarLoad) {
+          toolbarLoad.addEventListener('change', function(e) {
+            var data = { 'load': e.target.value };
+            //console.log(e.target, e.target.value, data);
+
+            if (data.load) {
+              fetch('/load', {
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+              }).then(updateEditorContents).then(function() {
+                toolbarLoad.value = '';
+              });
+            }
+          });
+        }
+      });
 
       // Run init callbacks
       runCallbacksFor('init');

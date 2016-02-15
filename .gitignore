@@ -6,3 +6,6 @@ npm-debug.log
 
 # Server databases
 server/data/*.db
+
+# Configuration file
+/config.json

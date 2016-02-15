@@ -99,6 +99,17 @@ cdb.get('/version', function (req, res) {
   res.send('Clouduboy Cloud Compiler ' + APP_VERSION);
 });
 
+cdb.get('/support', function (req, res) {
+  try {
+    let conf = require(__dirname+'/../config.json');
+    res.redirect(conf.supportUrl);
+
+  // Make sure we still run even if config.json doesn't exist
+  } catch(err) {
+    console.log("Error loading config.json: ", err);
+  }
+});
+
 
 // Session handling
 let cSess;

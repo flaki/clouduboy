@@ -55,14 +55,37 @@ function parseSid(sid) {
 
 
 
-function Session() {
+// Constructor
+function Session(sid) {
+  // Already has a session ID
+  if (typeof sid != "undefined") {
+    this._id = parseSid(sid);
+  }
 }
+
+Session.prototype = Object.create(null, {
+  // hex-formatted session ID
+  hexid: { get: function() { return hexSid(this._id); } },
+  // dictionary-encoded session ID
+  strid: { get: function() { return dictSid(this._id); } },
+});
+
+// Load session data
+Session.prototype.load = loadPrepped;
+Session.prototype.save = commit;
+Session.prototype.set = update;
+
+
+// Exposed constants
+Session.DICT_BITS = DICT_BITS;
+
 
 // Create a new Session
 // Since it involves checking that the created SID is not taken already
 // (and that is an asynchronous operation) we return a Promise, and resolve
 // the promise with the created session once
 const RETRY_COUNT = 5;
+
 Session.create = function() {
   let session = new Session();
   let retries = RETRY_COUNT;
@@ -76,8 +99,6 @@ Session.create = function() {
 
       // Make session tag
       session.tag = dictSid(session._id);
-
-      console.log(session, "...");
 
       // Try inserting with generated random id.
       // This might fail in case of a clash (id already taken), in this case
@@ -95,7 +116,7 @@ Session.create = function() {
         }
 
         // Session created successfully
-        console.log(session, "created");
+        //console.log(session, "created");
         resolve(session);
       });
     }
@@ -104,29 +125,71 @@ Session.create = function() {
   });
 }
 
-// Similar to Create, this one loads a session
+// "preps" the session to be loaded but doesn't load it right away
+Session.init = function(sid) {
+  let session = new Session(sid);
+
+  return session;
+}
+
+// Similar to Create, this one loads the session
 Session.load = function(sid) {
-  let session = new Session();
+  let session = new Session(sid);
 
-  // If session was a string, parse it
-  sid = parseSid(sid);
+  return session.load();
+}
 
-  // Async load
+// Async load a prepped session
+function loadPrepped() {
+  let session = this;
+
   return new Promise(function(resolve, reject) {
-    Storage.findOne({ _id: sid}, function(err, s) {
+    Storage.findOne({ _id: session._id}, function(err, s) {
       if (err) return reject(err);
 
       // Session not found
-      console.log(s);
-      if (!s) return reject(new Error("Session not found - "+sid));
+      if (!s) return reject(new Error("Session not found - "+session._id));
 
       // Load stored session data into the "session" object and return it
-      Object.assign( session, s ),
+      Object.assign( session, s );
+
+      //console.log("Session loaded: ", session);
       resolve(session);
     });
   });
 }
 
-Session.DICT_BITS = DICT_BITS;
+// Saves modified session data into DB
+function commit() {
+  let session = this;
+
+  return new Promise(function(resolve, reject) {
+    Storage.update({ _id: session._id}, session, function(err) {
+      if (err) return reject(err);
+
+      // Success!
+      //console.log("Session data updated.");
+      resolve(session);
+    });
+  });
+}
+
+// Updates field values in a session
+function update(fields) {
+  let session = this;
+
+  return new Promise(function(resolve, reject) {
+    Storage.update({ _id: session._id}, { $set: fields }, function(err) {
+      if (err) return reject(err);
+
+      // Success!
+      //console.log("Session data updated.");
+
+      // Load changes
+      resolve(session.load());
+    });
+  });
+}
+
 
 module.exports = Session;

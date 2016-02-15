@@ -15,6 +15,10 @@ var mb = require('menubar')({
 // Flasher functions
 let Flasher = require('../index.js');
 
+// Initial SID - get it from the last command line parameter
+let sid = process.argv.pop(); // TODO: add startup GUI to specify this
+
+
 
 // Menubar app ready
 mb.on('ready', function () {
@@ -25,7 +29,7 @@ mb.on('ready', function () {
 
   // Flasher polling
   function pollFlasher() {
-    fetch("http://clouduboy.slsw.hu/hex/flash").then(function(r) {
+    fetch('http://clouduboy.slsw.hu/hex/flash/'+sid).then(function(r) {
       if (r.status === 204) throw "Nothing to flash";
 
       // TODO: use HEX returned here, avoid refetching

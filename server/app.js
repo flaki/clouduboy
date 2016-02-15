@@ -2,22 +2,49 @@
 
 const APP_VERSION = process.env.npm_package_version || (require('../package.json').version);
 
-const log = function(label, log) {
-  return console.log('['+label+']', [].splice.call(arguments,1));
-}
 
-let fs = require('fs');
+// APP DEPENDENCIES
 
-let express = require('express'),
+// Used for file operations
+// TODO: make this fs-extra or fs-promise
+const fs = require('fs');
+
+
+// Used for serving the app
+const express = require('express'),
     cors = require('cors'),
     formidable = require('formidable'),
     vhost = require('vhost'),
-    bodyParser = require('body-parser');
+    bodyParser = require('body-parser'),
+    cookieParser = require('cookie-parser');
 
-let bodyParserJSON = bodyParser.json()
+// JSON postdata parser middleware
+const bodyParserJSON = bodyParser.json();
 
-let exec = require('child-process-promise').exec;
 
+// CUSTOM MODULES
+
+// Contains the session-related functions
+const cdbSession = require(__dirname+'/session.js');
+
+// Contains the build-related functions
+const cdbBuild = require(__dirname+'/build.js');
+
+
+// CONSTANTS & CONVENIENCE FUNCTIONS
+
+// Simple logging
+const log = function(label, log) {
+  return console.log.apply('['+label+']', [].splice.call(arguments,1));
+}
+
+// Promise rejected, request failed (this == res)
+const error500 = function(err) {
+  console.log("Request failed: ", err);
+  this.sendStatus(500);
+}
+
+// Paths
 const DIR_ROOT = require('path').normalize(__dirname+'/..');
 const DIR_SOURCES = DIR_ROOT + '/sources';
 const DIR_TEMPLATES = DIR_ROOT + '/templates';
@@ -26,17 +53,21 @@ const DIR_EDITOR = DIR_ROOT + '/editor';
 
 const BUILDFILE = DIR_BUILD + '/src/build.ino';
 
-const LOADSOURCES = {
+const LOADSOURCES = { // TODO: load these from a JSON (also, automate editor dropdown)
   'rundino': DIR_SOURCES + '/arduboy-rund-ino/rund/rund.ino',
   'rundino/halloween': DIR_SOURCES + '/arduboy-rund-ino/halloweend/halloweend.ino',
   'examples/ardubreakout': DIR_SOURCES + '/Arduboy/examples/ArduBreakout/ArduBreakout.ino',
   'examples/floatyball': DIR_SOURCES + '/Arduboy/examples/FloatyBall/FloatyBall.ino',
   'examples/tunes': DIR_SOURCES + '/Arduboy/examples/Tunes/Tunes.ino',
-  'templates/empty': DIR_TEMPLATES + '/empty.ino',
-  'templates/minimal': DIR_TEMPLATES + '/minimal.ino',
-  'templates/sprites': DIR_TEMPLATES + '/sprites.ino',
-  'templates/tunes': DIR_TEMPLATES + '/tunes.ino'
-}
+  'templates/empty': DIR_TEMPLATES + '/empty/empty.ino',
+  'templates/minimal': DIR_TEMPLATES + '/minimal/minimal.ino',
+  'templates/sprites': DIR_TEMPLATES + '/sprites/sprites.ino',
+  'templates/tunes': DIR_TEMPLATES + '/tunes/tunes.ino',
+  'templates/scene': DIR_TEMPLATES + '/scene/scene.ino',
+  'teamarg/shadowrun-devkit': DIR_SOURCES+'/SHRUN-DEV_v15/SHRUN-DEV_v15.ino',
+  'teamarg/epiccrates-devkit': DIR_SOURCES+'/ECOMD_DEV_v10/ECOMD_DEV_v10.ino'
+};
+const DEFAULT_TEMPLATE = 'templates/empty';
 
 // App
 let app = express();
@@ -59,51 +90,87 @@ app.use(vhost('clouduboy.slsw.hu', cdb));
 // Enable CORS for all endpoints (TODO: may want to further refine this later)
 cdb.use(cors());
 
+// Enable cookies
+cdb.use(cookieParser());
+
+
 // Print app version
 cdb.get('/version', function (req, res) {
   res.send('Clouduboy Cloud Compiler ' + APP_VERSION);
 });
 
-// No path info (server root), create new session
-let Session = require(__dirname+'/session.js');
-let sess;
+
+// Session handling
+let cSess;
 let sesslog = log.bind(log,'session');
 
-cdb.get('/', function (req, res) {
+// If a session id is found in a cookie, try to load as active session
+cdb.use(function(req, res, next) {
+  if (req.cookies.session) {
+    cSess = cdbSession.init(req.cookies.session);
+  }
+  next();
+});
+
+// Create a new session
+cdb.all('/init', function (req, res) {
+  // TODO: create intro page (source/template selector)
+  // TODO: handle template selection in POST/formdata
   console.log('New session...');
   // TODO: handle session cookies (res.cookies)
   // https://github.com/expressjs/cookie-parser
 
   // Create new session and redirect
-  Session.create().then(function(session) {
-    sess = session;
+  cdbSession.create().then(function(session) {
+    cSess = session;
 
-    sesslog('Created: ', sess);
+    sesslog('Created: ', cSess);
 
+    // Initialize build sources
+    let build = new cdbBuild(cSess);
+
+    // Initialize build sources (async)
+    return build.init(
+      'sources/ArduBreakout',
+      Build.sources(LOADSOURCES['sources/ArduBreakout']),
+      'Arduboy-0.9'//'Arduboy-dev' //TODO: selection UI & setting for Arduboy lib version
+    );
+
+  // Save build info into the session
+  }).then(function(build) {
+
+    // Build source/file for the session
+    return cSess.set({
+      builddir: build.dir,
+      buildfile: build.ino
+    });
+
+  // Redirect to the editor
+  }).then(function() {
     res
-      .cookie('session', sess.tag)
-      .redirect('/editor/'+sess.tag);
+      .cookie('session', cSess.tag)
+      .redirect('/editor/'+cSess.tag);
 
   // Session creation error
   }).catch(function(err) {
-    sesslog('[!] Failed to create session! ', err);
+    sesslog('[!] Failed to create session! ', err.stack);
 
     res.send('Cannot create session: '+err.toString()).sendStatus(500);
   });
 });
 
 // Handle SID tag in urls
-cdb.param('sid',function(req, res, next, sid) {
+cdb.param('sid', function(req, res, next, sid) {
   // Try to load provided session
-  Session.load(sid).then(function(session) {
-    sess = session;
+  cdbSession.load(sid).then(function(session) {
+    cSess = session;
 
-    sesslog('Loaded: ', sess);
+    sesslog('Loaded: ', cSess.tag);
     next();
 
   // Error loading session
   }).catch(function(err) {
-    sesslog('[!] Failed to load session!', err);
+    sesslog('[!] Failed to load session!', err.stack);
   });
 
 });
@@ -132,43 +199,61 @@ cdb.post('/sprite', bodyParserJSON, function (req, res) {
 
 // Get build source
 cdb.get('/src/build', function (req, res) {
-  res.type('text/x-arduino').download(BUILDFILE, 'build.ino');
+  // Load session and fetch build file
+  cSess.load().then(function() {
+    res.type('text/x-arduino').download(cSess.builddir+'/src/'+cSess.buildfile, cSess.buildfile);
+
+  // Failed
+  }).catch(error500.bind(res));
 });
 
 // Get last built HEX
 cdb.get('/hex/build', function (req, res) {
-  res.type('application/octet-stream').download(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex', 'build.leonardo.hex');
+  // Load session and fetch build file
+  cSess.load().then(function() {
+    res.type('application/octet-stream').download(cSess.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+
+  // Failed
+  }).catch(error500.bind(res));
 });
 
 // Get last built HEX for flashing (only returns with the HEX if flashing isrequested from the IDE)
 var doFlash = false;
-cdb.get('/hex/flash', function (req, res) {
-  if (!doFlash) {
-    return res.sendStatus(204);
-  }
+cdb.get('/hex/flash/:sid', function (req, res) {
+  // Load session & see if flashing has been requested
+  if (cSess) cSess.load().then(function() {
+    // No flashing requested
+    if (!cSess.flash) {
+      return res.sendStatus(204);
 
-  doFlash = false;
-  res.type('application/octet-stream').download(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex', 'build.leonardo.hex');
+    // Flashing was requested: clear the flag & return the binary
+    } else {
+      return cSess.set({ flash: false }).then(function() {
+        res.type('application/octet-stream').download(cSess.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+      });
+    }
+  // Failed
+  }).catch(error500.bind(res));
+
 });
 
 // Request flashing
 cdb.post('/do/flash', function (req, res) {
-  doFlash = true;
-  res.send('Ok');
+  // Load session & set flashing to true
+  cSess.load().then(function() {
+    return cSess.set({ flash: true });
+
+  // Flashing requested
+  }).then(function() {
+    res.send('Ok');
+
+  // Failed
+  }).catch(error500.bind(res));
 })
 
 
-cdb.get('/build', function (req, res) {
-  var hex = fs.readFileSync(DIR_BUILD + '/.pioenvs/leonardo/firmware.hex');
-  res.json({
-    'result': {
-      hex: hex.toString()
-    }
-  });
-});
 
-
-// Load app as build source
+// Load source for editing/building
 cdb.post('/load', bodyParserJSON, reqPostLoad);
 
 // Build & report errors on posted document
@@ -180,15 +265,17 @@ cdb.use(express.static(DIR_EDITOR));
 
 
 
-
+// Start server
 var server = app.listen(80, function () {
   var host = server.address().address;
   var port = server.address().port;
 
-  console.log('Clouduboy %s at http://%s:%s', APP_VERSION, host, port);
+  console.log('Clouduboy %s starting at http://%s:%s', APP_VERSION, host, port);
 });
 
 
+
+// Load new template/document source for editing
 function reqPostLoad(req, res) {
   let source;
 
@@ -197,19 +284,42 @@ function reqPostLoad(req, res) {
     return res.sendStatus(403);
   };
 
-  // Load source
-  console.log('Loading', req.body.load);
-  source = LOADSOURCES[req.body.load];
-  let copy = fs.createReadStream(source);
-    copy.pipe(fs.createWriteStream(BUILDFILE));
 
-  copy.on('end', function() {
-    console.log('Loaded "%s" into build.ino.', source);
-    res.type('text/x-arduino').download(BUILDFILE, 'build.ino');
-  });
+  // Load source
+  let template = req.body.load;
+
+
+  // Copy build sources
+  let build = new cdbBuild(cSess);
+
+  return build.init(
+    template,
+    cdbBuild.sources(LOADSOURCES[template]),
+    'Arduboy-dev' //TODO: selection UI & setting for Arduboy lib version
+  )
+
+  // Update buildfile in session data
+  .then(function(build) {
+    return cSess.set({
+      buildfile: build.ino
+    });
+  })
+
+  // Finished!
+  .then(function() {
+    console.log('Loaded new template: ', template);
+    res.type('text/x-arduino').download(cSess.builddir+'/src/'+cSess.buildfile, cSess.buildFile);
+  })
+
+  // Error
+  .catch(error500.bind(res));
 }
 
+
+// Save edited document data and rebuild project
 function reqPostBuild (req, res) {
+  let fd;
+
   // parse a file upload
   (new Promise(function(resolve, reject) {
     var form = new formidable.IncomingForm();
@@ -223,95 +333,40 @@ function reqPostBuild (req, res) {
         files: files
       });
     });
+  }))
 
-  // Write changed code
-  })).then(function(formdata) {
+  // Store formdata
+  .then(function(formdata) {
+    fd = formdata
     console.log(formdata);
+  })
 
+  // Load session data
+  .then(cSess.load.bind(cSess))
+
+  // Write file changes
+  .then(function() {
     // write file
-    fs.writeFileSync(DIR_BUILD + '/src/build.ino', formdata.fields.code);
+    fs.writeFileSync(cSess.builddir+'/src/'+cSess.buildfile, fd.fields.code);
+    // TODO: allow multiple files to be edited (use fd.fields.filename instead
+    // of cSess.buildfile)
+    // TODO: also, make this async
+  })
 
-  }).then(function() {
-    return build().then(res.json.bind(res));
+  // Rebuild project
+  .then(function() {
+    return new cdbBuild(cSess).build();
+  })
 
-  }).catch(function(e) {
+  // Return build results as a JSON
+  .then(res.json.bind(res))
+
+  // Something went wrong
+  .catch(function(e) {
     console.error('Failed to build: ', e);
 
     res.json({
       'error': e.toString()
     });
   });
-}
-
-
-const RX_BUILD_PROGMEM = /Program:\s*(\d+) bytes \(([\d\.]+)\%/;
-const RX_BUILD_DATAMEM = /Data:\s*(\d+) bytes \(([\d\.]+)\%/;
-
-function build() {
-//  Program:   10232 bytes (31.2% Full)
-//  (.text + .data + .bootloader)
-
-//  Data:       1275 bytes (49.8% Full)
-//  (.data + .bss + .noinit)
-
-  return exec('platformio run -d "' + DIR_BUILD + '" --disable-auto-clean')
-    .catch(function (failed) {
-      console.log('Build failed with code '+ failed.code +': ', failed.stderr)
-      return failed;
-
-    }).then(function (result) {
-      let r = {
-        stdout: result.stdout,
-        stderr: result.stderr,
-        memory: {}
-      };
-
-      console.log('stdout: ', result.stdout);
-      console.log('stderr: ', result.stderr);
-
-      if (result.stdout) {
-        let mem;
-
-        // Parse used Program memory
-        if (mem = result.stdout.match(RX_BUILD_PROGMEM)) {
-          r.memory.program = {
-            bytes: parseInt(mem[1],10),
-            used: parseFloat(mem[2])/100,
-          };
-        }
-
-        // Parse used Data memory
-        if (mem = result.stdout.match(RX_BUILD_DATAMEM)) {
-          r.memory.data = {
-            bytes: parseInt(mem[1],10),
-            used: parseFloat(mem[2])/100,
-          };
-        }
-      }
-
-      if (result.stderr) {
-        r.error = result.stderr;
-        r.compiler = {};
-
-        // Find compile errors/warnings
-        let rx = /([\w\/]+\.(?:ino|h|c|cpp))\:(\d+)\:(\d+)\:\s*(.*)/g
-
-        let e = null;
-        while ((e = rx.exec(r.error)) !== null) {
-          if (!r.compiler[ e[1] ]) r.compiler[ e[1] ]= [];
-
-          r.compiler[ e[1] ].push({
-            line: e[2],
-            col: e[3],
-            msg: e[4]
-          });
-        }
-      }
-
-      return r;
-    })
-    .catch(function (err) {
-      console.log('Build error in exec: ', err);
-      throw(err);
-    });
 }

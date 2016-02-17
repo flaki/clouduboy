@@ -18,10 +18,13 @@
       <select name="load">
         <option value="" default>---</option>
       </select>
+      <select name="file">
+      </select>
     </aside>
 
     <form>
       <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>
+      <input id="codeeditor-filename" type="hidden" name="filename" value="" />
     </form>
     <div id="servermsgs" class="servermsgs"></div>
 

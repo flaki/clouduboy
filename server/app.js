@@ -271,6 +271,55 @@ cdb.post('/do/flash', function (req, res) {
 // Load source for editing/building
 cdb.post('/load', bodyParserJSON, reqPostLoad);
 
+
+
+// List files in current build
+function buildFiles() {
+  let path = require('path');
+
+  // Make sure we have an initialized session
+  if (!cSess.builddir || !cSess.buildfile) return [];
+
+  // List files
+  return cdbBuild.sources(
+    cSess.builddir+'/src/'+cSess.buildfile
+  ).map((p) => path.basename(p))
+}
+
+// List files for current session
+cdb.get('/files', function (req,res) {
+  cSess.load().then(function() {
+    res.json({
+      files: buildFiles()
+    });
+
+  // Failed
+  }).catch(error500.bind(res));
+});
+
+// List files for current session
+cdb.get('/edit/:file?', reqGetEdit);
+
+function reqGetEdit(req, res) {
+  // Load session and check supplied filename in request params
+  cSess.load().then(function() {
+    // :file param defaults to session.buildfile
+    // TODO: create an "editedfile" active file entry and use that
+    let newfile = req.params.file || cSess.buildfile;
+    let files = buildFiles();
+
+    // No such file exists in the current source
+    if (!newfile || files.indexOf(newfile)===-1) {
+      return res.sendStatus(403);
+    };
+
+    console.log('Switching to: ', newfile);
+    res.type('text/plain').download(cSess.builddir+'/src/'+newfile, newfile);
+
+  // Failed
+  }).catch(error500.bind(res));
+}
+
 // Build & report errors on posted document
 cdb.post('/build', reqPostBuild);
 
@@ -331,6 +380,9 @@ function reqPostLoad(req, res) {
   // Finished!
   .then(function() {
     console.log('Loaded new template: ', template, arduboyLib);
+
+    // TODO: at this point this should just redirect to GET /edit/<buildfile>
+
     res.type('text/x-arduino').download(cSess.builddir+'/src/'+cSess.buildfile, cSess.buildFile);
   })
 
@@ -369,10 +421,16 @@ function reqPostBuild (req, res) {
 
   // Write file changes
   .then(function() {
+    let filename = fd.fields.filename || cSess.buildfile;
+    let files = buildFiles();
+
+    // No such file exists in the current source
+    if (!filename || files.indexOf(filename)===-1) {
+      return res.sendStatus(403);
+    };
+
     // write file
-    fs.writeFileSync(cSess.builddir+'/src/'+cSess.buildfile, fd.fields.code);
-    // TODO: allow multiple files to be edited (use fd.fields.filename instead
-    // of cSess.buildfile)
+    fs.writeFileSync(cSess.builddir+'/src/'+filename, fd.fields.code);
     // TODO: also, make this async
   })
 

@@ -138,7 +138,7 @@ cdb.all('/init', function (req, res) {
     // Initialize build sources (async)
     return build.init(
       DEFAULT_TEMPLATE.id,
-      Build.sources(DIR_ROOT+'/'+DEFAULT_TEMPLATE.src),
+      cdbBuild.sources(DIR_ROOT+'/'+DEFAULT_TEMPLATE.src),
       DEFAULT_ARDUBOY //TODO: selection UI & setting for Arduboy lib version
     );
 

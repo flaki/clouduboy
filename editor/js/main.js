@@ -1,6 +1,17 @@
 (function (exports) {
   'use strict';
 
+  // Fetch API same-origin shorthand to easily enable session cookies
+  // Sets credentials: to default to 'same-origin' (but overridable)
+  let API = {
+    fetch: function(url, settings) {
+      settings = settings || {};
+      settings.credentials = settings.credentials || 'same-origin';
+
+      return fetch(url, settings);
+    }
+  }
+
   var inited = false;
   var plugins = {};
 
@@ -8,6 +19,9 @@
     if (!inited) start();
     inited = true;
   }
+
+  // Expose Clouduboy API
+  Clouduboy.API = API;
 
   // Subscribe to a specific "event" with a callback to be called
   Clouduboy.on = function(event, callback) {
@@ -104,7 +118,7 @@
 
   function initSources() {
     // Fetch loadable sources
-    return fetch("/sources").then(function(r) {
+    return API.fetch("/sources").then(function(r) {
       return r.json();
 
     // Populate selector & set up event handlers
@@ -132,7 +146,7 @@
 
           // Init files
           if (data.load) {
-            fetch('/load', {
+            API.fetch('/load', {
               method: 'post',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(data)
@@ -159,7 +173,7 @@
     var select = document.querySelector('select[name="file"]');
 
     // Fetch loadable sources
-    return fetch("/files").then((r) => {
+    return API.fetch("/files").then((r) => {
       return r.json();
 
     // Populate selector & set up event handlers
@@ -179,7 +193,7 @@
 
         if (data.file) {
           // Fetch file source code
-          fetch('/edit/'+data.file, {
+          API.fetch('/edit/'+data.file, {
             method: 'get',
 
           })
@@ -222,7 +236,7 @@
   // Fetch last build source
   function load() {
     // Fetch last edited source
-    return fetch("/edit")
+    return API.fetch("/edit")
       // Parse out current filename and store it
       .then(storeCurrentFilename)
 

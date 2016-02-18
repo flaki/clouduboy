@@ -107,13 +107,12 @@ cdb.get('/support', function (req, res) {
 
 
 // Session handling
-let cSess;
 let sesslog = log.bind(log,'session');
 
 // If a session id is found in a cookie, try to load as active session
 cdb.use(function(req, res, next) {
   if (req.cookies.session) {
-    cSess = cdbSession.init(req.cookies.session);
+    req.$session = cdbSession.init(req.cookies.session);
   }
   next();
 });
@@ -128,12 +127,12 @@ cdb.all('/init', function (req, res) {
 
   // Create new session and redirect
   cdbSession.create().then(function(session) {
-    cSess = session;
+    req.$session = session;
 
-    sesslog('Created: ', cSess);
+    sesslog('Created: ', req.$session);
 
     // Initialize build sources
-    let build = new cdbBuild(cSess);
+    let build = new cdbBuild(req.$session);
 
     // Initialize build sources (async)
     return build.init(
@@ -146,7 +145,7 @@ cdb.all('/init', function (req, res) {
   }).then(function(build) {
 
     // Build source/file for the session
-    return cSess.set({
+    return req.$session.set({
       builddir: build.dir,
       buildfile: build.ino
     });
@@ -154,8 +153,8 @@ cdb.all('/init', function (req, res) {
   // Redirect to the editor
   }).then(function() {
     res
-      .cookie('session', cSess.tag)
-      .redirect('/editor/'+cSess.tag);
+      .cookie('session', req.$session.tag)
+      .redirect('/editor/'+req.$session.tag);
 
   // Session creation error
   }).catch(function(err) {
@@ -169,9 +168,9 @@ cdb.all('/init', function (req, res) {
 cdb.param('sid', function(req, res, next, sid) {
   // Try to load provided session
   cdbSession.load(sid).then(function(session) {
-    cSess = session;
+    req.$session = session;
 
-    sesslog('Loaded: ', cSess.tag);
+    sesslog('Loaded: ', req.$session.tag);
     next();
 
   // Error loading session
@@ -215,8 +214,8 @@ cdb.post('/sprite', bodyParserJSON, function (req, res) {
 // Get build source
 cdb.get('/src/build', function (req, res) {
   // Load session and fetch build file
-  cSess.load().then(function() {
-    res.type('text/x-arduino').download(cSess.builddir+'/src/'+cSess.buildfile, cSess.buildfile);
+  req.$session.load().then(function() {
+    res.type('text/x-arduino').download(req.$session.builddir+'/src/'+req.$session.buildfile, req.$session.buildfile);
 
   // Failed
   }).catch(error500.bind(res));
@@ -225,8 +224,8 @@ cdb.get('/src/build', function (req, res) {
 // Get last built HEX
 cdb.get('/hex/build', function (req, res) {
   // Load session and fetch build file
-  cSess.load().then(function() {
-    res.type('application/octet-stream').download(cSess.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+  req.$session.load().then(function() {
+    res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
 
   // Failed
   }).catch(error500.bind(res));
@@ -236,15 +235,15 @@ cdb.get('/hex/build', function (req, res) {
 var doFlash = false;
 cdb.get('/hex/flash/:sid', function (req, res) {
   // Load session & see if flashing has been requested
-  if (cSess) cSess.load().then(function() {
+  if (req.$session) req.$session.load().then(function() {
     // No flashing requested
-    if (!cSess.flash) {
+    if (!req.$session.flash) {
       return res.sendStatus(204);
 
     // Flashing was requested: clear the flag & return the binary
     } else {
-      return cSess.set({ flash: false }).then(function() {
-        res.type('application/octet-stream').download(cSess.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+      return req.$session.set({ flash: false }).then(function() {
+        res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
       });
     }
   // Failed
@@ -255,8 +254,8 @@ cdb.get('/hex/flash/:sid', function (req, res) {
 // Request flashing
 cdb.post('/do/flash', function (req, res) {
   // Load session & set flashing to true
-  cSess.load().then(function() {
-    return cSess.set({ flash: true });
+  req.$session.load().then(function() {
+    return req.$session.set({ flash: true });
 
   // Flashing requested
   }).then(function() {
@@ -274,23 +273,23 @@ cdb.post('/load', bodyParserJSON, reqPostLoad);
 
 
 // List files in current build
-function buildFiles() {
+function buildFiles(builddir, buildfile) {
   let path = require('path');
 
   // Make sure we have an initialized session
-  if (!cSess.builddir || !cSess.buildfile) return [];
+  if (!builddir || !buildfile) return [];
 
   // List files
   return cdbBuild.sources(
-    cSess.builddir+'/src/'+cSess.buildfile
+    builddir+'/src/'+buildfile
   ).map((p) => path.basename(p))
 }
 
 // List files for current session
 cdb.get('/files', function (req,res) {
-  cSess.load().then(function() {
+  req.$session.load().then(function() {
     res.json({
-      files: buildFiles()
+      files: buildFiles(req.$session.builddir, req.$session.buildfile)
     });
 
   // Failed
@@ -302,11 +301,11 @@ cdb.get('/edit/:file?', reqGetEdit);
 
 function reqGetEdit(req, res) {
   // Load session and check supplied filename in request params
-  cSess.load().then(function() {
+  req.$session.load().then(function() {
     // :file param defaults to session.buildfile
     // TODO: create an "editedfile" active file entry and use that
-    let newfile = req.params.file || cSess.buildfile;
-    let files = buildFiles();
+    let newfile = req.params.file || req.$session.buildfile;
+    let files = buildFiles(req.$session.builddir, req.$session.buildfile);
 
     // No such file exists in the current source
     if (!newfile || files.indexOf(newfile)===-1) {
@@ -314,7 +313,7 @@ function reqGetEdit(req, res) {
     };
 
     console.log('Switching to: ', newfile);
-    res.type('text/plain').download(cSess.builddir+'/src/'+newfile, newfile);
+    res.type('text/plain').download(req.$session.builddir+'/src/'+newfile, newfile);
 
   // Failed
   }).catch(error500.bind(res));
@@ -361,8 +360,8 @@ function reqPostLoad(req, res) {
   }
 
   // Copy build sources
-  let build = new cdbBuild(cSess);
   let buildSources = cdbBuild.sources(DIR_ROOT+'/'+source.src);
+  let build = new cdbBuild(req.$session);
 
   return build.init(
     template,
@@ -372,7 +371,7 @@ function reqPostLoad(req, res) {
 
   // Update buildfile in session data
   .then(function(build) {
-    return cSess.set({
+    return req.$session.set({
       buildfile: build.ino
     });
   })
@@ -383,7 +382,7 @@ function reqPostLoad(req, res) {
 
     // TODO: at this point this should just redirect to GET /edit/<buildfile>
 
-    res.type('text/x-arduino').download(cSess.builddir+'/src/'+cSess.buildfile, cSess.buildFile);
+    res.type('text/x-arduino').download(req.$session.builddir+'/src/'+req.$session.buildfile, req.$session.buildFile);
   })
 
   // Error
@@ -417,12 +416,12 @@ function reqPostBuild (req, res) {
   })
 
   // Load session data
-  .then(cSess.load.bind(cSess))
+  .then(req.$session.load.bind(req.$session))
 
   // Write file changes
   .then(function() {
-    let filename = fd.fields.filename || cSess.buildfile;
-    let files = buildFiles();
+    let filename = fd.fields.filename || req.$session.buildfile;
+    let files = buildFiles(req.$session.builddir, req.$session.buildfile);
 
     // No such file exists in the current source
     if (!filename || files.indexOf(filename)===-1) {
@@ -430,13 +429,13 @@ function reqPostBuild (req, res) {
     };
 
     // write file
-    fs.writeFileSync(cSess.builddir+'/src/'+filename, fd.fields.code);
+    fs.writeFileSync(req.$session.builddir+'/src/'+filename, fd.fields.code);
     // TODO: also, make this async
   })
 
   // Rebuild project
   .then(function() {
-    return new cdbBuild(cSess).build();
+    return new cdbBuild(req.$session).build();
   })
 
   // Return build results as a JSON

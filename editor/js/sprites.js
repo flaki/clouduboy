@@ -47,7 +47,7 @@
 
 
     function editSprite(e) {
-      fetch('/sprite', {
+      Clouduboy.API.fetch('/sprite', {
         method: 'post',
         headers: {
           'Content-Type': 'application/json'
@@ -75,7 +75,7 @@
       sprite.removeEventListener("click", editSaveSprite);
       sprite.addEventListener("click", editSprite);
 
-      fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {
+      Clouduboy.API.fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {
         var pdata = new PixelData(sprite);
         var sdata = ' /*'+pdata.w+'x'+pdata.h+'*/ '+pdata.bytes.map(function(i) { return '0x'+i.toString(16); }).join(', ')+' ';
 

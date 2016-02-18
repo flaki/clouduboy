@@ -32,7 +32,7 @@ function PixelData(input) {
   // If object data is not byte data continue with that data as input
   if (typeof input === 'object' && input.data instanceof Array) {
     if (typeof input.data[0] === 'number') {
-      this.bitmap = bytes2bitmap(input.data, input.w, input.h);
+      this.bitmap = bytes2bitmap(input.data, input.w, input.h, (input.w && input.h && "explicit-size") );
       this.w = this.bitmap[0].length;
       this.h = this.bitmap.length;
       this.id = input.id;
@@ -193,13 +193,15 @@ function bitmap2rgba(bitmap, fg, bg) {
 }
 
 
-function bytes2bitmap(bytes,w,h) {
+function bytes2bitmap(bytes,w,h,explicit) {
   // Width / height optional, assume square image @ 8x8 or multiples
-  if (!h) {
-    h = w;
-  }
-  if (!w || (w * Math.ceil(h/8)) < bytes.length) {
-    w = h = Math.ceil( Math.sqrt( bytes.length / 8) ) * 8;
+  if (!explicit) {
+    if (!h) {
+      h = w;
+    }
+    if (!w || (w * Math.ceil(h/8)) < bytes.length) {
+      w = h = Math.ceil( Math.sqrt( bytes.length / 8) ) * 8;
+    }
   }
 
   var x,y;

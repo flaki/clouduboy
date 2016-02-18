@@ -9,6 +9,15 @@ Object.assign( CFG, require('../config.json') );
 CFG.APP_VERSION = process.env.npm_package_version || (require('../package.json').version);
 
 
+// Root directory
+CFG.ROOT_DIR = require('path').normalize( __dirname + '/..' );
+
+// Root directory for the webapp
+CFG.APP_DIR = __dirname;
+
+// Root directory for the served content
+CFG.WEB_DIR = CFG.ROOT_DIR + '/editor';
+
+
 // Expose configuration object
 module.exports = CFG;
-console.log(CFG);

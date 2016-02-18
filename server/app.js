@@ -4,6 +4,9 @@
 
 const CFG = require('./cfg.js');
 
+// Session init defaults
+const DEFAULT_TEMPLATE = CFG.SOURCE_LIST[0];
+const DEFAULT_ARDUBOY = CFG.ARDUBOY_LIBS[0];
 
 
 // APP DEPENDENCIES
@@ -46,23 +49,6 @@ const error500 = function(err) {
   console.log("Request failed: ", err);
   this.sendStatus(500);
 }
-
-// Paths
-const DIR_ROOT = require('path').normalize(__dirname+'/..');
-const DIR_SOURCES = DIR_ROOT + '/sources';
-const DIR_TEMPLATES = DIR_ROOT + '/templates';
-const DIR_BUILD = DIR_ROOT + '/build';
-const DIR_EDITOR = DIR_ROOT + '/editor';
-
-const BUILDFILE = DIR_BUILD + '/src/build.ino';
-
-const LOADSOURCES = CFG.SOURCE_LIST; // TODO: load these from a JSON (also, automate editor dropdown)
-const DEFAULT_TEMPLATE = LOADSOURCES[0];
-
-const LIBVERSIONS = CFG.ARDUBOY_LIBS;
-const DEFAULT_ARDUBOY = LIBVERSIONS[0];
-
-const SOURCEGROUPS = CFG.SOURCE_GROUPS;
 
 
 // App
@@ -137,7 +123,7 @@ cdb.all('/init', function (req, res) {
     // Initialize build sources (async)
     return build.init(
       DEFAULT_TEMPLATE.id,
-      cdbBuild.sources(DIR_ROOT+'/'+DEFAULT_TEMPLATE.src),
+      cdbBuild.sources(CFG.ROOT_DIR+'/'+DEFAULT_TEMPLATE.src),
       DEFAULT_ARDUBOY //TODO: selection UI & setting for Arduboy lib version
     );
 
@@ -183,15 +169,15 @@ cdb.param('sid', function(req, res, next, sid) {
 
 // Editor
 cdb.get('/editor/:sid', function (req, res) {
-  res.sendFile(DIR_EDITOR + '/editor.html');
+  res.sendFile(CFG.WEB_DIR + '/editor.html');
 });
 
 // List installed sources/source groups/arduboy lib versions
 cdb.get('/sources', function (req,res) {
   res.json({
-    sources: LOADSOURCES,
-    groups: SOURCEGROUPS,
-    libs: LIBVERSIONS
+    sources: CFG.SOURCE_LIST,
+    groups: CFG.SOURCE_GROUPS,
+    libs: CFG.ARDUBOY_LIBS
   });
 });
 
@@ -324,7 +310,7 @@ cdb.post('/build', reqPostBuild);
 
 
 // Serve static
-cdb.use(express.static(DIR_EDITOR));
+cdb.use(express.static(CFG.WEB_DIR));
 
 
 
@@ -342,7 +328,7 @@ var server = app.listen(80, function () {
 function reqPostLoad(req, res) {
   // Check for posted template source existence
   let template = req.body && req.body.load;
-  let source = template && LOADSOURCES.find(function(i) {
+  let source = template && CFG.SOURCE_LIST.find(function(i) {
     return (i.id === template);
   });
 
@@ -355,13 +341,13 @@ function reqPostLoad(req, res) {
   let arduboyLib = req.body && req.body.lib;
 
   // Unknown Arduboy lib version was requested, use default
-  if (LIBVERSIONS.indexOf(arduboyLib) === -1) {
+  if (CFG.ARDUBOY_LIBS.indexOf(arduboyLib) === -1) {
     arduboyLib = DEFAULT_ARDUBOY;
   }
 
   // Copy build sources
-  let buildSources = cdbBuild.sources(DIR_ROOT+'/'+source.src);
   let build = new cdbBuild(req.$session);
+  let buildSources = cdbBuild.sources( CFG.ROOT_DIR+'/'+source.src );
 
   return build.init(
     template,

@@ -71,13 +71,14 @@ function flashArduboy(hex, port) {
 // Find & flash Arduboy with the provided .hex
 let abPort, abHex;
 
-function main() {
+function main(hex) {
   return findArduboy()
 
   .then(function(port) {
     abPort = port;
 
-    return fetchHex();
+    // Use provided hex
+    return hex || fetchHex();
   }).then(function(hex) {
     abHex = hex;
 

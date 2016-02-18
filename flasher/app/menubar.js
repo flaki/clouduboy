@@ -32,8 +32,10 @@ mb.on('ready', function () {
     fetch('http://clouduboy.slsw.hu/hex/flash/'+sid).then(function(r) {
       if (r.status === 204) throw "Nothing to flash";
 
-      // TODO: use HEX returned here, avoid refetching
-      flashBuild().then(function() {
+      return r.text();
+    })
+    .then(function(hex) {
+      flashBuild(hex).then(function() {
         setTimeout(pollFlasher, 2000);
       });
 
@@ -64,7 +66,7 @@ mb.on('after-create-window', function () {
 
 
 // Download and Flash latest build from Couduboy host
-function flashBuild () {
+function flashBuild (hex) {
   let flashBuild = require('../index.js');
 
   var flashing = setInterval( (function() {
@@ -74,7 +76,7 @@ function flashBuild () {
   }).bind({ current: 0, images: [ 'IconTemplate', 'boltTemplate' ]}), 333);
   mb.tray.setToolTip("Flashing Arduboy image...");
 
-  return flashBuild().then(function() {
+  return flashBuild(hex).then(function() {
     console.log('Flashing done!');
 
     return 'Success!';

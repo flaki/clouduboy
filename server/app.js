@@ -1,8 +1,9 @@
 'use strict';
 
-const APP_VERSION = process.env.npm_package_version || (require('../package.json').version);
+// APP CONFIGURATION
 
-const APP_CONFIG = require('../config.json');
+const CFG = require('./cfg.js');
+
 
 
 // APP DEPENDENCIES
@@ -55,13 +56,13 @@ const DIR_EDITOR = DIR_ROOT + '/editor';
 
 const BUILDFILE = DIR_BUILD + '/src/build.ino';
 
-const LOADSOURCES = APP_CONFIG.sources; // TODO: load these from a JSON (also, automate editor dropdown)
+const LOADSOURCES = CFG.SOURCE_LIST; // TODO: load these from a JSON (also, automate editor dropdown)
 const DEFAULT_TEMPLATE = LOADSOURCES[0];
 
-const LIBVERSIONS = APP_CONFIG.arduboyLibs;
+const LIBVERSIONS = CFG.ARDUBOY_LIBS;
 const DEFAULT_ARDUBOY = LIBVERSIONS[0];
 
-const SOURCEGROUPS = APP_CONFIG.sourceGroups;
+const SOURCEGROUPS = CFG.SOURCE_GROUPS;
 
 
 // App
@@ -96,8 +97,7 @@ cdb.get('/version', function (req, res) {
 
 cdb.get('/support', function (req, res) {
   try {
-    let conf = require(__dirname+'/../config.json');
-    res.redirect(conf.supportUrl);
+    res.redirect(CFG.SUPPORT_URL);
 
   // Make sure we still run even if config.json doesn't exist
   } catch(err) {
@@ -334,7 +334,7 @@ var server = app.listen(80, function () {
   var host = server.address().address;
   var port = server.address().port;
 
-  console.log('Clouduboy %s starting at http://%s:%s', APP_VERSION, host, port);
+  console.log('Clouduboy %s starting at http://%s:%s', CFG.APP_VERSION, host, port);
 });
 
 

@@ -191,5 +191,22 @@ function update(fields) {
   });
 }
 
+// Initialize session for incoming request if it has a session cookie
+// This call just initializes session, one still needs to call
+//   $req.session.load()
+// to actually load session data from the DB & use it
+Session.cookieHandler = function(req, res, next) {
+  if (req.cookies.session) {
+    req.$session = Session.init(req.cookies.session);
+  }
+
+  next();
+}
+
+// Session logging
+Session.log = (function(label, log) {
+  return console.log.apply('['+label+']', [].splice.call(arguments,1));
+}).bind(null, 'session');
+
 
 module.exports = Session;

@@ -176,6 +176,18 @@ function listSources(p) {
   });
 }
 
+// List files in current build
+function listFiles(builddir, buildfile) { // TODO: we don't really need buildfile
+  // Make sure we have an initialized session
+  if (!builddir || !buildfile) return [];
+
+  // List files
+  return listSources(
+    builddir+'/src/'+buildfile
+  ).map((p) => path.basename(p));
+}
+
+
 
 // Builder object
 function Builder(session) {
@@ -190,5 +202,6 @@ Builder.prototype = Object.create(null);
   Builder.prototype.build = build;
 
 Builder.sources = listSources;
+Builder.files = listFiles;
 
 module.exports = Builder;

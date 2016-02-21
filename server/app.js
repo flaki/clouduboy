@@ -114,14 +114,14 @@ cdb.post('/sprite', require('./api/sprite.js').post);
 
 
 // Get last built HEX
-cdb.get('/hex/build', );
+cdb.get('/hex/build', require('./api/hex.js').build.all);
 
 // Get last built HEX for flashing
 // (only returns with the HEX if flashing is requested from the IDE)
-cdb.get('/hex/flash/:sid?', );
+cdb.get('/hex/flash/:sid?', require('./api/hex.js').flash.get);
 
 // Request flashing
-cdb.post('/hex/flash', );
+cdb.post('/hex/flash', require('./api/hex.js').flash.post);
 
 
 

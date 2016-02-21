@@ -41,8 +41,13 @@ function flash_get(req, res) {
         res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
       });
     }
-  // Failed
-  }).catch(error500.bind(res));
+  })
+
+  // Error
+  .catch(function(err) {
+    console.log("Request failed: ", err);
+    res.sendStatus(500);
+  });
 }
 
 
@@ -54,7 +59,11 @@ function flash_post(req, res) {
   // Flashing requested
   }).then(function() {
     res.send('Ok');
+  })
 
-  // Failed
-  }).catch(error500.bind(res));
+  // Error
+  .catch(function(err) {
+    console.log("Request failed: ", err);
+    res.sendStatus(500);
+  });
 }

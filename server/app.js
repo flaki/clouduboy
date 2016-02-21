@@ -45,18 +45,9 @@ const error500 = function(err) {
 let app = express();
 
 
-// Top level host
-let root = express();
-app.use(vhost('slsw.hu', root));
-
-root.get('/', function (req, res) {
-  res.send('Welcome to slsw.hu');
-});
-
-
 // Clouduboy App
 let cdb = express();
-app.use(vhost('clouduboy.slsw.hu', cdb));
+app.use(vhost(CFG.SERVER_HOST, cdb));
 
 
 // Enable CORS for all endpoints (TODO: may want to further refine this later)
@@ -147,7 +138,7 @@ cdb.use(express.static(CFG.WEB_DIR));
 
 
 // Start server
-var server = app.listen(80, function () {
+var server = app.listen(CFG.SERVER_PORT, function () {
   var host = server.address().address;
   var port = server.address().port;
 

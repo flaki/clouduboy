@@ -7,7 +7,9 @@
     "server": "node server/app.js",
     "flasher": "electron flasher/app/menubar.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel editor/js -d editor/dist/js"
+    "build:transpile": "babel editor/js -d editor/dist/js",
+    "build:copy-libs": "mkdir -p editor/dist/lib; cp node_modules/whatwg-fetch/fetch.js editor/dist/lib/fetch.js",
+    "build": "npm run build:transpile & npm run build:copy-libs"
   },
   "author": "https://twitter.com/slsoftworks",
   "license": "MIT",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.5.1",
-    "babel-preset-es2015": "^6.5.0"
+    "babel-preset-es2015": "^6.5.0",
+    "whatwg-fetch": "^0.11.0"
   }
 }

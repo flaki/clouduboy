@@ -80,6 +80,9 @@ cdb.param('sid', function(req, res, next, sid) {
   cdbSession.load(sid).then(function(session) {
     req.$session = session;
 
+    // Make sure we update the stored cookie to reflect the SID passed
+    cdbSession.dropCookie(req, res);
+
     sesslog('Loaded: ', req.$session.tag);
     next();
 

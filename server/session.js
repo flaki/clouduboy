@@ -191,9 +191,15 @@ function update(fields) {
   });
 }
 
+// Save the session tag to a cookie for a request
+Session.dropCookie = function(req, res) {
+  res.cookie('session', req.$session.tag);
+}
+
+
 // Initialize session for incoming request if it has a session cookie
 // This call just initializes session, one still needs to call
-//   $req.session.load()
+//   req.$session.load()
 // to actually load session data from the DB & use it
 Session.cookieHandler = function(req, res, next) {
   if (req.cookies.session) {

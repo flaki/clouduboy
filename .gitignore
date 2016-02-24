@@ -9,3 +9,6 @@ server/data/*.db
 
 # Configuration file
 /config.json
+
+# Generated build files
+dist

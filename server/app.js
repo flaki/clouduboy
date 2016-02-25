@@ -45,6 +45,20 @@ const error500 = function(err) {
 let app = express();
 
 
+// Print app version
+app.get('/version', require('./api/version.js').all);
+
+// Support app development
+app.get('/support', require('./api/support.js').all);
+
+
+// Optional short link support
+if (CFG.SHORT_LINK_HOST) {
+  app.use(require('./short-link-host.js'));
+}
+
+
+
 // Clouduboy App
 let cdb = express();
 app.use(vhost(CFG.SERVER_HOST, cdb));
@@ -55,13 +69,6 @@ cdb.use(cors());
 
 // Enable cookies
 cdb.use(cookieParser());
-
-
-// Print app version
-cdb.get('/version', require('./api/version.js').all);
-
-// Support app development
-cdb.get('/support', require('./api/support.js').all);
 
 
 // Session handling

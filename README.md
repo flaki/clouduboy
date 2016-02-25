@@ -24,7 +24,7 @@ Upon startup, or if you initiate a new session you will also need to provide you
 Note, that this is'nt some big commercial app, floating on millions of dollars of VC-funding.※ This implies that bugs are only fixed once someone has a bit of a spare time to [hack on them](https://twitter.com/t_grote/status/698256793919692800). This also implies, that the service runs on a dirt-cheap, tiny DigitalOcean droplet, and since it also has to _compile_ sketches, it **will** be slow.  
 Please be kind — and if something breaks, file an [issue](https://github.com/flaki/clouduboy/issues).
 
-_※ although, feel free to send any number of million dollars to here:_ [![Support](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](http://clouduboy.slsw.hu/support) 😋
+_※ although, feel free to send any number of million dollars to here:_ [![Support](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](http://cld.by/support) 😋
 
 
 ## More on Clouduboy

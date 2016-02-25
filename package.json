@@ -3,6 +3,7 @@
   "version": "0.8.1",
   "description": "Clouduboy - Arduboy cloud compiler",
   "main": "server/app.js",
+  "repository": "flaki/clouduboy",
   "scripts": {
     "server": "node server/app.js",
     "flasher": "electron flasher/app/menubar.js",

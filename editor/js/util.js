@@ -1,4 +1,6 @@
 (function() {
+  'use strict';
+
   var RX_CLEANCOMMENTS = /(\/\/[^\n]*\n|\/\*(.*?\*\/))/g;
 
   // Removes line & block comments, without changing the length of the string

@@ -1,4 +1,6 @@
 (function(exports) {
+  'use strict';
+
   function ClouduboyLinter() {
   }
 
@@ -29,7 +31,7 @@
 
 
   // Build form document and check for errors, size etc.
-  widgets = [];
+  let widgets = [];
 
   function checkBuild(ed, changes) {
     var editor = Clouduboy.editor;
@@ -88,7 +90,7 @@
   });
 
   // Periodically check for syntax errors (also creates a flashable new build)
-  throttleCheckBuild = throttle(checkBuild, 1500);
+  let throttleCheckBuild = throttle(checkBuild, 1500);
 
   Clouduboy.on("contentchanged", throttleCheckBuild);
 })(window);

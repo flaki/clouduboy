@@ -1,6 +1,6 @@
-'use strict';
-
 (function () {
+  'use strict';
+
   function CodePlugin(editor, start, end, options) {
     options = options || {};
     this.editor = editor;

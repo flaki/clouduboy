@@ -1,6 +1,6 @@
-'use strict';
-
 (function () {
+  'use strict';
+
   // Synth control command constants (from audio.h)
   var TUNE_OP_PLAYNOTE = 0x90;  /* play a note: low nibble is generator #, note is next byte */
   var TUNE_OP_STOPNOTE = 0x80;  /* stop a note: low nibble is generator # */

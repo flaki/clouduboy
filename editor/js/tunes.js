@@ -1,4 +1,6 @@
 (function(exports) {
+  'use strict';
+
   function ClouduboyTunes() {
   }
 

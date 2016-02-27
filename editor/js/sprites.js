@@ -61,7 +61,7 @@
         sprite.classList.add("editing");
         document.body.classList.add("pixel-editor");
         document.querySelector("iframe").style.display="block";
-        document.querySelector("iframe").src="/painter-window.html";
+        document.querySelector("iframe").src="/editor/painter";
 
         sprite.removeEventListener("click", editSprite);
         sprite.addEventListener("click", editSaveSprite);

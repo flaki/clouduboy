@@ -14,7 +14,7 @@
 
     "build:transpile": "babel editor/js -d editor/dist/js",
     "build:copy-libs": "node -r shelljs/global -e 'mkdir(\"-p\", \"editor/dist/lib\"); cp(\"node_modules/whatwg-fetch/fetch.js\", \"editor/dist/lib/fetch.js\");'",
-    "build:dist-html": "node -r shelljs/global -e 'mkdir(\"-p\", \"editor/dist\"); cp(\"editor/*.html\", \"editor/dist/\"); ls(\"editor/dist/*.html\").forEach((file) => sed(\"-i\", /\\/js\\//, \"\\/js\\/dist\\/\", file));'",
+    "build:dist-html": "node -r shelljs/global -e 'mkdir(\"-p\", \"editor/dist\"); cp(\"editor/*.html\", \"editor/dist/\"); ls(\"editor/dist/*.html\").forEach((file) => sed(\"-i\", /\\/js\\//, \"\\/dist\\/js\\/\", file));'",
     "build:dist-js": "npm run build:transpile & npm run build:copy-libs",
 
     "build": "npm run build:dist-html & npm run build:dist-js"

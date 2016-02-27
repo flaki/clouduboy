@@ -113,8 +113,11 @@ cdb.get('/sources', require('./api/sources.js').all);
 
 
 // Sprite Editor
+cdb.get('/editor/painter', require('./api/editor.js').painter.all);
+
 cdb.get('/sprite', require('./api/sprite.js').get);
 cdb.post('/sprite', require('./api/sprite.js').post);
+// TODO: decouple these into their own plugin, maybe?
 
 
 

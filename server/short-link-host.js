@@ -28,7 +28,7 @@ function init() {
     if (!sid.match(/^\w+\-\w+\-\w+$/)) return next();
 
     // Redirect to editor
-    res.redirect('http://'+CFG.SERVER_HOST+'/editor/'+sid);
+    res.redirect('http://'+CFG.SERVER_HOST+'/'+sid+'/editor');
 
     console.log("Shortlink: ", sid);
   });

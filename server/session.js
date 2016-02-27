@@ -46,11 +46,18 @@ function parseSid(sid) {
   if (typeof sid == "string" && sid.length < 12) return parseInt(sid, 16);
 
   // Dictionary-encoded string
-  return sid
-    .split('-')
-    .reduce(function (sum, item, n) {
-      return (sum << Math.log2(DICTIONARY[n].length)) | DICTIONARY[n].indexOf(item);
-    } ,0);
+  try {
+    return sid
+      .split('-')
+      .reduce(function (sum, item, n) {
+        return (sum << Math.log2(DICTIONARY[n].length)) | DICTIONARY[n].indexOf(item);
+      } ,0);
+  }
+
+  // Not a valid SID
+  catch(e) {}
+
+  return void 0;
 }
 
 
@@ -213,6 +220,10 @@ Session.cookieHandler = function(req, res, next) {
 Session.log = (function(label, log) {
   return console.log.apply('['+label+']', [].splice.call(arguments,1));
 }).bind(null, 'session');
+
+
+// Expose parse SID function
+Session.parseSid = parseSid;
 
 
 module.exports = Session;

@@ -83,6 +83,10 @@ cdb.all('/init', require('./api/init.js').all);
 // Handle SID tag in urls
 // TODO: do we still need to handle this after the intro screen lands?
 cdb.param('sid', function(req, res, next, sid) {
+  // Skip if not a valid SID
+  // TODO: maybe throw an error, rather?
+  if (!cdbSession.parseSid(sid)) return next();
+
   // Try to load provided session
   cdbSession.load(sid).then(function(session) {
     req.$session = session;
@@ -102,7 +106,7 @@ cdb.param('sid', function(req, res, next, sid) {
 
 
 // Editor
-cdb.get('/editor/:sid', require('./api/editor.js').all);
+cdb.get('/:sid?/editor', require('./api/editor.js').all);
 
 // List installed sources/source groups/arduboy lib versions
 cdb.get('/sources', require('./api/sources.js').all);

@@ -152,5 +152,9 @@ var server = app.listen(CFG.SERVER_PORT, function () {
   var host = server.address().address;
   var port = server.address().port;
 
-  console.log('Clouduboy %s starting at http://%s:%s', CFG.APP_VERSION, host, port);
+  console.log('Clouduboy %s starting %s at http://%s:%s',
+    CFG.APP_VERSION,
+    (CFG.DIST ? 'IN PRODUCTION' : ''),
+    host, port
+  );
 });

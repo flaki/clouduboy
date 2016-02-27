@@ -10,14 +10,12 @@ const CFG = require('../cfg.js');
 
 
 function all(req, res) {
-  let editor = CFG.WEB_DIR + '/editor.html';
+  const DIST = req.query.dist || CFG.DIST;
+  const editor = CFG.WEB_DIR + (DIST ? '/dist': '') + '/editor.html';
 
   // If [dist] version requested modify the editor.html to point to [dist] sources
-  if (req.query.dist) {
+  if (DIST) {
     let html = require('fs').readFileSync(editor).toString();
-
-    // Replace JS includes with dist versions
-    html = html.replace(/\/js\//g, '/dist/js/');
 
     // Add Fetch API polyfill
     html = html.replace(/<\/head>/g, '<script src="/dist/lib/fetch.js"></script></head>');

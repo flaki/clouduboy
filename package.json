@@ -6,11 +6,18 @@
   "repository": "flaki/clouduboy",
   "scripts": {
     "start": "node server/app.js",
+    "start:prod": "node server/app.js --dist",
+
     "flasher": "electron flasher/app/menubar.js",
+
     "test": "echo \"Error: no test specified\" && exit 1",
+
     "build:transpile": "babel editor/js -d editor/dist/js",
     "build:copy-libs": "node -r shelljs/global -e 'mkdir(\"-p\", \"editor/dist/lib\"); cp(\"node_modules/whatwg-fetch/fetch.js\", \"editor/dist/lib/fetch.js\");'",
-    "build": "npm run build:transpile & npm run build:copy-libs"
+    "build:dist-html": "node -r shelljs/global -e 'mkdir(\"-p\", \"editor/dist\"); cp(\"editor/*.html\", \"editor/dist/\"); ls(\"editor/dist/*.html\").forEach((file) => sed(\"-i\", /\\/js\\//, \"\\/js\\/dist\\/\", file));'",
+    "build:dist-js": "npm run build:transpile & npm run build:copy-libs",
+
+    "build": "npm run build:dist-html & npm run build:dist-js"
   },
   "author": "https://twitter.com/slsoftworks",
   "license": "MIT",

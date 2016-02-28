@@ -29,11 +29,16 @@ function build_all(req, res) {
 
 
 function flash_get(req, res) {
+  // Session not specified or invalid session
+  if (!req.$session) {
+    return res.sendStatus(500).end();
+  }
+
   // Load session & see if flashing has been requested
-  if (req.$session) req.$session.load().then(function() {
+  req.$session.load().then(function() {
     // No flashing requested
     if (!req.$session.flash) {
-      return res.sendStatus(204);
+      return res.sendStatus(204).end();
 
     // Flashing was requested: clear the flag & return the binary
     } else {
@@ -43,10 +48,10 @@ function flash_get(req, res) {
     }
   })
 
-  // Error
+  // Error or session does not exist
   .catch(function(err) {
     console.log("Request failed: ", err);
-    res.sendStatus(500);
+    res.sendStatus(404).end();
   });
 }
 

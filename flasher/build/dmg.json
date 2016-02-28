@@ -1,0 +1,20 @@
+{
+  "title": "Clouduboy Flasher",
+  "icon": "icon.icns",
+  "icon-size": 48,
+  "background": "background.png",
+  "contents": [
+    {
+      "x": 280,
+      "y": 136,
+      "type": "link",
+      "path": "/Applications"
+    },
+    {
+      "x": 80,
+      "y": 136,
+      "type": "file",
+      "path": "ClouduboyFlasher.app"
+    }
+  ]
+}

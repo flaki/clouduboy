@@ -1,6 +1,6 @@
 {
   "name": "clouduboy",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Clouduboy - Arduboy cloud compiler",
   "main": "server/app.js",
   "repository": "flaki/clouduboy",
@@ -8,7 +8,7 @@
     "start": "node server/app.js",
     "start:prod": "node server/app.js --dist",
 
-    "flasher": "electron flasher/app/menubar.js",
+    "flasher": "electron flasher/app",
 
     "test": "echo \"Error: no test specified\" && exit 1",
 
@@ -19,7 +19,7 @@
 
     "build": "npm run build:dist-html & npm run build:dist-js"
   },
-  "author": "https://twitter.com/slsoftworks",
+  "author": "Flaki (https://twitter.com/slsoftworks)",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.14.2",

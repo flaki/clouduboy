@@ -19,7 +19,7 @@ var mb = require('menubar')({
 });
 
 // Flasher functions
-let Flasher = require('../index.js');
+let Flasher = require('./flasher.js');
 
 // Initial SID - get it from the last command line parameter
 var STATE = {};

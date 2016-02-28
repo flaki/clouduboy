@@ -1,0 +1,52 @@
+{
+  "name": "clouduboy-flasher",
+  "productName": "Clouduboy Flasher",
+  "identifier": "hu.slsw.clouduboy.flasher",
+  "version": "0.1.0",
+  "description": "Add-on for flashing Arduboy apps from the Clouduboy IDE",
+  "main": "index.js",
+  "author": "Flaki (https://twitter.com/slsoftworks)",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "electron-rebuild && cp -r node_modules/serialport/build/Release/electron-* node_modules/serialport/build/Release/node-v47-darwin-x64"
+  },
+  "dependencies": {
+    "async": "^1.5.0",
+    "avrgirl-arduino": "^1.5.6",
+    "chip.avr.avr109": "^1.0.4",
+    "intel-hex": "^0.1.1",
+    "menubar": "^3.0.0",
+    "node-fetch": "^1.3.3",
+    "serialport": "^2.0.5",
+    "tmp": "0.0.28"
+  },
+  "devDependencies": {
+    "electron-prebuilt": "0.36.9",
+    "electron-rebuild": "^1.1.3"
+  },
+  "build": {
+    "app-bundle-id": "hu.slsw.clouduboy.flasher",
+    "app-category-type": "tools",
+    "iconUrl": "https://raw.githubusercontent.com/flaki/clouduboy/master/flasher/build/icon.ico",
+    "osx": {
+      "title": "Clouduboy Flasher",
+      "icon": "build/icon.icns",
+      "icon-size": 48,
+      "background": "build/background.png",
+      "contents": [
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 220,
+          "type": "file",
+          "path": ""
+        }
+      ]
+    }
+  }
+}

@@ -85,7 +85,10 @@ cdb.all('/init', require('./api/init.js').all);
 cdb.param('sid', function(req, res, next, sid) {
   // Skip if not a valid SID
   // TODO: maybe throw an error, rather?
-  if (!cdbSession.parseSid(sid)) return next();
+  if (!cdbSession.parseSid(sid)) {
+    sesslog('[!] Invalid session ID!', sid);
+    return next();
+  }
 
   // Try to load provided session
   cdbSession.load(sid).then(function(session) {
@@ -100,8 +103,8 @@ cdb.param('sid', function(req, res, next, sid) {
   // Error loading session
   }).catch(function(err) {
     sesslog('[!] Failed to load session!', err.stack);
+    next();
   });
-
 });
 
 

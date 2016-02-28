@@ -4,8 +4,6 @@ let fs = require('fs');
 
 let Avrgirl = require('avrgirl-arduino');
 
-const BUILDURL = 'http://clouduboy.slsw.hu/hex/build';
-
 
 function findArduboy() {
   return new Promise(function(resolve, reject) {
@@ -29,42 +27,12 @@ function findArduboy() {
   });
 }
 
-function fetchHex(hex) {
-  return new Promise(function(resolve, reject) {
-    console.log('fetching '+BUILDURL+'...');
-    require('http').get(BUILDURL, function(res) {
-      var chunks = [];
-      //res.pipe(fs.createWriteStream('tmp.hex'));
-      res.on('data', chunks.push.bind(chunks) );
-      res.on('end', function() {
-        var hex = Buffer.concat(chunks).toString();
-        console.log('ok, '+hex.length+' bytes');
-        resolve(hex);
-      });
-    });
-  });
-}
 
 function flashArduboy(hex, port) {
   return require('./flash.js')({
     PORT: port,
-    DATA: hex//require('fs').readFileSync("/Users/flaki/Data/clouduboy/flasher/tmp.hex")
+    DATA: hex
   });
-  //return new Promise(function(resolve, reject) {
-    // let avrgirl = new Avrgirl({
-    //   board: 'leonardo',
-    //   port: port
-    // });
-    //
-    // avrgirl.flash(hex, function (error) {
-    //   if (error) {
-    //     console.log(error);
-    //     reject(error);
-    //   } else {
-    //     resolve();
-    //   }
-    // });
-  //});
 }
 
 
@@ -76,10 +44,6 @@ function main(hex) {
 
   .then(function(port) {
     abPort = port;
-
-    // Use provided hex
-    return hex || fetchHex();
-  }).then(function(hex) {
     abHex = hex;
 
     return flashArduboy(abHex, abPort);
@@ -93,16 +57,4 @@ function main(hex) {
 module.exports = main;
 
 module.exports.findArduboy = findArduboy;
-module.exports.downloadBuild = fetchHex;
 module.exports.flashArduboy = flashArduboy;
-
-/*
-var menubar = require('menubar');
-
-var mb = menubar();
-
-mb.on('ready', function ready () {
-  console.log('app is ready');
-  // your app code here
-});
-*/

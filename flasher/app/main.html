@@ -1,11 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Clouduboy Flasher</title>
+  <title>Clouduboy Flasher</title>
+  <style>
+    body {
+      background: #0A001F;
+      color: white;
+      font-family: sans-serif;
+      font-size: 13px;
+    }
+    input {
+      font-size: 1.5em;
+      background: transparent;
+      border: none;
+      text-align: center;
+      width: 70%;
+      padding: .2em;
+      transition: all .5s ease;
+      color: #aaa;
+    }
+    input:focus {
+      background: rgba(0,0,0,.5);
+      border: none;
+      outline: none;
+      color: #FFD500;
+      text-shadow: 0 1px 0 black;
+    }
+    input:focus::-webkit-input-placeholder {
+      opacity: 0;
+    }
+
+    input::-webkit-input-placeholder {
+        opacity: .5;
+        font-style: italic;
+        font-size: .75em;
+        line-height: 1.6em;
+        font-weight: 100;
+        transition: opacity .5s ease;
+    }
+
+    input[type="file"] {
+      font-size: .9em;
+      font-style: italic;
+      color: #999;
+    }
+    button {
+      border: 1px solid #999;
+      background: linear-gradient(to bottom, white, #777);
+      border-radius: .2em;
+      font-size: .9em;
+      font-weight: bold;
+    }
+
+    div {
+      margin: .5em;
+    }
+
+    h2 {
+      font-size: 1em;
+      font-weight: normal;
+      margin: .5em;
+      margin-top: 1em;
+    }
+
+    #status {
+      text-align: center;
+      font-weight: bold;
+      background: linear-gradient(45deg, #ccc, #aaa);
+      border-radius: 1em;
+      box-shadow: 2px 2px 6px #ddd inset;
+      box-sizing: border-box;
+
+      padding: .3em;
+      margin-bottom: 1em;
+      border: 1px solid #ddd;
+    }
+    #status .msg {
+      text-shadow: 0 1px 1px black;
+      color: white;
+    }
+    #status.error .msg{
+      text-shadow: 0 1px 1px white;
+      color: #d00;
+    }
+    #status.progress .msg {
+      text-shadow: 0 1px 1px white;
+      color: #090;
+    }
+
+    #status {
+      display: none;
+    }
+
+    #status.error,
+    #status.progress,
+    #status.notice {
+      display: block;
+    }
+
+  </style>
 </head>
-<body>
-  <div>Searching for connected Arduboy device...</div>
+<body class="init">
+  <div id="status">
+    <span class="msg"></span>
+  </div>
+
+  <h2>Type your Clouduboy ID:</h2>
+  <div class="sid">
+    <input name="sid" type="text" placeholder="e.g.: shiny-puppy-nose" />
+    <button>SET</button>
+  </div>
+
+  <h2>Flash a game (from .HEX):</h2>
+  <div class="upload">
+    <input name="hex" type="file" />
+    <button disabled>FLASH</button>
+  </div>
+
   <script>
+  /*
   var sp = require('serialport');
 
   sp.list(function(err, ports) {
@@ -13,6 +126,76 @@
       document.body.insertAdjacentHTML('beforeend','<p>('+n+'): '+e.comName+'</p>');
     });
   });
+  */
+
+  var ipc = require('electron').ipcRenderer;
+  var STATE;
+
+  // State update
+  ipc.on('state', function(e, state) {
+    var sidInput = document.querySelector('.sid input');
+    var statusElement = document.querySelector('#status');
+    var msgElement = document.querySelector('#status .msg');
+
+    STATE = state;
+    console.log(state, "updated");
+
+    // Update app state
+    sidInput.value = STATE.sid;
+
+    // Status message
+    statusElement.className = STATE.msgt;
+    msgElement.textContent = STATE.msg;
+  });
+
+  // State change
+  function updateState() {
+    var sidInput = document.querySelector('.sid input');
+    STATE.sid = sidInput.value.replace(/\s+/g, '-');
+    sidInput.value = STATE.sid;
+
+    return STATE;
+  }
+  document.querySelector('.sid button').addEventListener('click', function(e) {
+    ipc.send('state', updateState());
+  });
+
+  document.querySelector('.sid input').addEventListener('blur', function(e) {
+    updateState();
+  });
+
+  document.querySelector('.sid input').addEventListener('keyup', function(e) {
+    if (e.keyCode == 13) {
+      ipc.send('state', updateState());
+    }
+  });
+
+  var loadedHex;
+  document.querySelector('input[name="hex"]').addEventListener('change', function(e) {
+    console.log(e);
+    var file    = e.target.files[0];
+    var reader  = new FileReader();
+
+    reader.addEventListener("load", function () {
+      loadedHex = reader.result;
+      document.querySelector('.upload button').disabled = false;
+    }, false);
+
+    if (file) {
+      reader.readAsText(file);
+    }
+  });
+
+  document.querySelector('.upload button').addEventListener('click', function(e) {
+    if (loadedHex) {
+      ipc.send('flash', { 'data': loadedHex });
+      loadedHex = null;
+      document.querySelector('input[name="hex"]').value = null;
+      e.target.disabled = true;   
+    }
+  })
+
+
 </script>
 </body>
 </html>

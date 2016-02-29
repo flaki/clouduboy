@@ -3,10 +3,29 @@
 const nedb = require('nedb');
 const Storage = new nedb({
   filename: __dirname+'/data/session.db',
-  timestampData: true,
-  autoload: true
+  timestampData: true
 });
 
+// Sessions expire in
+const SESSION_EXPIRE_LIMIT = 7*24; // hours -> one week
+
+// Purge old session entries
+Storage.ensureIndex({ fieldName: 'updatedAt', expireAfterSeconds: SESSION_EXPIRE_LIMIT*60*60 }, function (err) {} );
+
+// Load database from disk
+Storage.loadDatabase(function(err) {
+  if (err) {
+    console.log("Error purging sessions: ", err);
+  }
+
+  // List all documents, and remove all expired ones
+  Storage.find({}, function(err) {
+    // Persist changes
+    Storage.persistence.compactDatafile();
+  });
+});
+
+// Dictionary to use for visual session ID names
 const DICTIONARY = [
   [ 'rough', 'silly', 'rabid', 'cheeky', 'cunning', 'pesky', 'shiny', 'weird', 'noisy', 'rapid', 'cold', 'quick', 'wacky', 'rare', 'happy', 'wicked' ],
   [ 'muffin', 'donut', 'cookie', 'fish', 'tiger', 'kitten', 'hamster', 'carrot', 'puppy', 'pancake', 'plush', 'unicorn', 'sugar', 'hamburger', 'nut', 'banana' ],

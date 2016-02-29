@@ -153,7 +153,7 @@ cdb.post('/build', require('./api/build.js').all);
 
 
 // Serve static
-cdb.use(express.static(CFG.WEB_DIR));
+cdb.use(express.static(CFG.WEB_DIR, { maxAge: 60*60*1000 }));
 
 
 

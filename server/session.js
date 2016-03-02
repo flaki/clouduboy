@@ -79,6 +79,32 @@ function parseSid(sid) {
   return void 0;
 }
 
+/* Generate a random available session ID */
+function availableSession() {
+  return new Promise(function(resolve, reject) {
+    // List all sessions
+    Storage.find({}, function(err, d) {
+      var data = d.map(i => i._id); // only care about IDs
+      var n = 100; // Number of tries
+
+      // Limit tries
+      while (--n) {
+        // Create random new SID
+        let next = newSid();
+
+        // Available?
+        if (data.indexOf(next) === -1) {
+          resolve(next);
+        }
+      }
+
+      // Couldn't generate a session ID
+      reject("Couldn't create session ID");
+    });
+
+  });
+
+}
 
 
 // Constructor
@@ -241,8 +267,9 @@ Session.log = (function(label, log) {
 }).bind(null, 'session');
 
 
-// Expose parse SID function
+// Expose functions
 Session.parseSid = parseSid;
-
+Session.stringifySid = dictSid;
+Session.availableSession = availableSession;
 
 module.exports = Session;

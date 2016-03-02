@@ -80,6 +80,10 @@ cdb.use(cdbSession.cookieHandler);
 // Create a new session
 cdb.all('/init', require('./api/init.js').all);
 
+// Generate new session id
+cdb.all('/session/generate', require('./api/session.js').generate.all);
+
+
 // Handle SID tag in urls
 // TODO: do we still need to handle this after the intro screen lands?
 cdb.param('sid', function(req, res, next, sid) {

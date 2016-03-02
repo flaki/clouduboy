@@ -156,8 +156,11 @@ cdb.get('/edit/:file?', require('./api/edit.js').all);
 cdb.post('/build', require('./api/build.js').all);
 
 
-// Serve static
+// Serve static assets for the Editor
 cdb.use(express.static(CFG.WEB_DIR, { maxAge: 60*60*1000 }));
+
+// Serve static files of the Flasher redistributable packages
+cdb.use('/download', express.static(CFG.ROOT_DIR + '/flasher/dist'));
 
 
 

@@ -128,9 +128,7 @@
       // Update canvas dimensions/blocksize
       if (pixels.w !== update.w || pixels.h !== update.h) {
         // Update blocksize
-        bs = update.w > update.h
-          ? Math.floor( canvas.width / update.w )
-          : Math.floor( canvas.height / update.h );
+        bs = Math.floor( Math.min( canvas.width/update.w, canvas.height/update.h ) );
       }
 
       // Store updated bitmap data

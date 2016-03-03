@@ -11,11 +11,7 @@ const CFG = require('./cfg.js');
 const express = require('express'),
     cors = require('cors'),
     vhost = require('vhost'),
-    bodyParser = require('body-parser'),
     cookieParser = require('cookie-parser');
-
-// JSON postdata parser middleware
-const bodyParserJSON = bodyParser.json();
 
 
 // CUSTOM MODULES
@@ -165,9 +161,9 @@ cdb.use('/download', express.static(CFG.ROOT_DIR + '/flasher/dist'));
 
 
 // Start server
-var server = app.listen(CFG.SERVER_PORT, function () {
-  var host = server.address().address;
-  var port = server.address().port;
+let server = app.listen(CFG.SERVER_PORT, function () {
+  let host = server.address().address;
+  let port = server.address().port;
 
   console.log('Clouduboy %s starting %s at http://%s:%s',
     CFG.APP_VERSION,

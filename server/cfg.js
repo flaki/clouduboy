@@ -22,5 +22,12 @@ CFG.APP_DIR = __dirname;
 CFG.WEB_DIR = CFG.ROOT_DIR + '/editor';
 
 
+// Production/development host/port setup
+if (!CFG.DIST) {
+  if (CFG.DEV_SERVER_HOST) CFG.SERVER_HOST = CFG.DEV_SERVER_HOST;
+  if (CFG.DEV_SERVER_PORT) CFG.SERVER_PORT = CFG.DEV_SERVER_PORT;
+}
+
+
 // Expose configuration object
 module.exports = CFG;

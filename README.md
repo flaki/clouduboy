@@ -1,4 +1,7 @@
 # Clouduboy
+
+![Clouduboy Intro](http://clouduboy.slsw.hu/res/clouduboy-intro.gif)
+
 Clouduboy is a connected Arduino cloud editor & MMDACCI. Nope, that's not latin for the release date - it means _Massively Multi-Device Arduboy Cloud-Compiler & IDE_. Whoah, that's quite a mouthful! But it really **means** that "connected" part, though! See, there are a _lot_ of IDE-s and Code Editors and cloud-based Arduino-workbenches out there.  
 Clouduboy specifically focuses on making Arduino hacking truly _fun_, working with the device/browser of your choice and even if you only have very basic coding skills.
 

@@ -164,7 +164,14 @@
   let pinchstate = false;
 
   function ptrStart(e) {
-    let px = pixelAt(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
+    let px;
+
+    // Fetch pixel info under pointer
+    if (e.targetTouches && e.targetTouches[0]) {
+      px = pixelAt(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
+    } else {
+      px = pixelAt(e.pageX, e.pageY);
+    }
 
     // Draw or erase on whole stroke depending on pixel under finger
     // on the initial touch
@@ -194,8 +201,11 @@
     if (!paintstate) return;
 
     // Fetch pixel info under pointer
-    //px = pixelAt(e.clientX, e.clientY);
-    px = pixelAt(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
+    if (e.targetTouches && e.targetTouches[0]) {
+      px = pixelAt(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
+    } else {
+      px = pixelAt(e.pageX, e.pageY);
+    }
 
     // Check if crossed pixel boundaries, if not, do not do anything
     if (lastupdate && lastupdate.x == px.x && lastupdate.y == px.y ) return;
@@ -209,9 +219,24 @@
     newstate = 1;
   }
 
+  // Mouse fallback
+  let noMouse = false;
+
+  canvas.addEventListener('mousedown', ptrStart);
+  canvas.addEventListener('mousemove', ptrUpdate);
+  canvas.addEventListener('mouseup', ptrEnd);
+
 
   // Input handling
   canvas.addEventListener('touchstart', function(e) {
+    // Touch device, mouse fallback disabled
+    if (!noMouse) {
+      canvas.removeEventListener('mousedown', ptrStart);
+      canvas.removeEventListener('mousemove', ptrUpdate);
+      canvas.removeEventListener('mouseup', ptrEnd);
+      noMouse = true;
+    }
+
     e.preventDefault(); e.stopPropagation();
     initgesture(e);
     ptrStart(e);

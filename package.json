@@ -1,6 +1,6 @@
 {
   "name": "clouduboy",
-  "version": "0.8.2",
+  "version": "0.8.9",
   "description": "Clouduboy - Arduboy cloud compiler",
   "main": "server/app.js",
   "repository": "flaki/clouduboy",

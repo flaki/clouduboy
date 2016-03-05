@@ -73,6 +73,12 @@ let sesslog = log.bind(log,'session');
 // If a session cookie was sent along with the request, init the session
 cdb.use(cdbSession.cookieHandler);
 
+// Check for saved beta keys
+cdb.use(require('./api/beta.js').check);
+
+cdb.get('/beta', require('./api/beta.js').get);
+cdb.post('/beta', require('./api/beta.js').post);
+
 // Create a new session
 cdb.all('/init', require('./api/init.js').post);
 

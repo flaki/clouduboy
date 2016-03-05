@@ -74,7 +74,7 @@ let sesslog = log.bind(log,'session');
 cdb.use(cdbSession.cookieHandler);
 
 // Create a new session
-cdb.all('/init', require('./api/init.js').all);
+cdb.all('/init', require('./api/init.js').post);
 
 // Generate new session id
 cdb.all('/session/generate', require('./api/session.js').generate.all);

@@ -5,11 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Clouduboy Editor</title>
 
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css"></link>
+
+    <link href="/css/intro.css" rel="stylesheet" />
+    <link href="/css/intro-sidgen.css" rel="stylesheet" />
   </head>
 
   <body>
 
-    <script src="/lib/pep/pep.js"></script>
+    <div class="intro">
+
+      <img src="res/clouduboy-logo-s.png" alt ="Welcome to Clouduboy" />
+
+      <h2>Hello!</h2>
+      <p>
+        Clouduboy is a free &amp; open-source online <a href="http://arduboy.com/">Arduboy</a>
+        Game Editor + Arduino IDE. For more info, refer to the <a href="https://github.com/flaki/clouduboy/">README</a>.
+      </p>
+
+      <h3>To get started, type your <em>session id</em>:</h3>
+      <div>
+        <span class="sidinput"><input name="sid" type="text"></span>
+        <button name="use-sid">Let's go!</button>
+      </div>
+
+      <h3>Don't have a session id yet? You can create one below:</h3>
+      <div class="sid-generator">
+        <span class="generator">
+          <span class="sidgen sg1"><i>?</i></span>-<span class="sidgen sg2"><i>?</i></span>-<span class="sidgen sg3"><i>?</i></span>
+        </span>
+        <button name="get-sid">Spin It!</button>
+        <form name="new-session" action='/init' method='post'>
+          <input type="hidden" name="new-session-id" value="" />
+          <button name="init-session">I want this one!</button>
+        </form>
+      </div>
+
+      <p>
+        A session ID is used to identify you across all your devices.
+        Open Clouduboy on your phone, or tablet and type your session ID
+        to interact with your edited project simultaneously on any of your
+        devices.
+      </p>
+      <p>
+        <em>Note: your sessions will be deleted after you haven't been
+          using them for a while.</em>
+      </p>
+
+      <h3>Flash your games directly from your browser!</h3>
+      <p>
+        To fully enjoy Clouduboy, you may download the Clouduboy Flasher
+        to your computer. With the Flasher, will be able to upload your
+        games &amp; sketches to your Arduboy/Arduino, without ever needing
+        to leave the editor.
+      </p>
+
+      <h3>Download the Clouduboy Flasher for...</h3>
+      <div>
+        <button name="download-osx">Mac / OSX</button>
+      </div>
+
+      <p>
+        <em>Windows/Linux version coming soon!</em>
+      </p>
+
+    </div>
+
+    <script src="js/startpage.js"></script>
   </body>
 </html>

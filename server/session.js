@@ -138,8 +138,8 @@ Session.DICT_BITS = DICT_BITS;
 // the promise with the created session once
 const RETRY_COUNT = 5;
 
-Session.create = function() {
-  let session = new Session();
+Session.create = function(sid) {
+  let session = new Session(sid);
   let retries = RETRY_COUNT;
 
   return new Promise(function(resolve, reject) {
@@ -147,7 +147,7 @@ Session.create = function() {
     let tryCreate = function() {
 
       // Generate new random id
-      session._id = newSid();
+      session._id = session._id || newSid();
 
       // Make session tag
       session.tag = dictSid(session._id);

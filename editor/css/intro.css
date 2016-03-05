@@ -1,0 +1,134 @@
+body {
+  font-family: sans-serif;
+  color: white;
+}
+
+a {
+  color: #6900A1;
+  text-decoration: none;
+}
+a:hover, a:focus, a:active {
+  color: #37F14A;
+}
+
+.intro {
+  width: 50%;
+  margin: 1em auto;
+}
+@media only screen and (max-width: 1280px) {
+  .intro {
+    width: 60%;
+  }
+}
+@media only screen and (max-width: 720px) {
+  .intro {
+    width: 90%;
+  }
+}
+
+.intro img {
+  display: block;
+  width: 100%;
+}
+
+.intro h1, .intro h2, .intro h3 {
+  font-family: "Arial Rounded MT Bold", sans-serif;
+  font-weight: normal;
+
+  margin: 0 auto;
+  padding: .5em 0;
+
+  width: 90%;
+}
+.intro h3 {
+  margin: 1em auto 0;
+}
+
+.intro p, .intro div {
+  line-height: 1.33em;
+  margin: auto;
+  width: 90%;
+  color: #ddf;
+
+  margin-bottom: 1em;
+}
+
+button {
+  display: block;
+  margin: 1em auto;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: white;
+  padding: 0.75em 2em;
+  background-color: #6900A1;
+  border: 2px solid transparent;
+  border-radius: 0.5em;
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 10%, transparent, rgb(0, 0, 0));
+  text-shadow: 0px 1px black;
+  cursor: pointer;
+
+  border-color: #440077;
+}
+button:hover, button:active, button:focus {
+  border-color: #9900CC;
+  outline: none;
+}
+
+/* Input field */
+input[type="text"] {
+  font-size: 1.1em;
+  color: #37F14A;
+
+  background: transparent;
+  border-style: none;
+  text-align: center;
+  width: 100%;
+  padding: .3em;
+}
+
+.sidinput {
+  border: 2px solid #305;
+  border-radius: .5em;
+  margin: auto;
+
+
+  display: block;
+  border-radius: .5em;
+}
+
+.sidinput,
+input[type="text"] {
+  display: block;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Gradient shadow */
+.sidinput {
+  position: relative;
+}
+.sidinput::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, black, rgba(0,0,0,0) 33%, black);
+  pointer-events: none;
+}
+
+
+
+/* Smallscreen fontsize */
+@media only screen and (max-width: 440px) {
+  body {
+   font-size: .85em;
+  }
+}
+
+@media only screen and (max-width: 359px) {
+  body {
+   font-size: .8em;
+  }
+  .intro {
+    width: 100%;
+  }
+}

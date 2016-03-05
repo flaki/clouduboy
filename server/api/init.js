@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  all: all
+  post: [ require('body-parser').urlencoded({ extended: true }), post ],
 };
 
 
@@ -15,13 +15,15 @@ const DEFAULT_TEMPLATE = CFG.SOURCE_LIST[0];
 const DEFAULT_ARDUBOY = CFG.ARDUBOY_LIBS[0];
 
 
-function all(req, res) {
+function post(req, res) {
   // TODO: create intro page (source/template selector)
   // TODO: handle template selection in POST/formdata
-  console.log('New session...');
+  let newSID = req.body['new-session-id'];
+
+  console.log('New session...', newSID);
 
   // Create new session and redirect
-  Session.create().then(function(session) {
+  Session.create(newSID).then(function(session) {
     req.$session = session;
 
     Session.log('Created: ', req.$session);
@@ -49,7 +51,7 @@ function all(req, res) {
   }).then(function() {
     res
       .cookie('session', req.$session.tag)
-      .redirect('/editor/'+req.$session.tag);
+      .redirect('/'+req.$session.tag+'/editor');
 
   // Session creation error
   }).catch(function(err) {

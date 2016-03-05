@@ -1,0 +1,92 @@
+@keyframes roll {
+  0% {
+    top: -1em;
+    opacity: .3
+  }
+  50% {
+    opacity: .6;
+  }
+  100% {
+    top: 1em;
+    opacity: .9
+  }
+}
+
+@keyframes reveal {
+  0% {
+    top: -1em;
+    opacity: .3
+  }
+  32% {
+    top: 1em;
+    opacity: .9
+  }
+  33% {
+    top: -1em;
+    opacity: .3;
+
+    text-shadow: 0 -1px 1px #37F14A, 0 -2px 2px #37F14A, 0 1px 4px #37F14A;
+    filter: blur(1px);
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+
+    text-shadow: 0 1px 1px #37F14A;
+    filter: blur(0px);
+  }
+}
+
+.sid-generator {
+}
+
+.sid-generator .generator {
+  display: block;
+  border: 2px solid #305;
+  border-radius: .5em;
+  text-align: center;
+
+
+  font-size: 1.1em;
+  color: #37F14A;
+  display: block;
+  border-radius: .5em;
+}
+
+.sidgen {
+  display: inline-block;
+  border: 1px solid black;
+  overflow: hidden;
+  width: 29%;
+  box-sizing: border-box;
+  padding: .3em;
+  vertical-align: -50%;
+}
+.sidgen > i {
+  position: relative;
+  top: 0;
+}
+
+.roll.sidgen > i {
+  text-shadow: 0 -1px 1px #37F14A, 0 -2px 2px #37F14A, 0 1px 4px #37F14A;
+  filter: blur(1px);
+
+  animation: .1s roll infinite;
+}
+.reveal.sidgen > i {
+  animation: 1s reveal ease-out 1;
+}
+
+
+.sidgen {
+  position: relative;
+  margin: 0 .2em;
+  vertical-align: -50%;
+}
+.sidgen::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, black, rgba(0,0,0,0) 33%, black);
+  pointer-events: none;
+}

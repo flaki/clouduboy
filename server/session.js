@@ -1,8 +1,11 @@
 "use strict";
 
+// Configuration
+const CFG = require('./cfg.js');
+
 const nedb = require('nedb');
 const Storage = new nedb({
-  filename: __dirname+'/data/session.db',
+  filename: CFG.SESSION_FILE,
   timestampData: true
 });
 

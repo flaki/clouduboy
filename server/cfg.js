@@ -28,6 +28,12 @@ if (!CFG.DIST) {
   if (CFG.DEV_SERVER_PORT) CFG.SERVER_PORT = CFG.DEV_SERVER_PORT;
 }
 
+// Session storage (use separate session file for dev/prod)
+CFG.SESSION_FILE = CFG.APP_DIR + '/data/session' +(CFG.DIST?'.dist':'')+ '.db';
+
+// Build directory (use separate for dev/prod)
+CFG.BUILD_DIR = CFG.ROOT_DIR + '/build' +(CFG.DIST?'/dist':'');
+
 
 // Expose configuration object
 module.exports = CFG;

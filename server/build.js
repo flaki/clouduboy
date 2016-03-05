@@ -1,5 +1,8 @@
 'use strict';
 
+// Configuration
+const CFG = require('./cfg.js');
+
 // Asynchronous filesystem operations
 var fs = require('fs-promise');
 
@@ -24,7 +27,7 @@ function init(src, sources, aboylib) {
   const sessionid = this.session.strid, builder = this;
 
   // Build root for current session
-  const BUILDDIR = ROOTDIR + '/build/src/'+sessionid;
+  const BUILDDIR = CFG.BUILD_DIR + '/src/'+sessionid;
 
 
   // Make sure session dir exists, but clean any contents

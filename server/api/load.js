@@ -41,7 +41,9 @@ function all(req, res) {
     }
 
     // Override Library version
-    arduboyLib = req.body && req.body.lib;
+    if (req.body && req.body.lib) {
+      arduboyLib = req.body.lib;
+    }
 
     // Unknown Arduboy lib version was requested, just use default
     if (!arduboyLib && CFG.ARDUBOY_LIBS.indexOf(arduboyLib) === -1) {

@@ -29,6 +29,9 @@ a:hover, a:focus, a:active {
 .intro img {
   display: block;
   width: 100%;
+
+  max-width: 480px;
+  margin: auto;
 }
 
 .intro h1, .intro h2, .intro h3 {

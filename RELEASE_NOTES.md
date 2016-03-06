@@ -1,5 +1,9 @@
 # Release Notes
 
+### Version 0.8.91 *(2016-05-06)*
+ * Arduboy & DevKit support!
+ * Small updates & fixes
+
 ### Version 0.8.9 *(2016-05-05)*
  * First limited public beta release
  * Beta Key access system

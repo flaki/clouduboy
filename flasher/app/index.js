@@ -25,7 +25,23 @@ let Flasher = require('./flasher.js');
 var STATE = {};
 
 STATE.s = 'init';
-STATE.sid = process.argv[process.argv.length] || null; // TODO: add startup GUI to specify this
+
+// Arg processing
+let arg = 2, argv = process.argv;
+
+// Host to poll/download hex from
+if (argv.length >= arg && argv[arg].match(/^http/)) {
+  STATE.host = argv[arg];
+  arg++;
+
+// Default host
+} else {
+  STATE.host = 'http://clouduboy.slsw.hu/hex/flash/';
+}
+
+// Default SID
+STATE.sid = argv[arg] || null;
+
 
 
 // Menubar app ready
@@ -38,14 +54,14 @@ mb.on('ready', function () {
 
   // Flasher polling
   function pollFlasher() {
-    let pollURL = 'http://clouduboy.slsw.hu/hex/flash/';
+    let pollURL = STATE.host + STATE.sid;
 
     // Wait until we have a session ID
     (new Promise(function(resolve, reject) {
       if (!STATE.sid) {
         reject(new Error('E_NO_SID'));
       } else {
-        resolve(pollURL + STATE.sid);
+        resolve(pollURL);
       }
     }))
 

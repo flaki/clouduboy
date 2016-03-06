@@ -116,6 +116,7 @@
     return updateEditorContents(v);
   }
 
+  let initedSources = false;
   function initSources() {
     // Fetch loadable sources
     return API.fetch("/sources").then(function(r) {
@@ -126,21 +127,28 @@
       // Load selector
       var toolbarLoad = document.querySelector('select[name="load"]');
 
+      // Remove contents
+      toolbarLoad.innerHTML = '';
+
       // Add options
       data.groups.forEach(function(group) {
         toolbarLoad.insertAdjacentHTML("beforeend",
           '<optgroup label="'+group.title+'":>'
           + data.sources
-                  .filter( (i) => i.id.match( new RegExp("^"+group.id) ) )
-                  .map(    (i) => '<option value="'+i.id+'">'+i.title+'</option>' )
+                  // Only sourcs from this group
+                  .filter( src => src.id.match( new RegExp("^"+group.id) ) )
+                  // Hide sources incompatible with active target
+                  .filter( src => !( src.target && src.target !== Clouduboy.activeTarget ) )
+                  // Render option
+                  .map(    src => '<option value="'+src.id+'">'+src.title+'</option>' )
                   .join('')
           +'</optgroup>'
         );
       });
 
       // Set up source/template switch handler
-      if (toolbarLoad) {
-        toolbarLoad.addEventListener('change', (e) => {
+      if (toolbarLoad && !initedSources) {
+        toolbarLoad.addEventListener('change', e => {
           var data = { 'load': e.target.value };
           //console.log(e.target, e.target.value, data);
 
@@ -165,6 +173,9 @@
           }
         });
       }
+
+      // Initialized sources
+      initedSources = true;
     });
   }
 
@@ -208,6 +219,53 @@
     });
   }
 
+  function initTargets() {
+    // Load selector
+    var select = document.querySelector('select[name="target"]');
+
+    // Fetch loadable sources
+    return API.fetch("/targets").then(function (r) {
+      return r.json();
+
+      // Populate selector & set up event handlers
+    }).then(function (data) {
+      // Store active target
+      Clouduboy.activeTarget = data.activeTarget;
+
+      // Add options
+      if (select) {
+        select.insertAdjacentHTML('beforeend', data.targets.reduce( (out, target) => {
+          return out
+            + '<option value="' + target.id + '"'
+              + (target.id === data.activeTarget ? 'selected' : '' )
+            + '>' + target.name + '</option>';
+        }, ''));
+      }
+
+      // Handle changes and load data
+    }).then(function () {
+      if (select) select.addEventListener('change', e => {
+        var data = new URLSearchParams;
+
+        // New target
+        data.append('target', e.target.value);
+        console.log(data.toString());
+
+        // Fetch file source code
+        API.fetch('/targets', {
+          method: 'post',
+          body: data
+        })
+        .then( _ => {
+          Clouduboy.activeTarget = e.target.value;
+        })
+
+        // Update displayed template sources
+        .then(initSources)
+      });
+    });
+  }
+
   function storeCurrentFilename(r) {
     let disposition = r.headers.get('Content-Disposition');
     let filename = (disposition.match(/filename="([^"]+)"/)||[])[1];
@@ -220,11 +278,11 @@
   function init() {
     return Promise.resolve()
 
+      // Init the "targets" dropdown
+      .then(initTargets)
+
       // Init UI "sources" dropdown
       .then(initSources)
-
-      // TODO: Init Library switcher
-      //.then()
 
       // Init UI "files" dropdown
       .then(initFiles)

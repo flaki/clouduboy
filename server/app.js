@@ -150,8 +150,14 @@ cdb.post('/load', require('./api/load.js').all );
 // List files for current session
 cdb.get('/files', require('./api/files.js').all);
 
-// List files for current session
+// Select edited file for current session
 cdb.get('/edit/:file?', require('./api/edit.js').all);
+
+
+// List targets available
+cdb.get('/targets', require('./api/targets.js').get);
+// Set active target
+cdb.post('/targets', require('./api/targets.js').post);
 
 
 // Build & report errors on posted document

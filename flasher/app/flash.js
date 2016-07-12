@@ -20,8 +20,9 @@ function reset(cfg) {
 
   return new Promise(function(resolve, reject) {
     var resetSP = new Serialport.SerialPort(cfg.PORT, {
-      baudRate: 1200
-    }, false);
+      baudRate: 1200,
+      autoOpen: false
+    });
 
     resetSP.open(function (error) {
       if (error) {
@@ -60,8 +61,9 @@ function reset(cfg) {
 function flash(cfg) {
   return new Promise(function(resolve, reject) {
     var bootloaderSP = new Serialport.SerialPort(cfg.PORT, {
-      baudRate: cfg.BAUDRATE
-    }, false);
+      baudRate: cfg.BAUDRATE,
+      autoOpen: false
+    });
 
     bootloaderSP.open(function (error) {
       if (error) {

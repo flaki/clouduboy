@@ -12,6 +12,8 @@ function findArduboy() {
 
       // Find (first) Arduboy device
       for (let p of ports) {
+        console.log(p);
+
         // Bootloader mode
         if (p.vendorId === '0x2341' && p.productId === '0x8036') {
           return resolve(p.comName);
@@ -19,6 +21,12 @@ function findArduboy() {
         // Recovery mode
         if (p.vendorId === '0x2341' && p.productId === '0x0036') {
           return resolve(p.comName);
+        }
+
+        // Plug & Play ID (Windows)
+        console.log(p.pnpId)
+        if (p.pnpId.match(/VID_2341&PID_(0|8)036/)) {
+          return resolve(p.comName);  
         }
       }
 

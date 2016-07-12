@@ -30,7 +30,8 @@ STATE.s = 'init';
 let arg = 2, argv = process.argv;
 
 // Host to poll/download hex from
-if (argv.length >= arg && argv[arg].match(/^http/)) {
+console.log(arg,argv.length,argv)
+if (argv.length > arg && argv[arg].match(/^http/)) {
   STATE.host = argv[arg];
   arg++;
 

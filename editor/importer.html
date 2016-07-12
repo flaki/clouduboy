@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clouduboy Image Importer</title>
+    <style>
+      canvas {
+        background: black; image-rendering: -moz-crisp-edges;
+      }
+    </style>
+  </head>
+
+  <body>
+    <input type="file" />
+    <button id="nudgeleft">&larr;</button>
+    <button id="nudgeright">&rarr;</button>
+    <button id="decwidth">&rarr;&larr;</button>
+    <button id="incwidth">&larr;&rarr;</button>
+    <button id="topup">&uarr;</button>
+    <button id="topdown">&darr;</button>
+    <button id="decheight">&darr;&uarr;</button>
+    <button id="incheight">&uarr;&darr;</button>
+    <div id="image"></div>
+    <canvas id="canvas" width="128" height="64"></canvas>
+    <script src="js/importer.js"></script>
+  </body>
+</html>

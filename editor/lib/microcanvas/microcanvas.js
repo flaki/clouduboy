@@ -21,6 +21,12 @@
   MCP.loadSprite = function(src) {
     return loadBytestream(src);
   }
+  MCP.loadTune = function(src) {
+    let contents = arrayInitializerContent(src);
+
+    console.log(contents);
+    return new ArduboyScore(contents);
+  }
   MCP.everyXFrame = function(frames) {
      return this.frameCount % frames == 0;
   }
@@ -61,7 +67,6 @@
 
     // Set up drawing font
     setFont.call(this);
-    console.log("Font: ", this.gfont);
 
     cb(this);
 
@@ -72,7 +77,13 @@
       cb();
 
       this.frameCount++;
-      window.requestAnimationFrame(this.loopCallback);
+
+      // Slow down framerate (for debugging etc)
+      if (this.playbackRate && this.playbackRate !== 1) {
+        window.setTimeout(this.loopCallback, this.frameRate/this.playbackRate);
+      } else {
+        window.requestAnimationFrame(this.loopCallback);
+      }
     }).bind(this);
   };
 
@@ -103,9 +114,6 @@
     let height = 0;
 
     let pix = new PixelData(codeToPif(bs));
-    console.log(pix);
-    console.log(pix.pif);
-    console.log("Frames: ", pix.frames, pix.frame(0).pif, pix.frame(1).pif);
 
     if (pix.frames) {
       return [...Array(pix.frames).keys()].map(i => loadBitmap(pix.frame(i).pif) );
@@ -114,17 +122,23 @@
     return loadBitmap(pix.pif);
   }
 
+  function arrayInitializerContent(statement) {
+    try {
+      return ( statement
+        .replace(/\r|\n|\t/g, ' ') // remove line breaks and tabs
+        .match(/=\s*[{\[](.*)[}\]]/)[1] // match core data
+        .replace(/\s+/g, ' ').trim() // clean up whitespace
+      ) || statement;
+    } catch(e) {};
+
+    return statement;
+  }
+
   function codeToPif(contents, label, statement) {
     var pdata = {};
     statement = statement || contents;
 
-    try {
-      contents = ( statement
-        .replace(/\r|\n|\t/g, ' ') // remove line breaks and tabs
-        .match(/=\s*[{\[](.*)[}\]]/)[1] // match core data
-        .replace(/\s+/g, ' ').trim() // clean up whitespace
-      ) || contents;
-    } catch(e) {};
+    contents = arrayInitializerContent(statement);
 
     // Pixelsprite id (label)
     pdata.id = label;
@@ -154,7 +168,6 @@
       pdata.ambiguous = false;
     }
 
-    console.log(pdata);
     return pdata;
   }
 

@@ -32,8 +32,9 @@ function PixelData(input) {
   // If object data is not byte data continue with that data as input
   if (typeof input === 'object' && input.data instanceof Array) {
     if (typeof input.data[0] === 'number') {
-      this.bitmap = bytes2bitmap(input.data, input.w, input.h, (input.w && input.h && "explicit-size") );
-      this.w = this.bitmap[0].length;
+      this.bitmap = bytes2bitmap(input.data, input.w, input.h, input.frames, (input.w && input.h && "explicit-size") );
+      this.frames = input.frames;
+      this.w = this.bitmap[0].length / (input.frames||1);
       this.h = this.bitmap.length;
       this.id = input.id;
       return;
@@ -76,6 +77,14 @@ function PixelData(input) {
 
 PixelData.prototype = {
   get pif() {
+    // frames support
+    if ('$f' in this) {
+      return bitmap2pif(
+        this.bitmap
+          .map(row => row.slice(this.$f*this.w, (this.$f+1)*this.w))
+        , (this.id ? this.id+'_'+this.$f : void 0)
+      );
+    }
     return bitmap2pif(this.bitmap, this.id);
   },
   get bytes() {
@@ -98,6 +107,15 @@ PixelData.prototype = {
       console.log("Error matching PixelData: ", e);
       return false;
     }
+  },
+
+  // A "view" into the PixelData object, representing just a single frame
+  frame: function(n) {
+    if (n > (this.frames||0)) return this;
+
+    var fobj = Object.create(this);
+    fobj.$f = n;
+    return fobj;
   },
 
   // Create an object with all properties
@@ -193,7 +211,7 @@ function bitmap2rgba(bitmap, fg, bg) {
 }
 
 
-function bytes2bitmap(bytes,w,h,explicit) {
+function bytes2bitmap(bytes,w,h,frames,explicit) {
   // Width / height optional, assume square image @ 8x8 or multiples
   if (!explicit) {
     if (!h) {
@@ -204,14 +222,21 @@ function bytes2bitmap(bytes,w,h,explicit) {
     }
   }
 
-  var x,y;
+  var x,y,f;
   var bitmap = [];
-  for (y = 0; y<h; ++y) {
-    bitmap[y] = [];
-    for (x = 0; x<w; ++x) {
-      bitmap[y][x] = (bytes[(y >> 3) * w + x] & (1 << (y % 8))) ? 1 : 0;
+
+  f = 0;
+  do {
+
+    for (y = 0; y<h; ++y) {
+      bitmap[y] = bitmap[y] || [];
+      for (x = 0; x<w; ++x) {
+        bitmap[y][x + f*w] = (bytes[w * (f + (y >> 3)) + x] & (1 << (y % 8))) ? 1 : 0;
+      }
     }
-  }
+
+    ++f;
+  } while (f < frames);
 
   return bitmap;
 }

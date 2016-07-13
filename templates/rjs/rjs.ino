@@ -63,8 +63,7 @@ void intro()
   {
     arduboy.clear();
     arduboy.drawBitmap(44, 0, rjs_logo, 39,36, WHITE );
-    //arduboy.setCursor(46, i);
-    //arduboy.print("ARDUBOY");
+
     arduboy.drawBitmap(25, i, rjs, 78,15, WHITE );
     arduboy.display();
     delay(16);
@@ -78,10 +77,8 @@ void intro()
   arduboy.print("presents");
   arduboy.display();
 
-  //delay(2000);
-  //arduboy.tunes.tone(1318, 1);
-
   delay(1000);
+
 
   int y = 12;
   arduboy.drawBitmap(54-2, y-1,    dino_top,   20,18, BLACK);
@@ -97,7 +94,7 @@ void intro()
     delay(16+i);
 
     arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_top,   20,18, BLACK);
-    arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_top,   20,18, BLACK);
+    arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_leg_0,   20,18, BLACK);
     arduboy.display();
     delay(30-i);
   }

@@ -87,130 +87,153 @@ function delay(f) {
 }
 
 function loop() {
-  // pause render until it's time for the next frame
-  // automatically // if (!(arduboy.nextFrame())) return;
-
-  //for(int i = -8; i < 39; i = i + 2)
   if (intro) {
-    ++frame;
-
-    if (intro === 1) {
-      game.clear();
-      game.drawImage(rjsLogo, 44, 0 );
-
-      let y = frame*2 - 8;
-      game.drawImage(rjs, 25, y );
-
-      if (y < 38) {
-        return;
-      }
-
-      game.drawText("presents", 42, 55);
-      intro++;
-    }
-
-    if (intro === 2) {
-      //arduboy.tunes.tone(987, 120);
-      //delay(120);
-      //arduboy.tunes.tone(1318, 400);
-      sfxBling.play();
-
-      intro++;
-    }
-
-    if (intro === 3) {
-      if (!delay(60)) return;
-      intro++;
-    }
-
-    let y = 12;
-    if (intro === 4) {
-      //arduboy.drawBitmap(54-2, y-1,    dino,   20,18, BLACK);
-      //arduboy.drawBitmap(54+1, y+1,    dino,   20,18, BLACK);
-      game.eraseImage(dino, 54-2, y-1);
-      game.eraseImage(dino, 54+1, y+1);
-
-      frame = 0;
-      intro++;
-    }
-
-    if (intro === 5) {
-    //for (int i=0; i<12; ++i) {
-      let rx = Math.floor(Math.random()*(2+1)) -1; // = random(0,2)-1;
-      let ry = Math.floor(Math.random()*(2+1)) -1;
-      let noise = 0;// (frame%6>2 ? frame : -frame )/6;
-
-      if (frame%3 === 0) {
-        game.drawImage(dino, rx+ 54, ry+ y);
-      } else {
-        game.eraseImage(dino, rx+ 54+noise, ry+ y+noise);
-      }
-//      arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_top,   20,18, BLACK);
-
-      if (frame < 36) {
-        return;
-      }
-
-      intro++;
-      frame = 0;
-    }
-
-    if (intro === 6) {
-      y += (frame + (frame>6?frame-6:0) + (frame>12?frame-12:0))|0;
-      if (y > 40) y = 40;
-      //for(; y < 41; y += 1+y/10)
-      game.clear();
-      game.drawImage(rjsLogo, 44, 0 );
-      game.drawImage(rjs, 25, 38 );
-
-      game.drawText("pr   nts", 42, 55);
-      game.drawText("ese", 54, 55 + (y>32 ? y-32 : 0));
-
-      game.eraseImage(dino, 54-2, y-1);
-      game.eraseImage(dino, 54+1, y+1);
-
-      game.drawImage(dino, 54, y);
-
-      if (y < 40) {
-        return;
-      }
-
-      //      arduboy.tunes.tone(246, 20);
-      //      delay(20);
-      //      arduboy.tunes.tone(174, 40);
-      //new ArduboyScore("0x90, 47, 0, 33, 0x80, 0x90, 41, 0, 50, 0x80, 0xf0").play();
-      sfxPlop.play();
-
-      intro++;
-    }
-
-    if (intro === 7) {
-      if (!delay(120)) return;
-
-      intro++;
-      frame = 0;
-    }
-
-    if (intro === 8) {
-      //for (int i = 0; i < 64; ++i) {
-      y = 40;
-      let z = frame<54 ? frame : 54;
-
-      game.eraseImage(dino, 54-z+1, y);
-
-      //arduboy.drawLine(0, i<32 ? i*2 : 127-i*2, 127,i<32 ? i*2 : 127-i*2, BLACK);
-      game.clearRect(0, frame<32 ? frame*2 : 127-frame*2, 128, 1);
-
-      game.drawImage(dino, 54-z, y);
-    }
-
-    if (!delay(240)) return;
-    intro = 0;
+    gameIntro();
+    return;
   }
 
   // Clear display, redraw background text
   game.clear();
   game.drawText("Animate\nDemo", 0,0, 3);
+}
+
+function gameIntro() {
+  // pause render until it's time for the next frame
+  // automatically // if (!(arduboy.nextFrame())) return;
+
+  //for(int i = -8; i < 39; i = i + 2)
+  ++frame;
+
+  if (intro === 1) {
+    game.clear();
+    game.drawImage(rjsLogo, 44, 0 );
+
+    let y = frame*2 - 8;
+    game.drawImage(rjs, 25, y );
+
+    if (y < 38) {
+      return;
+    }
+
+    game.drawText("presents", 42, 55);
+    intro++;
+  }
+
+  if (intro === 2) {
+    //arduboy.tunes.tone(987, 120);
+    //delay(120);
+    //arduboy.tunes.tone(1318, 400);
+    sfxBling.play();
+
+    intro = 2.1;
+  }
+
+  if (intro > 2 && intro < 3) {
+    // Flash the RGB led on the Arduboy or the screen in the browser to a purple color!
+    game.custom({
+      canvas: `document.body.style.backgroundColor='rgb(96, 0, 128)'`,
+      arduboy: `setRGBled(96, 0, 128)`,
+    });
+
+    if (!delay(6)) return;
+
+    game.custom({
+      canvas: `document.body.style.backgroundColor=''`,
+      arduboy: `setRGBled(0, 0, 0)`,
+    });
+
+    intro = 3;
+  }
+
+  if (intro === 3) {
+    if (!delay(60)) return;
+    intro++;
+  }
+
+  let y = 12;
+  if (intro === 4) {
+    //arduboy.drawBitmap(54-2, y-1,    dino,   20,18, BLACK);
+    //arduboy.drawBitmap(54+1, y+1,    dino,   20,18, BLACK);
+    game.eraseImage(dino, 54-2, y-1);
+    game.eraseImage(dino, 54+1, y+1);
+
+    frame = 0;
+    intro++;
+  }
+
+  if (intro === 5) {
+  //for (int i=0; i<12; ++i) {
+    let rx = Math.floor(Math.random()*(2+1)) -1; // = random(0,2)-1;
+    let ry = Math.floor(Math.random()*(2+1)) -1;
+    let noise = 0;// (frame%6>2 ? frame : -frame )/6;
+
+    if (frame%3 === 0) {
+      game.drawImage(dino, rx+ 54, ry+ y);
+    } else {
+      game.eraseImage(dino, rx+ 54+noise, ry+ y+noise);
+    }
+//      arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_top,   20,18, BLACK);
+
+    if (frame < 36) {
+      return;
+    }
+
+    intro++;
+    frame = 0;
+  }
+
+  if (intro === 6) {
+    y += (frame + (frame>6?frame-6:0) + (frame>12?frame-12:0))|0;
+    if (y > 40) y = 40;
+    //for(; y < 41; y += 1+y/10)
+    game.clear();
+    game.drawImage(rjsLogo, 44, 0 );
+    game.drawImage(rjs, 25, 38 );
+
+    game.drawText("pr   nts", 42, 55);
+    game.drawText("ese", 54, 55 + (y>32 ? y-32 : 0));
+
+    game.eraseImage(dino, 54-2, y-1);
+    game.eraseImage(dino, 54+1, y+1);
+
+    game.drawImage(dino, 54, y);
+
+    if (y < 40) {
+      return;
+    }
+
+    //      arduboy.tunes.tone(246, 20);
+    //      delay(20);
+    //      arduboy.tunes.tone(174, 40);
+    //new ArduboyScore("0x90, 47, 0, 33, 0x80, 0x90, 41, 0, 50, 0x80, 0xf0").play();
+    sfxPlop.play();
+
+    intro++;
+  }
+
+  if (intro === 7) {
+    if (!delay(120)) return;
+
+    intro++;
+    frame = 0;
+  }
+
+  if (intro === 8) {
+    //for (int i = 0; i < 64; ++i) {
+    y = 40;
+    let z = frame<54 ? frame : 54;
+
+    game.eraseImage(dino, 54-z+1, y);
+
+    //arduboy.drawLine(0, i<32 ? i*2 : 127-i*2, 127,i<32 ? i*2 : 127-i*2, BLACK);
+    game.clearRect(0, frame<32 ? frame*2 : 127-frame*2, 128, 1);
+
+    game.drawImage(dino, 54-z, y);
+  }
+
+  if (!delay(240)) return;
+  intro = 0;
+
 }
 
 console.log("MicroCanvas: Animate Demo");

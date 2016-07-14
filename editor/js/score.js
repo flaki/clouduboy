@@ -148,7 +148,7 @@
     var ch = [];
 
     // Create new synth, close old one if one exists
-    if (this.synth) this.synth.close();
+    if (this.synth) this.synth.stop();
     var synth = this.synth = new ClouduboySynth();
 
     // Play score from tab data

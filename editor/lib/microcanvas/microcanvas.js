@@ -61,6 +61,11 @@
   };
   MCP.detectCollision = function() {};
   MCP.buttonPressed = function(button) {};
+  MCP.custom = function (platforms) {
+    if ('canvas' in platforms) {
+      ( new Function(platforms.canvas) ).call(this);
+    }
+  };
   MCP.setup = function(cb, fps = 60) {
     this.frameCount = 0;
     this.frameRate = fps;

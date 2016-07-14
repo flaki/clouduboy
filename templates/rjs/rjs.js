@@ -114,27 +114,28 @@ function *gameIntro() {
     yield 1; // essentially delay(16);
   }
 
-    game.drawText("presents", 42, 55);
+  game.drawText("presents", 42, 55);
 
-    //arduboy.tunes.tone(987, 120);
-    //delay(120);
-    //arduboy.tunes.tone(1318, 400);
-    sfxBling.play();
+  //arduboy.tunes.tone(987, 120);
+  //delay(120);
+  //arduboy.tunes.tone(1318, 400);
+  sfxBling.play();
 
-    // Flash the RGB led on the Arduboy or the screen in the browser to a purple color!
-    game.custom({
-      canvas: `document.body.style.backgroundColor='rgb(96, 0, 128)'`,
-      arduboy: `setRGBled(96, 0, 128)`,
-    });
 
-    yield 6; // essentially delay(6*16);
+  // Flash the RGB led on the Arduboy or the screen in the browser to a purple color!
+  game.custom({
+    canvas: `document.body.style.backgroundColor='rgb(96, 0, 128)'`,
+    arduboy: `setRGBled(96, 0, 128)`,
+  });
 
-    game.custom({
-      canvas: `document.body.style.backgroundColor=''`,
-      arduboy: `setRGBled(0, 0, 0)`,
-    });
+  yield 6; // essentially delay(6*16);
 
-    yield 60;
+  game.custom({
+    canvas: `document.body.style.backgroundColor=''`,
+    arduboy: `setRGBled(0, 0, 0)`,
+  });
+
+  yield 60;
 
 
   let y = 12;
@@ -154,7 +155,7 @@ function *gameIntro() {
     } else {
       game.eraseImage(dino, rx+ 54+noise, ry+ y+noise);
     }
-//      arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_top,   20,18, BLACK);
+    //arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,    dino_top,   20,18, BLACK);
 
     yield 1;
   }
@@ -180,13 +181,13 @@ function *gameIntro() {
     yield 1;
   }
 
-    //      arduboy.tunes.tone(246, 20);
-    //      delay(20);
-    //      arduboy.tunes.tone(174, 40);
-    //new ArduboyScore("0x90, 47, 0, 33, 0x80, 0x90, 41, 0, 50, 0x80, 0xf0").play();
-    sfxPlop.play();
+  //      arduboy.tunes.tone(246, 20);
+  //      delay(20);
+  //      arduboy.tunes.tone(174, 40);
+  //new ArduboyScore("0x90, 47, 0, 33, 0x80, 0x90, 41, 0, 50, 0x80, 0xf0").play();
+  sfxPlop.play();
 
-    yield 120;
+  yield 120;
 
 
   //for (int i = 0; i < 64; ++i) {

@@ -2,8 +2,8 @@
 
 let game = new MicroCanvas();
 
-let rjs, rjsLogo, dino;
-let sfxBling, sfxPlop;
+let rjs, rjsLogo, dino, dinoLegs, dinoKaput, clouds, cactus;
+let sfxBling, sfxPlop, sfxBoing, sfxBust;
 
 game.setup(function(mctx) {
   rjs = mctx.loadGraphics(
@@ -42,13 +42,58 @@ game.setup(function(mctx) {
   );
 
   dino = mctx.loadGraphics(
-    `PROGMEM const unsigned char dino_top[] = { /*20x24*/
+    `PROGMEM const unsigned char dino[] = { /*20x24*/
       0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,
       0xfe, 0xff, 0xfb, 0xff, 0xff, 0xbf, 0xbf, 0xbf, 0x3f, 0x3e,
       0x7e, 0xf8, 0xf0, 0xe0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff,
       0xff, 0xff, 0xff, 0x7f, 0x4,  0xc,  0x0,  0x0,  0x0,  0x0,
       0x0,  0x0,  0x1,  0x3,  0x7,  0x7f, 0x5f, 0xf,  0x7,  0xf,
-      0x7f, 0x43, 0x1,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0 };`
+      0x7f, 0x43, 0x1,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0
+    };`
+  );
+
+  dinoLegs = mctx.loadGraphics(
+    `PROGMEM const unsigned char dino_legs[] = { /*20x5x2*/
+      0x00, 0x00, 0x00, 0x00, 0x01, 0x0f, 0x0b, 0x01, 0x01, 0x03,
+      0x1f, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+      0x00, 0x00, 0x00, 0x00, 0x01, 0x1f, 0x17, 0x03, 0x01, 0x03,
+      0x0f, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };`
+  );
+
+  dinoKaput = mctx.loadGraphics(
+    `PROGMEM const unsigned char dino_tumble[] = { /* 30x18 */
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x7e, 0xf8, 0xf0, 0xe0, 0xe0, 0xf0, 0xf0, 0xf8, 0xf8, 0xf8,
+      0xf8, 0xf0, 0xf0, 0xf0, 0xe0, 0xe0, 0xc0, 0xc0, 0x80, 0xc0,
+      0xf0, 0xa8, 0xd8, 0xa8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf0,
+      0x00, 0x00, 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+      0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01,
+      0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x01
+    };`
+  );
+
+  clouds = mctx.loadGraphics(
+    `PROGMEM const unsigned char clouds[] = { /* 20x16x1 */
+      0x1c, 0x22, 0x22, 0x22, 0x24, 0x10, 0x12, 0x2a, 0x21, 0x41,
+      0x41, 0x41, 0x42, 0x4a, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    };`
+  );
+
+  cactus = mctx.loadGraphics(
+    `PROGMEM const unsigned char cactus[] = { /* 16x24 */
+      0x00, 0x00, 0x00, 0x00, 0xfe, 0xff, 0xff, 0xfe,
+      0x00, 0xc0, 0xc0, 0x80, 0x00, 0x00, 0x00, 0x00,
+      0xfe, 0xff, 0xfe, 0x00, 0xff, 0xff, 0xff, 0xff,
+      0xc0, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x00, 0x00,
+      0x01, 0x03, 0x03, 0x83, 0xff, 0xff, 0xff, 0xff,
+      0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };`
   );
 
   sfxBling = mctx.loadTune(
@@ -67,6 +112,22 @@ game.setup(function(mctx) {
     };`
   );
 
+  sfxBoing = mctx.loadTune(
+    `const byte PROGMEM score [] = {
+         0x90, 57, 0, 33, 0x80,
+         0x90, 69, 0, 83, 0x80,
+         0xf0
+    };`
+  );
+
+  sfxBust = mctx.loadTune(
+    `const byte PROGMEM score [] = {
+         0x90, 47, 0, 50, 0x80,
+         0x90, 41, 0, 99, 0x80,
+         0xf0
+    };`
+  );
+
   //mctx.playbackRate = 1/3;
   mctx.loop(loop);
 });
@@ -81,14 +142,17 @@ function loop() {
   if (intro) {
      if (!_running) _running = gameIntro();
 
+     if (game.buttonPressed("enter")) return gameStart();
+
      if (game._delay && game._delay > 0) {
         --game._delay;
      } else {
        let c = _running.next();
 
        if (c.done) {
-         intro = false;
          _running = null;
+
+         return gameStart();
        } else {
          game._delay = c.value -1;
        }
@@ -97,9 +161,33 @@ function loop() {
      return;
   }
 
-  // Clear display, redraw background text
+  // Clear display
   game.clear();
-  game.drawText("Animate\nDemo", 0,0, 3);
+
+  // Flash active controls
+  if (game.everyXFrame(5)) {
+    if (game.buttonPressed("left")) {
+      game.drawText("<", 80,50);
+    }
+    if (game.buttonPressed("right")) {
+      game.drawText(">", 93,50);
+    }
+    if (game.buttonPressed("up")) {
+      game.drawText("/\\", 84,45);
+    }
+    if (game.buttonPressed("down")) {
+      game.drawText("\\/", 84,55);
+    }
+      if (game.buttonPressed("space")) {
+      game.drawText("A", 102,50);
+    }
+    if (game.buttonPressed("enter")) {
+      game.drawText("B", 110,50);
+    }
+  }
+
+
+  gamePlay();
 }
 
 
@@ -204,7 +292,162 @@ function *gameIntro() {
     yield 1;
   }
 
-  yield 240;
+  yield 10;
+}
+
+
+
+let d_jump_t = 0;
+let d_jump = 0;
+
+let d_tumble_t = false;
+
+let d_run = true;
+
+function gameStart() {
+  intro = false;
+
+  d_tumble_t = false;
+  d_run = true;
+
+  d_jump_t = 0;
+  d_jump = 0;
+
+  game.d = 0;
+  game.ox = 130;
+}
+
+function gamePlay() {
+  if (!d_run && game.buttonPressed("enter")) {
+    gameStart();
+  };
+
+  // increase distance whilst running
+  game.d = game.d||0;
+  game.delta = game.delta||0;
+  if (d_run && (++game.delta > 4)) {
+    game.delta = 0; ++game.d;
+  }
+
+  // obstacles
+  game.ox = game.ox||130;
+  if (d_run) {
+    game.ox -= (game.frameCount%2)*(game.d/100|0) + 2;
+    if (game.ox < -15) game.ox += 140 + Math.floor(0 + Math.random()*(60-0+1)); // random(0,60)
+  }
+
+
+  // jump!
+  if (d_run && !d_jump_t && (game.buttonPressed("space") || game.buttonPressed("up"))) {
+    d_jump_t = 1;
+    d_jump=5;
+
+    //arduboy.tunes.tone(440, 40);
+    sfxBoing.play();
+
+    //console.log(d_jump_t,d_jump);
+  } else if (d_jump_t) {
+    //if (d_jump_t == 3) arduboy.tunes.tone(880, 80);
+
+    ++d_jump_t;
+
+    if (d_jump_t<6) {
+      d_jump +=6;
+    } else if (d_jump_t<9) {
+      d_jump +=2;
+    } else if (d_jump_t<13) {
+      d_jump +=1;
+    } else if (d_jump_t == 16 || d_jump_t == 18) {
+      d_jump +=1;
+    } else if (d_jump_t == 20 || d_jump_t == 22) {
+      d_jump -=1;
+    } else if (d_jump_t>38) {
+      d_jump = 0;
+      d_jump_t = 0;
+    } else if (d_jump_t>32) {
+      d_jump -=6;
+    } else if (d_jump_t>29) {
+      d_jump -=2;
+    } else if (d_jump_t>25) {
+      d_jump -=1;
+    }
+    //console.log(d_jump_t,d_jump);
+  }
+
+  let cloud_1_y = 5;
+  let dy = 40 - d_jump;
+
+
+
+
+  // parallax clouds
+  game.drawImage(clouds[0], 130 -(game.d%150),cloud_1_y);
+
+  if (game.d%128 == 0) {
+    cloud_1_y = Math.floor(0 + Math.random()*(10-0+1));// random(0,10);
+  }
+
+  // terrain
+  if (d_jump > 4) {
+    game.fillRect( 0,60, 128,1);
+  } else {
+    game.fillRect( 0,60, 4,1);
+    game.fillRect(12,60, 116,1); // => drawLine(x,y, x+w-1, y+h-1, WHITE )
+    //arduboy.drawLine(12,60,127,60,WHITE);
+  }
+
+  // obstacles
+  game.drawImage(cactus, game.ox,40);
+
+
+
+  //arduboy.drawBitmap(0,dy,dino_top,20,18,WHITE);
+  if (d_tumble_t) {
+    game.drawImage(dinoKaput, 0,dy);
+  } else {
+    game.drawImage(dino, 0,0, 20,18, 0,dy ,20,18);
+
+    // Legs phases
+    let legPhase = ((game.frameCount % 8) / 4)|0;
+
+    // Run, Dino, Run!
+    if (d_run && !d_jump) {
+      //arduboy.drawBitmap(0,dy+18,dino_leg_2,20,5,WHITE);
+      game.drawImage(dinoLegs[legPhase], 0,dy+18);
+    } else {
+      //arduboy.drawBitmap(0,dy+18,dino_leg_0,20,5,WHITE);
+      game.drawImage(dino, 0,18, 20,5, 0,dy+18, 20,5);
+    }
+  }
+
+  // hud
+  //arduboy.setCursor(0, 0);
+  //sprintf(text,"DIST: %d",d);
+  game.drawText("DIST: "+game.d, 0,0);
+
+
+
+  // hit detection
+  if (!d_tumble_t && game.detectCollision(dino, 0,dy, cactus, game.ox,40)) {
+    d_tumble_t = 1;
+    sfxBust.play();
+  }
+
+  if (d_tumble_t) {
+    //if (d_tumble_t == 1) {
+    //  arduboy.tunes.tone(246, 80);
+    //} else if (d_tumble_t == 6) {
+    //  arduboy.tunes.tone(174, 200);
+    //}
+
+    ++d_tumble_t;
+    if (d_jump > -4) {
+      d_jump -= 1;
+      game.ox -= 1;
+    } else {
+      d_run = 0;
+    }
+  }
 }
 
 console.log("MicroCanvas: Animate Demo with Generators");

@@ -1,13 +1,34 @@
-"use strict";
+'use strict';
 
 (function() {
   function MicroCanvas(ctx) {
-    ctx = ctx || document.querySelector('canvas.microcanvas').getContext("2d");
+    ctx = ctx || document.querySelector('canvas.microcanvas').getContext('2d');
     ctx.width = ctx.canvas.width;
     ctx.height = ctx.canvas.height;
 
     // Disables interpolation on drawImage calls
     ctx.mozImageSmoothingEnabled = false;
+
+    // Keystroke emulation
+    ctx.$buttons = {};
+    window.addEventListener('keydown', e => {
+      if (e.key==='ArrowLeft') ctx.$buttons.left = true;
+      if (e.key==='ArrowRight') ctx.$buttons.right = true;
+      if (e.key==='ArrowUp') ctx.$buttons.up = true;
+      if (e.key==='ArrowDown') ctx.$buttons.down = true;
+      if (e.key===' ') ctx.$buttons.A = true;
+      if (e.key==='Enter') ctx.$buttons.B = true;
+    });
+
+    window.addEventListener('keyup', e => {
+      if (e.key==='ArrowLeft') ctx.$buttons.left = false;
+      if (e.key==='ArrowRight') ctx.$buttons.right = false;
+      if (e.key==='ArrowUp') ctx.$buttons.up = false;
+      if (e.key==='ArrowDown') ctx.$buttons.down = false;
+      if (e.key===' ' ) ctx.$buttons.A = false;
+      if (e.key==='Enter') ctx.$buttons.B = false;
+    });
+
 
     let mc = Object.assign(ctx, MicroCanvas.prototype);
     return mc;
@@ -60,7 +81,10 @@
     };
   };
   MCP.detectCollision = function() {};
-  MCP.buttonPressed = function(button) {};
+  MCP.buttonPressed = function(button) {
+    if (button in this.$buttons) return this.$buttons[button];
+    return false;
+  };
   MCP.custom = function (platforms) {
     if ('canvas' in platforms) {
       ( new Function(platforms.canvas) ).call(this);
@@ -181,7 +205,7 @@
   function cleanComments(str) {
     return str.replace(
       RX_CLEANCOMMENTS,
-      function(i) { return " ".repeat(i.length); }
+      function(i) { return ' '.repeat(i.length); }
     );
   }
 

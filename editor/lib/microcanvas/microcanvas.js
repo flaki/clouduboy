@@ -82,7 +82,63 @@
       ++c;
     };
   };
-  MCP.detectCollision = function() {};
+  MCP.detectCollision = function (s1, x1,y1, s2, x2,y2, precise=true) {
+    let result = false;
+
+    this.save();
+
+    this.strokeStyle = "rgba(0,200,0,.3)";
+    this.strokeRect(x1 +.5,y1 +.5, s1.width -1,s1.height -1);
+    this.strokeRect(x2 +.5,y2 +.5, s2.width -1,s2.height -1);
+
+    // Basic collision rectangle
+    let cx = x1>x2 ? x1 : x2;
+    let cw = x1>x2 ? x2+s2.width-x1 : x1+s1.width-x2;
+
+    let cy = y1>y2 ? y1 : y2;
+    let ch = y1>y2 ? y2+s2.height-y1 : y1+s1.height-y2;
+
+    if (cx>0 && cy>0 && cw>0 && ch>0) {
+      this.fillStyle = "rgba(200,0,0,.5)";
+      this.fillRect(cx,cy, cw,ch);
+      //console.log(cx,cy,cw,ch);
+      result = true;
+    }
+
+    // No bounding rect collision or no precise check requested
+    if (!precise || !result) {
+      this.restore();
+      return result;
+    }
+
+    // Optimization: Cache context on graphics objects
+    s1.context = s1.context || s1.getContext('2d');
+    s2.context = s2.context || s2.getContext('2d');
+
+    let id1 = s1.context.getImageData(x1>x2 ? 0 : x2-x1, y1>y2 ? 0 : y2-y1, cw,ch);
+    let id2 = s2.context.getImageData(x1<x2 ? 0 : x1-x2, y1<y2 ? 0 : y1-y2, cw,ch);
+
+    //console.log(id1bpp,id1);
+    //console.log(id2bpp,id2);
+
+    this.fillStyle = "yellow";
+
+    let collisions = 0;
+    for (let i=0; i<id1.data.length; i+=4) {
+      if (
+        id1.data[i] > 0 && id2.data[i] > 0 // monochrome test
+      ) {
+        ++collisions;
+        this.fillRect(cx + (i/4)%cw,cy + (i/4/cw)|0, 1,1);
+      }
+    }
+  //  console.log("Overlap: ", id1.width*id1.height, ", collisions: ", collisions, "px");
+  //  console.log(s1, x1,y1, s1.width,s1.height);
+  //  console.log(s2, x2,y2, s2.width,s2.height);
+  //  console.log('---')
+    this.restore();
+    return (collisions>0);
+  };
   MCP.buttonPressed = function(button) {
     if (button in this.$buttons) return this.$buttons[button];
     if (button === "space") return !!this.$buttons.A;

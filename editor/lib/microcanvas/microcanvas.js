@@ -29,6 +29,8 @@
       if (e.key==='Enter') ctx.$buttons.B = false;
     });
 
+    // default fillStyle
+    ctx.fillStyle = "white";
 
     let mc = Object.assign(ctx, MicroCanvas.prototype);
     return mc;
@@ -83,6 +85,8 @@
   MCP.detectCollision = function() {};
   MCP.buttonPressed = function(button) {
     if (button in this.$buttons) return this.$buttons[button];
+    if (button === "space") return !!this.$buttons.A;
+    if (button === "enter") return !!this.$buttons.B;
     return false;
   };
   MCP.custom = function (platforms) {

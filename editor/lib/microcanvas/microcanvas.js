@@ -130,10 +130,7 @@
         this.fillRect(cx + (i/4)%cw,cy + (i/4/cw)|0, 1,1);
       }
     }
-  //  console.log("Overlap: ", id1.width*id1.height, ", collisions: ", collisions, "px");
-  //  console.log(s1, x1,y1, s1.width,s1.height);
-  //  console.log(s2, x2,y2, s2.width,s2.height);
-  //  console.log('---')
+
     this.restore();
     return (collisions>0);
   };
@@ -147,6 +144,9 @@
     if ('canvas' in platforms) {
       ( new Function(platforms.canvas) ).call(this);
     }
+  };
+  MCP.random = function(min, max) {
+    return Math.floor(min + Math.random()*(max-min+1));
   };
   MCP.setup = function(cb, fps = 60) {
     this.frameCount = 0;

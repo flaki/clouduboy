@@ -3,7 +3,7 @@
 let game = new MicroCanvas();
 
 // Graphics assets
-let rjs, rjsLogo, dino, dinoEek, dinoLegs, dinoKaput, clouds, cactus;
+let gfxRjs, gfxRjsLogo, gfxDino, gfxDinoEek, gfxDinoLegs, gfxDinoKaput, gfxClouds, gfxCactus;
 
 // Sound assets
 let sfxBling, sfxPlop, sfxBoing, sfxEek, sfxBust;
@@ -23,8 +23,8 @@ let baseline, baselineDino;
 // Setup phase
 // Load assets, preconfigure globals, set up microcanvas subsystem
 game.setup(function(game) {
-  rjs = game.loadGraphics(
-    `PROGMEM const unsigned char rjs[] = { /*77x15*/
+  gfxRjs = game.loadGraphics(
+    `PROGMEM const unsigned char gfxRjs[] = { /*77x15*/
        0xfe, 0x01, 0xfe, 0x02, 0x85, 0x85, 0x05, 0xc5, 0xb9, 0xc2, 0x3c, 0x00, 0x00, 0x00,
        0xfe, 0x01, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfe, 0x01, 0xfe, 0x00, 0x00, 0x00, 0x00,
        0xfe, 0x01, 0x7e, 0x40, 0x40, 0x40, 0x40, 0x80, 0xfe, 0x01, 0xfe, 0x00, 0x00, 0x00,
@@ -39,8 +39,8 @@ game.setup(function(game) {
        0x1b, 0x34, 0x39, 0x0f };`
   );
 
-  rjsLogo = game.loadGraphics(
-    `PROGMEM const unsigned char rjs_logo[] = { /*39x36*/
+  gfxRjsLogo = game.loadGraphics(
+    `PROGMEM const unsigned char gfxRjs_logo[] = { /*39x36*/
       0x00, 0x00, 0x00, 0x00, 0xc0, 0x60, 0xb0, 0x50, 0x28, 0x2c, 0x14, 0x8a, 0x8a,
       0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5,
       0xa5, 0x8a, 0x8a, 0x14, 0x2c, 0x28, 0x50, 0xb0, 0x60, 0xc0, 0x00, 0x00,
@@ -58,8 +58,8 @@ game.setup(function(game) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };`
   );
 
-  dino = game.loadGraphics(
-    `PROGMEM const unsigned char dino[] = { /*20x24*/
+  gfxDino = game.loadGraphics(
+    `PROGMEM const unsigned char gfxDino[] = { /*20x24*/
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0xfe, 0xff, 0xfb, 0xff, 0xff, 0xbf, 0xbf, 0xbf, 0x3f, 0x3e,
       0x7e, 0xf8, 0xf0, 0xe0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff,
@@ -69,8 +69,8 @@ game.setup(function(game) {
     };`
   );
 
-  dinoEek = game.loadGraphics(
-    `PROGMEM const unsigned char dino_eek[] = { /*20x24*/
+  gfxDinoEek = game.loadGraphics(
+    `PROGMEM const unsigned char gfxDino_eek[] = { /*20x24*/
       0x00, 0x00, 0x00,  0x00, 0x00, 0x00,  0x00, 0x00, 0x00,  0x00, 0xfe, 0xf5,
       0xfb, 0xb5, 0xdf,  0x5f, 0x5f, 0x5f,  0x1f, 0x1e, 0x7e,  0xf8, 0xf0, 0xe0,
       0xe0, 0xf0, 0xf8,  0xfc, 0xfe, 0xff,  0xff, 0xff, 0xff,  0x7f, 0x04, 0x0c,
@@ -79,8 +79,8 @@ game.setup(function(game) {
     };`
   );
 
-  dinoLegs = game.loadGraphics(
-    `PROGMEM const unsigned char dino_legs[] = { /*20x5x2*/
+  gfxDinoLegs = game.loadGraphics(
+    `PROGMEM const unsigned char gfxDino_legs[] = { /*20x5x2*/
       0x00, 0x00, 0x00, 0x00, 0x01, 0x0f, 0x0b, 0x01, 0x01, 0x03,
       0x1f, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
       ,
@@ -89,8 +89,8 @@ game.setup(function(game) {
     };`
   );
 
-  dinoKaput = game.loadGraphics(
-    `PROGMEM const unsigned char dino_tumble[] = { /* 30x18 */
+  gfxDinoKaput = game.loadGraphics(
+    `PROGMEM const unsigned char gfxDino_tumble[] = { /* 30x18 */
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -103,8 +103,8 @@ game.setup(function(game) {
     };`
   );
 
-  clouds = game.loadGraphics(
-    `PROGMEM const unsigned char clouds[] = { /* 20x16x1 */
+  gfxClouds = game.loadGraphics(
+    `PROGMEM const unsigned char gfxClouds[] = { /* 20x16x1 */
       0x1c, 0x22, 0x22, 0x22, 0x24, 0x10, 0x12, 0x2a, 0x21, 0x41,
       0x41, 0x41, 0x42, 0x4a, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -112,8 +112,8 @@ game.setup(function(game) {
     };`
   );
 
-  cactus = game.loadGraphics(
-    `PROGMEM const unsigned char cactus[] = { /* 16x24x2 */
+  gfxCactus = game.loadGraphics(
+    `PROGMEM const unsigned char gfxCactus[] = { /* 16x24x2 */
       0x00, 0x00, 0x00,  0x00, 0x00, 0x00,  0xfe, 0xff, 0xff,
       0xfe, 0x00, 0xc0,  0xc0, 0x80, 0x00,  0x00, 0x00, 0x00,
       0xfe, 0xff, 0xfe,  0x00, 0xff, 0xff,  0xff, 0xff, 0xc0,
@@ -170,9 +170,9 @@ game.setup(function(game) {
     };`
   );
 
-  // Baseline height for ground and dino
+  // Baseline height for ground and gfxDino
   baseline = game.height - 5;
-  baselineDino = game.height - dino.height;
+  baselineDino = game.height - gfxDino.height;
 
   // Starting game state
   game.state = S_INTRO;
@@ -253,9 +253,9 @@ function *gameIntro() {
   //for(int i = -8; i < 39; i = i + 2)
   for (let y = -8;  y <= 38; y += 2) {
     game.clear();
-    game.drawImage(rjsLogo, 44, 0 );
+    game.drawImage(gfxRjsLogo, 44, 0 );
 
-    game.drawImage(rjs, 25, y );
+    game.drawImage(gfxRjs, 25, y );
     yield 1; // essentially delay(16);
   }
 
@@ -286,8 +286,8 @@ function *gameIntro() {
   let y = 12;
     //arduboy.drawBitmap(54-2, y-1,   dino,  20,18, BLACK);
     //arduboy.drawBitmap(54+1, y+1,   dino,  20,18, BLACK);
-    game.clearImage(dino, 54-2, y-1);
-    game.clearImage(dino, 54+1, y+1);
+    game.clearImage(gfxDino, 54-2, y-1);
+    game.clearImage(gfxDino, 54+1, y+1);
 
   //for (int i=0; i<12; ++i) {
   for (let frame = 0; frame <36; ++frame ) {
@@ -296,9 +296,9 @@ function *gameIntro() {
     let noise = 0;// (frame%6>2 ? frame : -frame )/6;
 
     if (frame%3 === 0) {
-      game.drawImage(dino, rx+ 54, ry+ y);
+      game.drawImage(gfxDino, rx+ 54, ry+ y);
     } else {
-      game.clearImage(dino, rx+ 54+noise, ry+ y+noise);
+      game.clearImage(gfxDino, rx+ 54+noise, ry+ y+noise);
     }
     //arduboy.drawBitmap(rx+ 54+(i%2?i:-i)/2, ry+ y+(i%2?i:-i)/2,   dino_top,  20,18, BLACK);
 
@@ -312,16 +312,16 @@ function *gameIntro() {
     if (y > baselineDino) y = baselineDino;
 
     game.clear();
-    game.drawImage(rjsLogo, 44, 0 );
-    game.drawImage(rjs, 25, 38 );
+    game.drawImage(gfxRjsLogo, 44, 0 );
+    game.drawImage(gfxRjs, 25, 38 );
 
     game.drawText("pr   nts", 42, 55);
     game.drawText("ese", 54, 55 + (y>32 ? y-32 : 0));
 
-    game.clearImage(dino, 54-2, y-1);
-    game.clearImage(dino, 54+1, y+1);
+    game.clearImage(gfxDino, 54-2, y-1);
+    game.clearImage(gfxDino, 54+1, y+1);
 
-    game.drawImage(dino, 54, y);
+    game.drawImage(gfxDino, 54, y);
 
     yield 1;
   }
@@ -339,12 +339,12 @@ function *gameIntro() {
   for (let i = 0; i < 64; ++i) {
     let z = i<54 ? i : 54;
 
-    game.clearImage(dino, 54-z+1, y);
+    game.clearImage(gfxDino, 54-z+1, y);
 
     //arduboy.drawLine(0, i<32 ? i*2 : 127-i*2, 127,i<32 ? i*2 : 127-i*2, BLACK);
     game.clearRect(0, i<32 ? i*2 : 127-i*2, 128, 1);
 
-    game.drawImage(dino, 54-z, y);
+    game.drawImage(gfxDino, 54-z, y);
 
     yield 1;
   }
@@ -441,7 +441,7 @@ function *gameOver() {
     drawTerrain();
 
     if (i!=7 && i!=8 && i!= 16 && i!=17) {
-      game.drawImage(dinoEek, 0,baselineDino-dinoJumpHeight);
+      game.drawImage(gfxDinoEek, 0,baselineDino-dinoJumpHeight);
     }
 
     drawUI();
@@ -479,7 +479,7 @@ function *gameOver() {
 
     baselineDino - dinoJumpHeight;
 
-    game.drawImage(dinoKaput, 0,baselineDino-dinoJumpHeight);
+    game.drawImage(gfxDinoKaput, 0,baselineDino-dinoJumpHeight);
 
     drawUI();
 
@@ -509,36 +509,36 @@ function gameSetup() {
 
 function updateTerrain(distance) {
   // Place a new cactus
-  if (obsCactus1+cactus.width < distance) {
+  if (obsCactus1+gfxCactus.width < distance) {
     obsCactus1 = distance + 175 + 5*Math.floor(0 + Math.random()*(10-0+1));
-    obsCactus1Y = game.random(baseline+1,game.height) - cactus.height;
+    obsCactus1Y = game.random(baseline+1,game.height) - gfxCactus.height;
   }
 
   // Place a second cactus
   if (distance > 500) {
-    if (obsCactus2+cactus.width < distance) {
+    if (obsCactus2+gfxCactus.width < distance) {
       obsCactus2 = distance + 200 + 6*Math.floor(0 + Math.random()*(10-0+1));
-      obsCactus2Y = game.random(baseline+1,game.height) - cactus.height;
+      obsCactus2Y = game.random(baseline+1,game.height) - gfxCactus.height;
     }
 
     // Make sure placement of cactii is not *too* evil :)
     let obsDistance = obsCactus2-obsCactus1;
 
     // too dense
-    if (obsDistance > 0 && obsDistance < cactus.width/2) {
-      obsCactus2 += cactus.width/2|0;
+    if (obsDistance > 0 && obsDistance < gfxCactus.width/2) {
+      obsCactus2 += gfxCactus.width/2|0;
     }
-    if (obsDistance < 0 && obsDistance > cactus.width/-2) {
-      obsCactus1 += cactus.width/2|0;
+    if (obsDistance < 0 && obsDistance > gfxCactus.width/-2) {
+      obsCactus1 += gfxCactus.width/2|0;
     }
 
     // too close
     obsDistance = obsCactus2-obsCactus1;
-    if (obsDistance > cactus.width+5 && obsDistance < cactus.width+dino.width) {
-      obsCactus2 += dino.width;
+    if (obsDistance > gfxCactus.width+5 && obsDistance < gfxCactus.width+gfxDino.width) {
+      obsCactus2 += gfxDino.width;
     }
-    if (obsDistance < -(cactus.width+5) && obsDistance > -(cactus.width+dino.width)) {
-      obsCactus1 += dino.width;
+    if (obsDistance < -(gfxCactus.width+5) && obsDistance > -(gfxCactus.width+gfxDino.width)) {
+      obsCactus1 += gfxDino.width;
     }
 
   }
@@ -581,8 +581,8 @@ function updateDino() {
 }
 
 function drawTerrain(distance) {
-  // Parallax scrolling clouds
-  game.drawImage(clouds[0], game.width -(distance%(game.width+clouds.width)),5);
+  // Parallax scrolling gfxClouds
+  game.drawImage(gfxClouds[0], game.width -(distance%(game.width+gfxClouds.width)),5);
 
   // Terrain
   if (dinoJumpHeight > 4) {
@@ -595,20 +595,20 @@ function drawTerrain(distance) {
   // Obstacles
   let c1 = obsCactus1-distance;
   let c2 = obsCactus2-distance;
-  if (c1 < game.width) game.drawImage(cactus[0], c1,obsCactus1Y);
-  if (c2 < game.width) game.drawImage(cactus[1], c2,obsCactus2Y);
+  if (c1 < game.width) game.drawImage(gfxCactus[0], c1,obsCactus1Y);
+  if (c2 < game.width) game.drawImage(gfxCactus[1], c2,obsCactus2Y);
 }
 
 function drawDino() {
   let dy = baselineDino - dinoJumpHeight;
 
-  game.drawImage(dino, 0,0, 20,18, 0,dy ,20,18);
+  game.drawImage(gfxDino, 0,0, 20,18, 0,dy ,20,18);
 
-  // Run, Dino, Run!
+  // Run, gfxDino, Run!
   if (!dinoJumpHeight) {
-    game.drawImage(dinoLegs[ (distance/10|0)%2 ], 0,dy+18);
+    game.drawImage(gfxDinoLegs[ (distance/10|0)%2 ], 0,dy+18);
   } else {
-    game.drawImage(dino, 0,18, 20,5, 0,dy+18, 20,5);
+    game.drawImage(gfxDino, 0,18, 20,5, 0,dy+18, 20,5);
   }
 }
 
@@ -626,8 +626,8 @@ function checkCollisions() {
   let hit = false;
 
   hit = hit
-    || ( c1<=dino.width && game.detectCollision(dino, 0,dy, cactus[0], c1,obsCactus1Y) )
-    || ( c2<=dino.width && game.detectCollision(dino, 0,dy, cactus[1], c2,obsCactus1Y) );
+    || ( c1<=gfxDino.width && game.detectCollision(gfxDino, 0,dy, gfxCactus[0], c1,obsCactus1Y) )
+    || ( c2<=gfxDino.width && game.detectCollision(gfxDino, 0,dy, gfxCactus[1], c2,obsCactus1Y) );
 
   return hit;
 }

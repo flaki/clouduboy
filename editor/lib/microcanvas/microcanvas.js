@@ -55,7 +55,7 @@
   MCP.clear = function() {
     this.clearRect(0, 0, this.width, this.height);
   };
-  MCP.eraseImage = function(...args) {
+  MCP.eraseImage = MCP.clearImage = function(...args) {
     // Learn more of composites:
     // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation
     let prevComp = this.globalCompositeOperation;

@@ -197,16 +197,21 @@
   }
 
   function loadBytestream(bs) {
-    let width = 0;
-    let height = 0;
+    let ret;
 
     let pix = new PixelData(codeToPif(bs));
 
     if (pix.frames) {
-      return [...Array(pix.frames).keys()].map(i => loadBitmap(pix.frame(i).pif) );
+      ret = [...Array(pix.frames).keys()].map(i => loadBitmap(pix.frame(i).pif) );
+
+      ret.width = ret[0].width;
+      ret.height = ret[0].height;
       // ^ same as Array(pix.frames).fill(null).map((_,i) => ... );
+    } else {
+      ret = loadBitmap(pix.pif);
     }
-    return loadBitmap(pix.pif);
+    ret.pixeldata = pix;
+    return ret;
   }
 
   function arrayInitializerContent(statement) {

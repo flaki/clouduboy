@@ -173,7 +173,27 @@
       }
     }).bind(this);
   };
+  // Async state fragment (generator function) runner
+  MCP.run = function(gen) {
+    if (!this.$state || this.$state instanceof gen === false) this.$state = gen();
 
+    if (this.$delay && this.$delay > 0) {
+       --this.$delay;
+    } else {
+      let c = this.$state.next();
+
+      if (c.done) {
+        this.$state = null;
+
+        // state finished
+        return true;
+      } else {
+        this.$delay = c.value -1;
+      }
+    }
+
+    return;
+  }
 
 
   function loadBitmap(bmp) {

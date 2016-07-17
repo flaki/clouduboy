@@ -224,6 +224,7 @@ function bytes2bitmap(bytes,w,h,frames,explicit) {
 
   var x,y,f;
   var bitmap = [];
+  var rows = Math.ceil(h/8);
 
   f = 0;
   do {
@@ -231,7 +232,7 @@ function bytes2bitmap(bytes,w,h,frames,explicit) {
     for (y = 0; y<h; ++y) {
       bitmap[y] = bitmap[y] || [];
       for (x = 0; x<w; ++x) {
-        bitmap[y][x + f*w] = (bytes[w * (f + (y >> 3)) + x] & (1 << (y % 8))) ? 1 : 0;
+        bitmap[y][x + f*w] = (bytes[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) ? 1 : 0;
       }
     }
 

@@ -47,7 +47,6 @@
   MCP.loadTune = function(src) {
     let contents = arrayInitializerContent(src);
 
-    console.log(contents);
     return new ArduboyScore(contents);
   }
   MCP.everyXFrame = function(frames) {
@@ -98,10 +97,9 @@
     let cy = y1>y2 ? y1 : y2;
     let ch = y1>y2 ? y2+s2.height-y1 : y1+s1.height-y2;
 
-    if (cx>0 && cy>0 && cw>0 && ch>0) {
+    if (cw>0 && ch>0) {
       this.fillStyle = "rgba(200,0,0,.5)";
       this.fillRect(cx,cy, cw,ch);
-      //console.log(cx,cy,cw,ch);
       result = true;
     }
 

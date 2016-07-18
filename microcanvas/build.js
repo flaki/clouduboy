@@ -3,21 +3,23 @@
 const fs = require('fs');
 const acorn = require('acorn');
 
-let src = fs.readFileSync('../templates/rjs/rjs.js');
+let srcFile = process.argv[2] || '../templates/sprites/sprites.js';
+let src = fs.readFileSync(srcFile);
 
 let ast = acorn.parse(src ,{ ecmaVersion: 6, sourceType: 'script' });
 
 fs.writeFileSync('ast.json', JSON.stringify(ast));
 
 
-let game = {};
+let game = { alias: 'game' };
 
-
-parseInitializers();
 
 parseGlobals();
 
+parseInitializers();
+
 parseSetupBody();
+
 
 function createConstant(id, value, type) {
   // Make sure the constants list exists
@@ -39,32 +41,6 @@ function createConstant(id, value, type) {
   game.constants[id] = game.constants[game.constants.length-1];
 
   console.log('+ new const: %s = %s', game.constants[id].cid, value);
-}
-
-// Find intializers
-function parseInitializers() {
-  console.log('Looking for initializers');
-
-  let initializers = ast.body
-    .filter(o => o.type === 'ExpressionStatement')
-    .map(es => es.expression)
-    .filter(ex => ex.type === 'CallExpression' && ex.callee.type === 'MemberExpression' && ex.callee.object.name === 'game')
-
-  if (!initializers) {
-    throw new Error('Invalid MicroCanvas file: initializers (setup/loop) not found.');
-  }
-
-  game.initializers = {
-    setup: initializers.find(e => e.callee.property.name === 'setup'),
-    loop: initializers.find(e => e.callee.property.name === 'loop')
-  };
-
-  if (!game.initializers.setup) {
-    throw new Error('Required initializer `game.setup()` not found.');
-  }
-  if (!game.initializers.loop) {
-    throw new Error('Required initializer `game.loop()` not found.');
-  }
 }
 
 // Collect global declarations
@@ -102,6 +78,12 @@ function parseGlobals() {
           });
           game.sfx[dec.id.name] = game.sfx[game.sfx.length-1];
 
+        // MicroCanvas standard library hook
+        } else if (getString(dec.init) === 'new MicroCanvas') {
+          game.alias = dec.id.name;
+
+          console.log("MicroCanvas uses the alias: game")
+
         } else {
           game.globals = game.globals || [];
 
@@ -115,6 +97,32 @@ function parseGlobals() {
       });
     }
   });
+}
+
+// Find intializers
+function parseInitializers() {
+  console.log('Looking for initializers');
+
+  let initializers = ast.body
+    .filter(o => o.type === 'ExpressionStatement')
+    .map(es => es.expression)
+    .filter(ex => ex.type === 'CallExpression' && ex.callee.type === 'MemberExpression' && ex.callee.object.name === game.alias)
+
+  if (!initializers) {
+    throw new Error('Invalid MicroCanvas file: initializers (setup/loop) not found.');
+  }
+
+  game.initializers = {
+    setup: initializers.find(e => e.callee.property.name === 'setup'),
+    loop: initializers.find(e => e.callee.property.name === 'loop')
+  };
+
+  if (!game.initializers.setup) {
+    throw new Error('Required initializer `game.setup()` not found.');
+  }
+  if (!game.initializers.loop) {
+    throw new Error('Required initializer `game.loop()` not found.');
+  }
 }
 
 // Parse game.setup call body and generate setup
@@ -213,6 +221,8 @@ function getString(exp, target) {
     case 'MemberExpression':
       return (self(exp.object) + '.' + self(exp.property));
 
+    case 'NewExpression':
+      return 'new '+self(exp.callee);
 
     case 'ExpressionStatement':
       return self(exp.expression);
@@ -246,7 +256,7 @@ function translate(target, exp) {
       let obj = getString(exp.object);
 
       // MicroCanvas calls
-      if (obj === 'game'
+      if (obj === game.alias
        || obj.match(/^(g|s)fx/) // Game asset properties (gfx & sfx)
      ) {
         return translateLib(target, exp);
@@ -277,7 +287,7 @@ function translateLib(target, exp) {
   console.log('{%s.%s}', obj, prop);
 
   // Standard library (MicroCanvas) method/property
-  if (obj === 'game') {
+  if (obj === game.alias) {
     switch (prop) {
       // Screen width and height
       case 'width': return 'WIDTH';
@@ -329,7 +339,10 @@ function loadAsset(exp) {
       console.warn('Warning: asset '+exp.left.name+' is not declared on the global scope!');
     }
 
-    if (isCalling(exp.right, 'game.loadGraphics')) {
+    // LoadGraphics / LoadSprite are both valid methods for loading graphics assets
+    if (isCalling(exp.right, game.alias+'.loadGraphics')
+     || isCalling(exp.right, game.alias+'.loadSprite')
+    ) {
       loadGraphics(id, exp.right.arguments);
       console.log(' 👾 loaded %s as GFX', id);
     } else {
@@ -342,7 +355,7 @@ function loadAsset(exp) {
       console.warn('Warning: asset '+exp.left.name+' is not declared on the global scope!');
     }
 
-    if (isCalling(exp.right, 'game.loadTune')) {
+    if (isCalling(exp.right, game.alias+'.loadTune')) {
       loadTune(id, exp.right.arguments);
       console.log(' 🔔 loaded %s as SFX', id);
     } else {
@@ -413,41 +426,51 @@ function exportGame(target) {
       b += arduboyHeader().trim()+'\n\n';
 
       // Assets
+      // Graphics
+      if (game.gfx) {
       game.gfx.forEach(asset => {
-        b += arduboyGfx(asset.cid, asset.value);
-      });
-      b+='\n';
+          b += arduboyGfx(asset.cid, asset.value);
+        });
+        b+='\n';
+      }
 
-      game.sfx.forEach(asset => {
-        b += arduboySfx(asset.cid, asset.value);
-      });
-      b+='\n';
+      // Sounds
+      if (game.sfx) {
+        game.sfx.forEach(asset => {
+          b += arduboySfx(asset.cid, asset.value);
+        });
+        b+='\n';
+      }
 
       // Constants
-      game.constants.forEach(c => {
-        b += 'const ' + (c.type ? c.type : guessType(c.id, c.value, 'constant')) + ' ';
-        b += c.cid;
+      if (game.constants) {
+        game.constants.forEach(c => {
+          b += 'const ' + (c.type ? c.type : guessType(c.id, c.value, 'constant')) + ' ';
+          b += c.cid;
 
-        if (typeof c.value !== 'undefined') {
-          b += ' = ' + c.value;
-        }
+          if (typeof c.value !== 'undefined') {
+            b += ' = ' + c.value;
+          }
 
-        b+=';\n';
-      });
-      b+='\n';
+          b+=';\n';
+        });
+        b+='\n';
+      }
 
       // Globals
-      game.globals.forEach(c => {
-        b += (c.type ? c.type : guessType(c.id, c.value)) + ' ';
-        b += c.cid;
+      if (game.globals) {
+        game.globals.forEach(c => {
+          b += (c.type ? c.type : guessType(c.id, c.value)) + ' ';
+          b += c.cid;
 
-        if (typeof c.value !== 'undefined') {
-          b += ' = ' + c.value;
-        }
+          if (typeof c.value !== 'undefined') {
+            b += ' = ' + c.value;
+          }
 
-        b+=';\n';
-      });
-      b+='\n';
+          b+=';\n';
+        });
+        b+='\n';
+      }
 
       // Setup
       b+=arduboySetup(game.setup.code.join('\n'))+'\n';

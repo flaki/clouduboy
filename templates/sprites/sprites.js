@@ -1,22 +1,19 @@
 "use strict";
 
 let game = new MicroCanvas();
-let bats;
 
-game.setup(function(mctx) {
-  bats = mctx.loadSprite(
-    `PROGMEM const unsigned char bats[] = { /*16x6x2*/
+let gfxBats;
+
+game.setup(function(game) {
+  gfxBats = game.loadSprite(
+    `PROGMEM const unsigned char gfxBats[] = { /*16x6x2*/
       0x01, 0x0f, 0x0e, 0x1c, 0x38, 0x3c, 0x1b, 0x3e,
       0x3e, 0x1b, 0x3c, 0x38, 0x1c, 0x0e, 0x0f, 0x01,
       0x1c, 0x0e, 0x0c, 0x07, 0x0e, 0x0c, 0x1b, 0x3e,
       0x3e, 0x1b, 0x0c, 0x0e, 0x07, 0x0c, 0x0e, 0x1c,
     };`
   );
-
-  mctx.loop(loop);
 });
-
-
 
 
 
@@ -26,12 +23,12 @@ let sx = 1, sy = 1;
 let animationSpeed = 8;
 let cSprite = 0;
 
-function loop() {
+game.loop(function() {
   // pause render until it's time for the next frame
   // automatically // if (!(arduboy.nextFrame())) return;
 
   // Update flapping animation
-  if (game.everyXFrame(animationSpeed)) {
+  if (game.everyXFrames(animationSpeed)) {
     cSprite = !cSprite;
   }
 
@@ -51,11 +48,11 @@ function loop() {
 
   // Draw shadow (unset pixels on screen based on the bitmap)
   // TODO:
-  game.eraseImage(bats[cSprite|0], 0 +x,2 +y);
-  game.eraseImage(bats[cSprite|0], 2 +x,2 +y);
+  game.eraseImage(gfxBats[cSprite|0], 0 +x,2 +y);
+  game.eraseImage(gfxBats[cSprite|0], 2 +x,2 +y);
 
   // Draw Bat
-  game.drawImage(bats[cSprite|0], 1 +x,1 +y);
+  game.drawImage(gfxBats[cSprite|0], 1 +x,1 +y);
 
   // Draw Bat Sprite
   //game.drawImage(sprite[cSprite+0], 107 -x,55 -y);
@@ -65,6 +62,6 @@ function loop() {
 
   // Update Screen
   // automatically? // arduboy.display();
-}
+});
 
 console.log("MicroCanvas initialized");

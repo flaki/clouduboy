@@ -49,7 +49,7 @@
 
     return new ArduboyScore(contents);
   }
-  MCP.everyXFrame = function(frames) {
+  MCP.everyXFrames = MCP.everyXFrame = function(frames) {
      return this.frameCount % frames == 0;
   }
   MCP.clear = function() {

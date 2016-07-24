@@ -57,7 +57,15 @@ if (CFG.SHORT_LINK_HOST) {
 
 // Clouduboy App
 let cdb = express();
-app.use(vhost(CFG.SERVER_HOST, cdb));
+
+// Use vhost setting in production
+if (CFG.DIST && CFG.SERVER_HOST) {
+  app.use(vhost(CFG.SERVER_HOST, cdb));
+
+// Bind to default host
+} else {
+  app.use(cdb);
+}
 
 
 // Enable CORS for all endpoints (TODO: may want to further refine this later)
@@ -177,8 +185,9 @@ let server = app.listen(CFG.SERVER_PORT, function () {
   let host = server.address().address;
   let port = server.address().port;
 
-  console.log('Clouduboy %s starting %s at http://%s:%s',
+  console.log('Clouduboy %s/%s starting %s at http://%s:%s',
     CFG.APP_VERSION,
+    require('os').platform(),
     (CFG.DIST ? 'IN PRODUCTION' : ''),
     host, port
   );

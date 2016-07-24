@@ -51,6 +51,11 @@ function init(src, sources, aboylib) {
     // link arduboy lib if needed
     .then(function() {
       if (aboylib) {
+        // No symlinking on Windows, just copy the thing
+        if (require('os').platform() === 'win32') {
+          return require('fs-promise').copy(ROOTDIR+'/build/lib/'+aboylib, BUILDDIR+'/lib/Arduboy');          
+        }
+
         return fs.symlink(ROOTDIR+'/build/lib/'+aboylib, BUILDDIR+'/lib/Arduboy');
       }
     })

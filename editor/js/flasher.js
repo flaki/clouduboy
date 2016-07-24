@@ -11,6 +11,11 @@
         console.log(r.status === 200 ? "Flashing in progress..." : "Failed!");
       });
     });
+
+    document.querySelector('.toolbar button[name="download"]')
+      .addEventListener('click',
+        e => window.open('/hex/build')
+      );
   }
 
   // Expose

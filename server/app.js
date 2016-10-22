@@ -174,6 +174,17 @@ cdb.post('/build', require('./api/build.js').all);
 
 // Compile to target
 cdb.all('/compile', require('./api/compile.js').all);
+
+// Session debugging
+cdb.get('/S', function(req, res) {
+  req.$session.load().then(function() {
+    console.log("SON", req.$session);
+    res.send(req.$session);
+  })
+  .catch(console.log.bind.console);
+});
+
+
 // Serve static assets for the Editor
 cdb.use(express.static(CFG.WEB_DIR, { maxAge: 60*60*1000 }));
 

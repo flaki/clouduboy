@@ -69,7 +69,7 @@ if (CFG.DIST && CFG.SERVER_HOST) {
 
 
 // Enable CORS for all endpoints (TODO: may want to further refine this later)
-cdb.use(cors());
+//cdb.use(cors());
 
 // Enable cookies
 cdb.use(cookieParser());

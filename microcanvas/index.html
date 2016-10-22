@@ -1,0 +1,12 @@
+<!doctype HTML>
+
+<html>
+<head><title>Test MicroCanvas parser</title></head>
+<body>
+  <script>
+  fetch('http://localhost:9999/microcanvas/game.json')
+    .then(r => r.json())
+    .then(r => console.log(window.game = r, 'loaded!'));
+  </script>
+</body>
+</html>

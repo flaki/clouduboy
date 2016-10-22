@@ -172,6 +172,8 @@ cdb.post('/targets', require('./api/targets.js').post);
 cdb.post('/build', require('./api/build.js').all);
 
 
+// Compile to target
+cdb.all('/compile', require('./api/compile.js').all);
 // Serve static assets for the Editor
 cdb.use(express.static(CFG.WEB_DIR, { maxAge: 60*60*1000 }));
 

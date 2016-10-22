@@ -52,6 +52,8 @@ function all(req, res) {
     };
 
     // write file
+    // TODO: cleanup
+    filename = filename.replace('.ino', '.arduboy.ino');
     FS.writeFileSync(req.$session.builddir+'/src/'+filename, fd.fields.code);
     // TODO: also, make this async
   })

@@ -12,11 +12,14 @@ const CFG = require('../cfg.js');
 
 const Build = require('../build.js');
 
+const path = require('path');
+
 const DEFAULT_ARDUBOY = CFG.ARDUBOY_LIBS[0];
 
 
 function all(req, res) {
   let template, arduboyLib;
+  let builddir;
 
   req.$session.load().then(function() {
     // Check for posted template source existence
@@ -53,7 +56,8 @@ function all(req, res) {
 
     // Copy build sources
     let build = new Build(req.$session);
-    let buildSources = Build.sources( CFG.ROOT_DIR+'/'+source.src );
+    let buildSources = Build.sources( path.join( CFG.ROOT_DIR, source.src) );
+    console.log('New Build Sources: ', buildSources);
 
     return build.init(
       template,
@@ -64,9 +68,12 @@ function all(req, res) {
 
   // Update buildfile in session data
   .then(function(build) {
+    const loadedfile = build.templateName + '.js'; // TODO: do not assume .js root
+
     return req.$session.set({
-      buildfile: build.ino,
-      activeTemplate: build.src
+      buildFile: loadedfile,
+      activeTemplate: build.template,
+      activeFile: loadedfile
     });
   })
 
@@ -76,7 +83,9 @@ function all(req, res) {
 
     // TODO: at this point this should just redirect to GET /edit/<buildfile>
 
-    res.type('text/x-arduino').download(req.$session.builddir+'/src/'+req.$session.buildfile, req.$session.buildFile);
+    //res.type('application/javascript').download( path.join( req.$session.builddir, 'editor', req.$session.buildFile ), req.$session.buildFile);
+    // TODO: make this return the main file of the template, designated by SRC in config.json, handle different filetypes
+    res.redirect('/edit');
   })
 
   // Error

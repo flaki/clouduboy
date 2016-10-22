@@ -17,8 +17,7 @@ function all(req, res) {
   // Load session and check supplied filename in request params
   req.$session.load().then(function() {
     // :file param defaults to session.buildfile
-    // TODO: create an "editedfile" active file entry and use that
-    let newfile = req.params.file || req.$session.buildfile;
+    let newfile = req.params.file || req.$session.activeFile;
     let files = Build.files(req.$session.builddir, req.$session.buildfile);
 
     // No such file exists in the current source
@@ -26,8 +25,12 @@ function all(req, res) {
       return res.sendStatus(403);
     };
 
-    console.log('Switching to: ', newfile);
-    res.type('text/plain').download(req.$session.builddir+'/src/'+newfile, newfile);
+    req.$session.activeFile = newfile;
+
+    return req.$session.save().then(function() {
+      console.log('Switched to: ', newfile);
+      res.type('text/plain').download(req.$session.builddir+'/editor/'+newfile, newfile);
+    });
   })
 
   // Error

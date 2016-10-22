@@ -161,14 +161,17 @@
             })
 
             // Parse out current filename and store it
-            .then(storeCurrentFilename)
+            .then(res => {
+              return initFiles()
+                .then(storeCurrentFilename.bind(null, res)); // TODO: Use "this" instead?
+            })
 
             // Receive .ino file contents
             .then(updateEditorContents)
 
             // Reset selected item
             .then(() => {
-              toolbarLoad.value = '';
+              //toolbarLoad.value = '';
             });
           }
         });
@@ -191,6 +194,7 @@
     }).then((data) => {
       // Add options
       if (select)  {
+        select.innerHTML = '';
         select.insertAdjacentHTML('beforeend',
           data.files
               .reduce( (out, file) => out+'<option value="'+file+'">'+file+'</option>', '' )
@@ -199,7 +203,7 @@
 
     // Handle changes and load data
     }).then(() => {
-      if (select) select.addEventListener('change', (e) => {
+      if (select && !select.dataset.inited) select.addEventListener('change', (e) => {
         var data = { 'file': e.target.value };
 
         if (data.file) {
@@ -214,6 +218,9 @@
 
           // Update editor contents
           .then(updateEditorContents);
+
+          // Initialized
+          select.dataset.inited = 'yes';
         }
       });
     });
@@ -267,10 +274,15 @@
   }
 
   function storeCurrentFilename(r) {
-    let disposition = r.headers.get('Content-Disposition');
+    let disposition = r.headers.get('Content-Disposition') || '';
     let filename = (disposition.match(/filename="([^"]+)"/)||[])[1];
+
     //Clouduboy.editor.display.wrapper.dataset.file = filename;
     document.getElementById("codeeditor-filename").value = filename;
+
+    // Update file selector dropdown
+    document.querySelector('select[name="file"]').value = filename;
+
     return r;
   }
 

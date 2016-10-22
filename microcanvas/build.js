@@ -3,8 +3,10 @@
 const fs = require('fs');
 const acorn = require('acorn');
 
-let srcFile = process.argv[2] || '../templates/sprites/sprites.js';
+let srcFile = process.argv[2] || './game.js';
 let targetSystem = process.argv[3] || 'arduboy';
+
+let game;
 
 // Button mapping for different targets
 const BUTTONS = {
@@ -16,46 +18,66 @@ const BUTTONS = {
     space: 'A_BUTTON',
     enter: 'B_BUTTON',
   }
-}
-
-let src = fs.readFileSync(srcFile);
-
-let ast = acorn.parse(src, { ecmaVersion: 6, sourceType: 'script' });
-
-fs.writeFileSync('ast.json', JSON.stringify(ast));
-
-ast = astAddParents(ast);
-
-
-// Init
-let game = {
-  alias: 'game',
-  target: targetSystem,
-  constants: [], globals: [], gfx: [], sfx: []
 };
 
+// Game object
+function Game(target) {
+  Object.assign(this, {
+    alias: 'game',
+    target: target,
+    constants: [], globals: [], gfx: [], sfx: []
+  });
+}
 
-// Parse
-parseGlobals(); // TODO: function declarations!
-
-parseInitializers();
-
-parseSetupBody();
-
-parseLoopBody();
-
-parseGlobalFunctions();
+Game.prototype.export = exportGame;
 
 
-// Build
-game.ast = ast;
-game.ino = exportGame(targetSystem);
+// Commandline
+if (!module.parent) {
+  if (srcFile === '--help') {
+    console.log('Usage: node build.js <MICROCANVAS_SRC.JS> <TARGET>\n\nCurrently supported targets: arduboy');
 
-// Save
-fs.writeFileSync('game.json', JSON.stringify(game));
+  } else {
+    buildGame(targetSystem, fs.readFileSync(srcFile), require('path').basename(srcFile));
 
-fs.writeFileSync('game.ino', game.ino||'');
+    // Save
+    fs.writeFileSync('ast.json', JSON.stringify(game.ast));
+    fs.writeFileSync('game.json', JSON.stringify(game));
+    fs.writeFileSync('game.ino', game.ino||'');
+  }
+}
 
+
+// Module usage
+module.exports = buildGame;
+
+
+function buildGame(target, source, id) {
+  game = new Game();
+
+  game.id = id;
+  game.target = target;
+
+  game.ast = acorn.parse(source, { ecmaVersion: 6, sourceType: 'script' });
+  game.ast = astAddParents(game.ast);
+
+  // Parse
+  parseGlobals(); // TODO: function declarations!
+
+  parseInitializers();
+
+  parseSetupBody();
+
+  parseLoopBody();
+
+  parseGlobalFunctions();
+  console.log("game",Object.keys(game.__proto__));
+
+  // Build
+  game.ino = game.export(target);
+
+  return game;
+}
 
 
 function createConstant(id, value, type) {
@@ -84,7 +106,7 @@ function parseGlobals() {
   // TODO: check for reserved globals, like "arduboy"
 
   // All variable declarations
-  let vars = ast.body
+  let vars = game.ast.body
   .filter(o => o.type === 'VariableDeclaration')
   .forEach(function (n) {
     if (n.kind === 'const') {
@@ -119,7 +141,7 @@ function parseGlobals() {
             id: dec.id.name,
             cid: toSnakeCase(dec.id.name),
             value: dec.init ? dec.init.value : void 0,
-            type: 'let'
+            scope: 'let'
           });
           game.globals[dec.id.name] = game.globals[game.globals.length-1];
         }
@@ -128,7 +150,7 @@ function parseGlobals() {
   });
 
   // All global function declaration
-  ast.body
+  game.ast.body
   .filter(o => o.type === 'FunctionDeclaration')
   .forEach(function (dec) {
     let id = getString(dec.id);
@@ -149,7 +171,7 @@ function parseGlobals() {
 function parseInitializers() {
   console.log('Looking for initializers');
 
-  let initializers = ast.body
+  let initializers = game.ast.body
     .filter(o => o.type === 'ExpressionStatement')
     .map(es => es.expression)
     .filter(ex => ex.type === 'CallExpression' && ex.callee.type === 'MemberExpression' && ex.callee.object.name === game.alias)
@@ -246,7 +268,7 @@ function astAddParents(ast) {
     });
   };
 
-  ast.body.forEach(n => {
+  game.ast.body.forEach(n => {
     // Top level nodes
     if (n instanceof Node) addParent(n, null);
   });
@@ -726,8 +748,13 @@ function guessType(id, value, hint) {
   return 'int';
 }
 
-function exportGame() {
-  switch (game.target) {
+function exportGame(target) {
+  let game = this;
+  target = target || game.target;
+
+  console.log('Exporting %s for %s', game.id, target);
+
+  switch (target) {
     case 'arduboy':
       let b = '';
 
@@ -840,12 +867,16 @@ ${contents}
 function arduboyLoop(contents) {
   return `
 void loop() {
+  if (!arduboy.nextFrame()) return;
+
   ++_microcanvas_frame_counter;
   if (_microcanvas_frame_counter==60000) _microcanvas_frame_counter = 0;
 
 ////// LOOP CONTENTS TO FOLLOW //////
 ${contents}
 ////// END OF LOOP CONTENTS //////
+
+  arduboy.display();
 }
 `
 }

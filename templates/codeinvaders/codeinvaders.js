@@ -1,92 +1,96 @@
 "use strict";
 
-let left,right,fire;
+let game = new MicroCanvas();
 
-let rocket_x;
-let rocket_y = 0;
+let gfxInvader, gfxDefender;
 
-let gamearea_size = 80;
-let turret_position = gamearea_size/2;
+game.setup(function(game) {
+  gfxInvader = game.loadSprite(
+    `PROGMEM const unsigned char invader[] = { /*9x6*/ 0x38, 0x1c, 0x35, 0x1e, 0x3c, 0x1e, 0x35, 0x1c, 0x38 }`
+  );
+  //let invader = new Image();
+  //invader.src="https://happycodefriends.github.io/code-invaders/invader.png";
+  //invader.onload=function(){ invader.loaded = true };
 
-let canvas_element = window.myCanvas;
+  gfxDefender = game.loadSprite(
+    `PROGMEM const unsigned char defender[] = {
+      /*9x6*/ 0x38, 0x30, 0x3c, 0x2e, 0x27, 0x2e, 0x3c, 0x30, 0x38
+    }`
+  );
+  //let turret = new Image();
+  //turret.src="https://happycodefriends.github.io/code-invaders/turret.png";
+  //turret.onload=function(){ turret.loaded = true };
 
-let canvas = canvas_element.getContext("2d");
-canvas_element.width = canvas.width = gamearea_size;
-canvas_element.height = canvas.height = gamearea_size;
-
-let invader = new Image();
-invader.src="https://happycodefriends.github.io/code-invaders/invader.png";
-invader.onload=function(){ invader.loaded = true };
-
-let turret = new Image();
-turret.src="https://happycodefriends.github.io/code-invaders/turret.png";
-turret.onload=function(){ turret.loaded = true };
-
-canvas_element.addEventListener("touchmove", function(e) {
- turret_position = (e.touches[0].pageX-canvas_element.offsetLeft)/300*gamearea_size;
 });
 
-window.addEventListener("keydown", function(e) {
- if (e.keyCode===37) left = true;
- if (e.keyCode===39) right = true;
- if (e.keyCode===32) fire = true;
+
+
+let rocketX;
+let rocketY = 0;
+
+let gameareaSize = 64;
+let turretPosition = gameareaSize/2;
+
+
+game.loop(function() {
+
+  // Clear display, redraw background text
+  game.clear();
+
+
+  // Handle keypresses
+  if (game.buttonPressed('left')) turretPosition = turretPosition-3;
+  if (turretPosition<0) turretPosition = 0;
+
+  if (game.buttonPressed('right')) turretPosition = turretPosition+3;
+  if (turretPosition>gameareaSize-gfxDefender.width) turretPosition = gameareaSize-gfxDefender.width;
+
+  // Update turret projectile
+  if (rocketY <= 0) {
+    if (game.buttonPressed('space')) {
+      rocketY = gameareaSize - 3;
+      rocketX = turretPosition - 1;
+    }
+  }
+
+  if (rocketY > 0) {
+    rocketY = rocketY -3;
+  }
+
+
+  // Draw the game
+  draw();
+
 });
 
-window.addEventListener("keyup", function(e) {
- if (e.keyCode===37) left = false;
- if (e.keyCode===39) right = false;
- if (e.keyCode===32) fire = false;
-});
 
-function play() {
- if (left) turret_position = turret_position-3;
- if (right) turret_position = turret_position+3;
-
- if (rocket_y <= 0) {
-   if (fire) {
-     rocket_y = gamearea_size - 3;
-     rocket_x = turret_position - 1;
-   }
- }
-
- if (rocket_y > 0) {
-   rocket_y = rocket_y -3;
- }
-
-
- if (invader.loaded && turret.loaded) draw();
-}
-
-let frame = 0;
 function draw() {
- frame = frame + 1;
- canvas.clearRect(0,0,gamearea_size,gamearea_size);
+  game.clear()
 
- let y = 0;
- while (y < 4) {
+  let y = 0;
+  while (y < 4) {
 
    let x = 0;
-   while (x < 6) {
+   while (x < 5) {
      if (y % 2)
-       canvas.drawImage(invader, 13*x+Math.abs(frame%30/5-3), 9*y);
+       game.drawImage(gfxInvader, 13*x+Math.abs(game.frameCount%30/5-3), 9*y);
      else
-       canvas.drawImage(invader, 13*x+4-Math.abs(frame%30/5-3), 9*y);
+       game.drawImage(gfxInvader, 13*x+4-Math.abs(game.frameCount%30/5-3), 9*y);
 
      x = x + 1;
    }
    y = y + 1;
- }
+  }
 
- canvas.drawImage(turret , turret_position-5, gamearea_size-8);
+  game.drawImage(gfxDefender , turretPosition-5, gameareaSize-8);
 
- canvas.fillStyle="white";
- canvas.font="12px arial";
- if (left) canvas.fillText('<', 0, gamearea_size);
- if (right) canvas.fillText('>', gamearea_size-10, gamearea_size);
+  if (game.buttonPressed('left')) game.drawText('<', 0, gameareaSize-7);
+  if (game.buttonPressed('right')) game.drawText('>', gameareaSize-10, gameareaSize-7);
 
- if (rocket_y > 0) {
-   canvas.fillRect(rocket_x, rocket_y, 1,2);
- }
+  if (rocketY > 0) {
+    game.fillRect(rocketX, rocketY, 1,2);
+  }
 }
 
-setInterval(play, 40);
+
+console.log("MicroCanvas initialized");

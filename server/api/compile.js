@@ -3,7 +3,12 @@
 /* Load new template/document source for editing
 */
 module.exports = {
-  all: [ require('body-parser').json(), all ]
+  info: {
+    all: [ require('body-parser').json(), compileInfo ]
+  },
+  flash: {
+    all: [ require('body-parser').json(), flash ]
+  }
 };
 
 
@@ -21,44 +26,60 @@ const fs = require('fs-promise'),
 const DEFAULT_ARDUBOY = CFG.ARDUBOY_LIBS[0];
 
 
-function all(req, res) {
-  let template, arduboyLib;
-  let builddir;
+function compile(req) {
+  const builddir = req.$session.builddir;
+  const sourceFile = req.$session.activeFile;
+
+  // No compilation needed, active file is already a buildable sourcefile
+  if (sourceFile.match(/\.ino$/)) {
+    req.$session.compiledFile = void 0;
+    req.$session.buildFile = sourceFile;
+    return path.join(builddir, 'editor', sourceFile);
+  }
+
   const microCanvasBuild = require(CFG.ROOT_DIR+'/microcanvas/build.js');
 
-  req.$session.load().then(function() {
-    builddir = path.join( req.$session.builddir );
-    let sourceFile = req.$session.activeFile;
+  let source = require('fs').readFileSync( path.join(builddir, 'editor', sourceFile) );
 
-    // No compilation needed, active file is already a buildable sourcefile
-    if (sourceFile.match(/\.ino$/)) {
-      req.$session.compiledFile = void 0;
-      req.$session.buildFile = sourceFile;
-      return path.join(builddir, 'editor', sourceFile);
-    }
+  req.$session.compiledFile = sourceFile.replace('.js','.arduboy.ino');
+  let outFile = path.join(builddir, 'editor', req.$session.compiledFile);
 
-    let source = require('fs').readFileSync( path.join(builddir, 'editor', sourceFile) );
+  let game = microCanvasBuild('arduboy', source, req.$session.activeFile);
+  require('fs').writeFileSync( outFile, game.ino);
+  console.log(outFile, game.ino);
 
-    req.$session.compiledFile = sourceFile.replace('.js','.arduboy.ino');
-    let outFile = path.join(builddir, 'editor', req.$session.compiledFile);
+  console.log('Compilation finished: ', outFile);
+  return { info: game, outFile: outFile };
+}
 
-    let game = microCanvasBuild('arduboy', source, req.$session.activeFile);
-    require('fs').writeFileSync( outFile, game.ino);
-    console.log(outFile, game.ino);
+function compileInfo(req, res) {
+  req.$session.load()
+    .then(compile.bind(null, req))
+    .then(game => res.send(game.info))
+    .catch(err => {
+      console.log('Compile error!');
+      console.log(err.stack);
+      res.sendStatus(500);
+    });
+}
 
-    console.log('Compilation finished: ', outFile);
-    return outFile;
-  })
+function flash(req, res) {
+  let template, arduboyLib;
+
+  req.$session.load()
+
+  // Compile project
+  .then(compile.bind(null, req))
 
   // Rebuild project
-  .then(function(outfile) {
+  .then(function(compile) {
     console.log('Building project...');
 
     const log = function(msg, value, ret) { console.log(msg, value); return ret; };
 
-    let builder = new Build(req.$session)
+    let builder = new Build(req.$session);
 
-    return builder.from(outfile).then(builder.build.bind(builder));
+    return builder.from(compile.outFile).then(builder.build.bind(builder));
   })
 
   // Build finished

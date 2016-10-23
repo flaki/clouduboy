@@ -174,7 +174,9 @@ cdb.post('/update', require('./api/update.js').all);
 
 
 // Compile to target
-cdb.all('/compile', require('./api/compile.js').all);
+cdb.all('/compile/flash', require('./api/compile.js').flash.all);
+cdb.all('/compile/info', require('./api/compile.js').info.all);
+
 
 // Session debugging
 cdb.get('/S', function(req, res) {

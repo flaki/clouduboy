@@ -15,7 +15,7 @@
 
 
   function buildMicroCanvas() {
-    Clouduboy.API.fetch('/compile')
+    Clouduboy.API.fetch('/compile/flash')
       .then(Clouduboy.reinit.filesDropdown);
   }
 

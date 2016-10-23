@@ -82,6 +82,8 @@
     }
   );
 
+  // Add custom mime type for arduino (c-like) sources
+  CodeMirror.mimeModes['text/x-arduino'] = CodeMirror.mimeModes['text/x-c++src'];
 
   // Update editor
   function setEditorContents(v) {
@@ -133,14 +135,14 @@
       // Add options
       data.groups.forEach(function(group) {
         toolbarLoad.insertAdjacentHTML("beforeend",
-          '<optgroup label="'+group.title+'":>'
+          '<optgroup label="'+group.title+':">'
           + data.sources
                   // Only sourcs from this group
                   .filter( src => src.id.match( new RegExp("^"+group.id) ) )
                   // Hide sources incompatible with active target
                   .filter( src => !( src.target && src.target !== Clouduboy.activeTarget ) )
                   // Render option
-                  .map(    src => '<option value="'+src.id+'">'+src.title+'</option>' )
+                  .map(    src => '<option value="'+src.id+'"'+(src.id===data.activeTemplate?' selected':'')+' >'+src.title+'</option>' )
                   .join('')
           +'</optgroup>'
         );
@@ -197,7 +199,7 @@
         select.innerHTML = '';
         select.insertAdjacentHTML('beforeend',
           data.files
-              .reduce( (out, file) => out+'<option value="'+file+'">'+file+'</option>', '' )
+              .reduce( (out, file) => out+'<option value="'+file+'"'+(data.activeFile===file?' selected':'')+'>'+file+'</option>', '' )
         );
       }
 
@@ -278,7 +280,23 @@
     let filename = (disposition.match(/filename="([^"]+)"/)||[])[1];
 
     //Clouduboy.editor.display.wrapper.dataset.file = filename;
-    document.getElementById("codeeditor-filename").value = filename;
+    let target = document.getElementById("codeeditor-filename");
+    target.value = filename;
+    target.dataset.filename = filename;
+
+    // Update document syntax mode
+    let ctype = ( r.headers.get('Content-Type') || '' ).match(/^[^\s;]+/);
+    let cmode = CodeMirror.mimeModes[ctype && ctype[0]];
+    console.log("c-type & mode", ctype, cmode);
+
+    if (ctype && cmode !== target.dataset.cmode) {
+      Clouduboy.editor.setOption('mode', cmode);
+
+      target.dataset.ctype = ctype[0];
+      target.dataset.cmode = cmode;
+
+      console.log("New document mode: ", (typeof cmode=='object' ? cmode.name : cmode));
+    }
 
     // Update file selector dropdown
     document.querySelector('select[name="file"]').value = filename;
@@ -335,6 +353,11 @@
 
   // Expose
   exports.Clouduboy = Clouduboy;
+
+  // Expose functionality
+  Clouduboy.reinit = {
+    filesDropdown: initFiles
+  };
 
   // Auto-init
   setTimeout(Clouduboy, 0);

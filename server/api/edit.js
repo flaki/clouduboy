@@ -11,6 +11,7 @@ module.exports = {
 const CFG = require('../cfg.js');
 
 const Build = require('../build.js');
+const path = require('path');
 
 
 function all(req, res) {
@@ -29,7 +30,9 @@ function all(req, res) {
 
     return req.$session.save().then(function() {
       console.log('Switched to: ', newfile);
-      res.type('text/plain').download(req.$session.builddir+'/editor/'+newfile, newfile);
+
+      if (newfile.match(/\.ino$/)) res.type('text/x-arduino; charset=utf-8');
+      res.download( path.join( req.$session.builddir, 'editor', newfile), newfile);
     });
   })
 

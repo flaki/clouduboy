@@ -12,7 +12,8 @@
 
 
   function buildMicroCanvas() {
-    Clouduboy.API.fetch('/compile');
+    Clouduboy.API.fetch('/compile')
+      .then(Clouduboy.reinit.filesDropdown);
   }
 
   // Add plugin

@@ -169,7 +169,8 @@ cdb.post('/targets', require('./api/targets.js').post);
 
 
 // Build & report errors on posted document
-cdb.post('/build', require('./api/build.js').all);
+cdb.post('/build', require('./api/build.js').all); // TODO: deprecated
+cdb.post('/update', require('./api/update.js').all);
 
 
 // Compile to target

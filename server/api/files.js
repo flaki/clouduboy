@@ -16,7 +16,8 @@ const Build = require('../build.js');
 function all(req, res) {
   req.$session.load().then(function() {
     res.json({
-      files: Build.files(req.$session.builddir, req.$session.buildfile)
+      files: Build.files(req.$session.builddir, req.$session.buildfile),
+      activeFile: req.$session.activeFile
     });
   })
 

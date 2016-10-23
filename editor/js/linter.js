@@ -46,7 +46,7 @@
       widgets.length = 0;
     });
 
-    Clouduboy.API.fetch('/build', {
+    Clouduboy.API.fetch('/update', {
       method: 'post',
       body: new FormData(document.querySelector('form'))
 

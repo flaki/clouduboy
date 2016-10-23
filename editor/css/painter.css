@@ -2,7 +2,7 @@
 body.pixel-editor {
   overflow: hidden;
 }
-iframe {
+body.pixel-editor #codeplugin {
   width: 100%;
   height: calc( 100% - 28px );
   position: fixed;

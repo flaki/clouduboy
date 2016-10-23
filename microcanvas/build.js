@@ -244,7 +244,29 @@ function parseLoopBody() {
 }
 
 // Parse (global) function declarations
-function parseGlobalFunctions() {}
+function parseGlobalFunctions() {
+  game.functions = [];
+
+  game.globals.forEach(dec => {
+    if (dec.type === 'function') {
+      console.log('Translating function declaration "'+dec.cid+'()"');
+      let f = { fobj: dec, code: [] };
+
+      let funcbody = dec.value // FunctionDeclaration; TODO: FunctionExpression
+        .body // BlockStatement
+        .body;
+
+      // Walk the body contents
+      funcbody.forEach(exp => {
+        let ln = translate(exp);
+        f.code.push(ln);
+        console.log('>>> '+ln);
+      });
+
+      game.functions.push(f);
+    }
+  });
+}
 
 function astAddParents(ast) {
   let Node = astNode();
@@ -415,6 +437,10 @@ function translate(exp) {
     case 'BlockStatement':
       return '{\n'+exp.body.map(e => '  '+self(e)).join('\n') +'\n}';
 
+    // Loops
+    case 'WhileStatement':
+      return 'while ('+self(exp.test)+') ' + self(exp.body);
+
     // If statements are all the same
     case 'IfStatement':
       return 'if ('+self(exp.test)+') '
@@ -504,6 +530,9 @@ function translateLib(exp, callexp) {
       // Global game state
       case 'state': return '_microcanvas_state';
 
+      // Global game frame count
+      case 'frameCount': return '_microcanvas_frame_counter';
+
       // Playback rate
       case 'playbackRate':
         let framerateArgs = [ {
@@ -552,7 +581,9 @@ function translateLib(exp, callexp) {
       // game.clearImage(gfx,x,y);   >>>    arduboy.drawBitmap(x,y, gfx, GFX_WIDTH,GFX_HEIGHT, BLACK);
       if (prop === 'drawImage' || prop === 'clearImage' || prop === 'eraseImage') {
         let sA = callexp.arguments;
-        let gfx = getString(sA[0].object);
+        let gfx = getString(sA[0].object || sA[0]); // for MemberExpression & Identifier types
+        // MemberExpression is e.g. gfxAnim[frame]-style declarations
+
         let clear = (prop === 'clearImage' || prop === 'eraseImage');
         let targetArgs = [
           sA[1], sA[2], sA[0],
@@ -612,6 +643,9 @@ function translateLib(exp, callexp) {
 
       // Math.floor
       // Math.abs
+      case 'abs':
+        return 'abs' + translateArgs(callexp.arguments);
+
       // Math.random
     }
   }
@@ -795,7 +829,7 @@ function exportGame(target) {
 
       // Globals
       if (game.globals) {
-        game.globals.forEach(c => {
+        game.globals.filter(dec => dec.type!=='function').forEach(c => {
           b += (c.type ? c.type : guessType(c.id, c.value)) + ' ';
           b += c.cid;
 
@@ -804,6 +838,29 @@ function exportGame(target) {
           }
 
           b+=';\n';
+        });
+        b+='\n';
+      }
+
+      // Functions
+      if (game.globals) {
+        game.functions.forEach(f => {
+          b += (f.fobj.rtype ? f.fobj.rtype : 'void') + ' ';
+          b += f.fobj.cid;
+
+          b += '(';
+          if (f.params) {
+            f.params.forEach(param => {
+              b += (param.type ? param.type : guessType(param.id, param.value)) + ' ';
+              b += param.cid;
+            })
+          }
+          b += ')';
+
+          b += ' {\n';
+          b += '////// FUNCTION BODY //////\n';
+          b += f.code.join('\n')+'\n';
+          b += '\n}\n';
         });
         b+='\n';
       }

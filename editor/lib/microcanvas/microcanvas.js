@@ -8,6 +8,7 @@
 
     // Disables interpolation on drawImage calls
     ctx.mozImageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = false;
 
     // Keystroke emulation
     ctx.$buttons = {};

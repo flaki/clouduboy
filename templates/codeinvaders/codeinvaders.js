@@ -43,7 +43,7 @@ game.loop(function() {
   if (turretPosition<0) turretPosition = 0;
 
   if (game.buttonPressed('right')) turretPosition = turretPosition+3;
-  if (turretPosition>gameareaSize-gfxDefender.width) turretPosition = gameareaSize-gfxDefender.width;
+  if (turretPosition>gameareaSize-gfxDefender.width/2) turretPosition = gameareaSize-gfxDefender.width/2;
 
   // Update turret projectile
   if (rocketY <= 0) {

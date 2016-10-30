@@ -27,6 +27,7 @@ b = game.ino;
 d = diff.diffTrimmedLines(a.replace(/\r\n/g,'\n').trim(),b.replace(/\r\n/,'\n').trim());
 
 console.log('Compilation finished: ', testfile);
+fs.writeFileSync('.lasttest.ino', game.ino);
 console.log('---');
 //console.log(d);
 
@@ -35,13 +36,22 @@ d.forEach(c => {
   //console.log( c.added?'+': (c.removed?'-':''), c.count );
   if (c.removed) {
     c.value.replace(/\n$/,'').split(/\n/).forEach((ln,idx) => {
-      console.log( ' '.repeat(5-Math.log10(lc))+(lc+idx)+' | '+colors.green(ln) );
+      console.log( lpad(lc+idx, 5)+' | '+colors.green(ln) );
     });
   } else if (c.added) {
     c.value.replace(/\n$/,'').split(/\n/).forEach((ln,idx) => {
-      console.log( ' '.repeat(5-Math.log10(lc))+(lc+idx)+' | '+colors.red(ln) );
+      console.log( lpad(lc+idx, 5)+' | '+colors.red(ln) );
     });
   } else {
     lc += c.count;
   }
 });
+
+function lpad(str, n, padstr) {
+  padstr = padstr || ' ';
+  str = String(str);
+  let l = str.length;
+  if (l < 0) l=0;
+  if (l > n) l=n;
+  return padstr.repeat(n-l||0)+str.substr(-l);
+}

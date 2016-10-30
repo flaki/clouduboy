@@ -3,22 +3,18 @@
 const fs = require('fs');
 const acorn = require('acorn');
 
+const utils = require('./modules/utils.js')
+
+const translate = require('./modules/translate.js');
+const translateLib = require('./modules/translateLib.js');
+const lookup = require('./modules/lookup.js');
+const getString = require('./modules/getString.js');
+
 let srcFile = process.argv[2] || './game.js';
 let targetSystem = process.argv[3] || 'arduboy';
 
 let game;
 
-// Button mapping for different targets
-const BUTTONS = {
-  'arduboy': {
-    left: 'LEFT_BUTTON',
-    right: 'RIGHT_BUTTON',
-    up: 'UP_BUTTON',
-    down: 'DOWN_BUTTON',
-    space: 'A_BUTTON',
-    enter: 'B_BUTTON',
-  }
-};
 
 // Game object
 function Game(target) {
@@ -53,7 +49,7 @@ module.exports = buildGame;
 
 
 function buildGame(target, source, id) {
-  game = new Game();
+  translate.game = translateLib.game = lookup.game = game = new Game();
 
   game.id = id;
   game.target = target;
@@ -80,7 +76,7 @@ function buildGame(target, source, id) {
 }
 
 
-function createConstant(id, value, type) {
+Game.prototype.createConstant = function(id, value, type) {
   // If no type specified, try to guess it
   // PS: constants shouldn't be affected by scope issues
   //if (!type) type = guessType(id, value, 'constant');
@@ -88,7 +84,7 @@ function createConstant(id, value, type) {
 
   game.constants.push({
     id: id,
-    cid: toConstCase(id),
+    cid: utils.toConstCase(id),
     value: value,
     type: type
   });
@@ -99,7 +95,7 @@ function createConstant(id, value, type) {
   console.log('+ new const: %s = %s', game.constants[id].cid, value);
 }
 
-function createVariable(id, value, type, declaration) {
+Game.prototype.createVariable = function (id, value, type, declaration) {
   // If no type specified, try to guess it
   // PS: constants shouldn't be affected by scope issues
   //if (!type) type = guessType(id, value, 'constant');
@@ -107,14 +103,14 @@ function createVariable(id, value, type, declaration) {
 
   let newVar = {
     id: id,
-    cid: toSnakeCase(id),
+    cid: utils.toSnakeCase(id),
     value: value,
     type: type
   };
 
   // Find parent scope
   let scope = declaration; // fallback
-  let scopes = walkParents(scope);
+  let scopes = utils.walkParents(scope);
   // TODO: find scope parent
   // TODO: support var/function scope
 
@@ -140,6 +136,13 @@ function createVariable(id, value, type, declaration) {
   return newVar;
 }
 
+Game.prototype.guessType = function (id, value, hint) {
+  if (hint === 'constant' && typeof value == 'number' && value < 256) return 'byte';
+
+  // unsigned int, byte, char, char[]
+  return 'int';
+}
+
 
 // Collect global declarations
 function parseGlobals() {
@@ -153,7 +156,7 @@ function parseGlobals() {
   .forEach(function (n) {
     if (n.kind === 'const') {
       n.declarations.forEach(dec => {
-        createConstant(getString(dec.id), getString(dec.init));
+        game.createConstant(getString(dec.id), getString(dec.init));
       });
 
     } else if (n.kind === 'let') {
@@ -161,14 +164,14 @@ function parseGlobals() {
         if (dec.id.name.match(/^gfx/)) {
           game.gfx.push({
             id: dec.id.name,
-            cid: toSnakeCase(dec.id.name)
+            cid: utils.toSnakeCase(dec.id.name)
           });
           game.gfx[dec.id.name] = game.gfx[game.gfx.length-1];
 
         } else if (dec.id.name.match(/^sfx/)) {
           game.sfx.push({
             id: dec.id.name,
-            cid: toSnakeCase(dec.id.name)
+            cid: utils.toSnakeCase(dec.id.name)
           });
           game.sfx[dec.id.name] = game.sfx[game.sfx.length-1];
 
@@ -181,7 +184,7 @@ function parseGlobals() {
         } else {
           game.globals.push({
             id: dec.id.name,
-            cid: toSnakeCase(dec.id.name),
+            cid: utils.toSnakeCase(dec.id.name),
             value: dec.init ? dec.init.value : void 0,
             scope: 'let'
           });
@@ -196,11 +199,11 @@ function parseGlobals() {
   .filter(o => o.type === 'FunctionDeclaration')
   .forEach(function (dec) {
     let id = getString(dec.id);
-    console.log('fn: ', dec.id.name, dec.params.map(p => p.name));
+    console.log('+', dec.generator ? 'generator' : 'function', dec.id.name, dec.params.map(p => getString(p)));
 
     game.globals.push({
       id: id,
-      cid: toSnakeCase(id),
+      cid: utils.toSnakeCase(id),
       value: dec,
       type: dec.generator ? 'generator' : 'function'
     });
@@ -306,7 +309,24 @@ function parseGlobalFunctions() {
       });
 
       game.functions.push(f);
+    } else if (dec.type === 'generator') {
+      console.log('Translating generator function "'+dec.cid+'()"');
+      let f = { fobj: dec, code: [] };
+
+      let funcbody = dec.value // FunctionDeclaration; TODO: FunctionExpression
+        .body // BlockStatement
+        .body;
+
+      // Walk the body contents
+      funcbody.forEach(exp => {
+        let ln = translate(exp);
+        f.code.push(ln);
+        console.log('>>> '+ln);
+      });
+
+      game.functions.push(f);
     }
+
   });
 }
 
@@ -342,30 +362,8 @@ function astAddParents(ast) {
   return ast;
 }
 
-function walkParents(node) {
-  let ret = [];
-
-  while (node) {
-    ret.unshift(node);
-    node = node.$parent;
-  }
-
-  return ret;
-}
-
 function astNode() {
   return (acorn.parse('function x() {}').body[0]).constructor;
-}
-
-function toSnakeCase(s) {
-  return s.replace(/[A-Z0-9]/g, e => '_'+e.toLowerCase() );
-}
-
-function toConstCase(s) {
-  // Already in const case
-  if (s.match(/^[A-Z0-9_]+$/)) return s;
-
-  return toSnakeCase(s).toUpperCase();
 }
 
 function isCalling(exp, id) {
@@ -394,435 +392,8 @@ function isCalling(exp, id) {
   return false;
 }
 
-function getString(exp) {
-  if (typeof exp === 'string') return exp;
 
-  if (!exp || !exp.type ) return '?';
 
-  let self = getString;
-
-  switch (exp.type) {
-    case 'Identifier':
-      return exp.name;
-
-    case 'Literal':
-      return exp.value;
-
-    case 'TemplateLiteral':
-      return (exp.quasis.map(q => q.value.raw).join())
-
-    case 'MemberExpression':
-      // Simple property access
-      if (exp.property.type === 'Identifier') {
-        return (self(exp.object) + '.' + self(exp.property));
-      }
-
-      // Property expression
-      return (self(exp.object) + '[ ' + self(exp.property)) +' ]';
-
-    case 'NewExpression':
-      return 'new '+self(exp.callee);
-
-    case 'ExpressionStatement':
-      return self(exp.expression);
-
-    case 'BinaryExpression':
-    case 'AssignmentExpression':
-      return self(exp.left) +' '+exp.operator+' '+ self(exp.right);
-
-    default:
-      return '? '+exp.type;
-  }
-}
-
-function translate(exp) {
-  if (typeof exp === 'string') return exp;
-
-  if (!exp || !exp.type ) return '?';
-
-  let self = translate;
-
-  switch (exp.type) {
-
-    // Literals return the textual definiton of the literal
-    case 'Literal':
-      return JSON.stringify(exp.value);
-
-    // Look up identifiers
-    case 'Identifier': // TODO: we'll need to handle scope (path)
-      return lookup(exp);
-
-    // Member expressions are usually translated to built-in methods
-    case 'MemberExpression':
-      let obj = self(exp.object);
-
-      // MicroCanvas calls
-      if (obj === game.alias
-       || obj.match(/^(g|s)fx/) // Game asset properties (gfx & sfx)
-     ) {
-        return translateLib(exp);
-
-      // Some other library
-      } else {
-        // Simple property access
-        //if (exp.property.type === 'Identifier') {
-        //  return '? ' + (self(exp.object) + '.' + self(exp.property));
-        //} this shouldn't be needed now
-
-        // Property expression
-        return '(' + (self(exp.object) + ').' + self(exp.property));
-        // TODO: property access belongs to subexpressions, move it there
-        // TODO: add one-level-deep ternary support
-        // TODO: support bracket notation for complex properties
-        // TODO: do not parenthetise simple identifiers
-      }
-
-    // Define a new variable on the current scope
-    case 'VariableDeclaration':
-      return exp.declarations.map(dec => self(dec)).join(' ');
-
-    case 'VariableDeclarator':
-      let id = getString(exp.id),
-          initializer = self(exp.init);
-
-      let v = createVariable(id, initializer, undefined, exp);
-
-      return (
-        (v.type ? v.type : guessType(v.id, v.value, v.$scope)) + ' '
-        + v.cid
-        + (typeof v.value !== 'undefined' ? ' = ' + v.value : '')
-        + ';'
-      );
-
-    // Just unwrap expression body
-    case 'ExpressionStatement':
-      return self(exp.expression) +';';
-
-    // And wrap a block statement
-    case 'BlockStatement':
-      return '{\n'+exp.body.map(e => '  '+self(e)).join('\n') +'\n}';
-
-    // Loops
-    case 'WhileStatement':
-      return 'while ('+self(exp.test)+') ' + self(exp.body);
-
-    // If statements are all the same
-    case 'IfStatement':
-      return 'if ('+self(exp.test)+') '
-        +( exp.consequent
-           ? self(exp.consequent) + ( exp.alternate ? ' else ' + self(exp.alternate) : '')
-           : ''
-        );
-
-    // Similarly, conditionals too
-    case 'ConditionalExpression':
-      return '('+self(exp.test)
-        +( exp.consequent
-           ? ' ? '+self(exp.consequent) + ( exp.alternate ? ' : '+self(exp.alternate) : '')
-           : ''
-        )+')'; // TODO: smarter parens
-
-    // Function calls
-    case 'CallExpression':
-      return translateLib(exp.callee, exp);
-
-    // Return statements
-    case 'ReturnStatement':
-      return 'return' + (exp.argument ? ' '+self(exp.argument) : '') + ';';
-
-    // Assignment and binary expressions work pretty much unchanged across JS/C
-    case 'LogicalExpression': // TODO: parens?
-    case 'BinaryExpression': // TODO: parens!
-    case 'AssignmentExpression':
-      // Special handling for game.playbackRate changes
-      if (exp.type == 'AssignmentExpression'
-       && getString(exp.left) == game.alias+'.playbackRate'
-      ) {
-        return translateLib(exp.left, exp);
-      }
-
-      return self(exp.left) +' '+exp.operator+' '+ self(exp.right);
-
-    // Unary expression (pre + postfix) work mostly the same
-    // TODO: boolean tricks? (!something >>> 1-something)
-    case 'UnaryExpression':
-      return (exp.prefix
-        ? exp.operator + self(exp.argument)
-        : self(exp.argument) + exp.operator
-      );
-
-    default:
-      return '__translate("'+exp.type+'","'+getString(exp)+'")';
-  }
-}
-
-function translateArgs(args) {
-  return '('
-    +(args.length
-      ? ' '+args.map(arg => translate(arg)).join(', ')+' '
-      : ''
-    )
-  +')';
-
-}
-
-function translateLib(exp, callexp) {
-  let obj, prop, id;
-
-  // A member-style callback (obj.prop(...))
-  if (exp.type == 'MemberExpression') {
-    obj = getString(exp.object);
-    prop = exp.property.type == 'Identifier' ? getString(exp.property) : exp.property;
-
-    if (typeof prop == 'string') console.log('{%s.%s}', obj, prop); else console.log('{%s[%s]}', obj, getString(prop));
-
-  // A function name
-  } else if (exp.type == 'Identifier') {
-    id = getString(exp);
-  }
-
-  // Function call
-  if (id) {
-    return lookup(exp) + translateArgs(callexp.arguments);
-
-  // Standard library (MicroCanvas) method/property
-  } else if (obj === game.alias) {
-    switch (prop) {
-      // Screen width and height
-      case 'width': return 'WIDTH';
-      case 'height': return 'HEIGHT';
-
-      // Global game state
-      case 'state': return '_microcanvas_state';
-
-      // Global game frame count
-      case 'frameCount': return '_microcanvas_frame_counter';
-
-      // Playback rate
-      case 'playbackRate':
-        let framerateArgs = [ {
-          type: 'BinaryExpression',
-          operator: '*',
-          left: { type: 'Literal', value: 60, raw: '60' },
-          right: {
-            type: 'CallExpression',
-            callee: {
-              type: 'MemberExpression',
-              object: { type: 'Identifier', name: 'Math' },
-              property: { type: 'Identifier', name: 'round' }
-            },
-            arguments: [
-              callexp.right
-            ]
-          }
-        } ];
-        return game.target+'.setFrameRate' + translateArgs( framerateArgs );
-    }
-
-    // Function/library method calls
-    if (callexp) {
-      // Call to 1:1 library mapping library functions
-      if (~[
-        'everyXFrames',
-        'clear',
-      ].indexOf(prop)) {
-        return game.target+'.'+prop + translateArgs(callexp.arguments);
-      }
-
-      // strings in "buttonPressed" are turned into constants
-      if (prop === 'buttonPressed') {
-        // First argument is the queried button
-        let btn = getString(callexp.arguments[0]);
-
-        if (btn in BUTTONS[targetSystem]) {
-          return game.target+'.pressed' + translateArgs([ BUTTONS[targetSystem][btn] ]);
-        } else {
-          return new Error('Unknown button reference: '+btn);
-        }
-      }
-
-      // drawImage has a different library name and uses different args
-      // game.drawImage(gfx,x,y);    >>>    arduboy.drawBitmap(x,y, gfx, GFX_WIDTH,GFX_HEIGHT, WHITE);
-      // game.clearImage(gfx,x,y);   >>>    arduboy.drawBitmap(x,y, gfx, GFX_WIDTH,GFX_HEIGHT, BLACK);
-      if (prop === 'drawImage' || prop === 'clearImage' || prop === 'eraseImage') {
-        let sA = callexp.arguments;
-        let argW, argH;
-        // MemberExpression is e.g. gfxAnim[frame]-style declarations
-
-        if (sA[0] && sA[0].type) {
-          let gfx;
-
-          switch (sA[0].type) {
-            case 'Identifier':
-              gfx = getString(sA[0]);
-              argW = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'width' }};
-              argH = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'height' }};
-              break;
-            case 'MemberExpression':
-              gfx = getString(sA[0].object);
-              argW = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'width' }};
-              argH = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'height' }};
-              break;
-            case 'ConditionalExpression':
-              let gfxC = getString(sA[0].consequent),
-                  gfxA = getString(sA[0].alternate);
-
-              argW = { type: 'ConditionalExpression',
-                       test: sA[0].test,
-                       consequent: { type: 'MemberExpression', object: gfxC, property: { type: 'Identifier', name:'width' }},
-                       alternate: { type: 'MemberExpression', object: gfxA, property: { type: 'Identifier', name:'width' }}
-                     };
-              argH = { type: 'ConditionalExpression',
-                       test: sA[0].test,
-                       consequent: { type: 'MemberExpression', object: gfxC, property: { type: 'Identifier', name:'height' }},
-                       alternate: { type: 'MemberExpression', object: gfxA, property: { type: 'Identifier', name:'height' }}
-                     };
-              break;
-
-            default:
-              argW = { type: '__translateLib('+sA[0].type+')', object: sA[0], property: { type: 'Identifier', name:'width' }};
-              argH = { type: '__translateLib('+sA[0].type+')', object: sA[0], property: { type: 'Identifier', name:'height' }};
-          }
-
-        } else {
-          argW = { type: 'MemberExpression', object: sA[0], property: { type: 'Identifier', name:'width' }};
-          argH = { type: 'MemberExpression', object: sA[0], property: { type: 'Identifier', name:'height' }};
-        }
-
-        let clear = (prop === 'clearImage' || prop === 'eraseImage');
-        let targetArgs = [
-          sA[1], sA[2], sA[0],
-          argW, argH,
-          clear ? 'BLACK' : 'WHITE'
-        ];
-
-        return game.target+'.drawBitmap' + translateArgs(targetArgs);
-        // todo subframe slice version
-      }
-
-      // drawText
-      // sprintf(_microcanvas_textbuffer, "DIST: %d", d);
-      // arduboy.setTextSize(3);
-      // arduboy.setCursor(0,0);
-      // arduboy.print("Sprite\nDemo");
-      // game.drawText("Sprite\nDemo", 0,0, 3);
-      if (prop === 'drawText') {
-        let sA = callexp.arguments;
-        // TODO: proper string/concat/cast/etc expression handling
-        let text = getString(sA[0]);
-
-        return '{\n'+(
-          ( sA[3] ? game.target+'.setTextSize'+translateArgs([ sA[3] ])+';\n' : '')+
-          game.target+'.setCursor'+translateArgs([ sA[1], sA[2] ])+';\n'+
-          game.target+'.print'+translateArgs([ sA[0] ])
-        )+';\n}';// todo subframe slice version
-      }
-
-      // fillRect
-      // game.fillRect(x,y,w,h);    >>>    arduboy.drawBitmap(x,y, w,h);
-      if (prop === 'fillRect' || prop === 'clearRect') {
-        let sA = callexp.arguments;
-        let clear = (prop === 'clearRect');
-
-        let targetArgs = [
-          sA[0], sA[1], sA[2], sA[3],
-          clear ? 'BLACK' : 'WHITE'
-        ];
-
-        return game.target+'.fillRect' + translateArgs(targetArgs);
-      }
-
-
-    }
-
-  // Graphics asset property
-  } else if (obj.match(/^gfx/)) {
-    switch (prop) {
-      case 'width':
-      case 'height':
-      case 'frames':
-        let id = obj + prop[0].toUpperCase() + prop.slice(1);
-        if (id in game.constants) {
-          return game.constants[id].cid;
-        }
-    }
-
-    // Computed property (e.g. frame access)
-    if (typeof prop == 'object') {
-      // TODO: proper type checking
-      return lookup(obj) + ' + ' + lookup(obj+'Framesize')+'*('+translate(prop)+')';
-    }
-
-  // Standard maths calls cross-compilation
-  } else if (obj === 'Math') {
-    switch (prop) {
-      // Math.round
-      case 'round':
-        return 'round' + translateArgs(callexp.arguments);
-
-      // Math.floor
-      // Math.abs
-      case 'floor':
-        return 'floor' + translateArgs(callexp.arguments);
-
-      case 'abs':
-        return 'abs' + translateArgs(callexp.arguments);
-
-      // Math.random
-    }
-  }
-
-  return '__translateLib("'+getString(exp)+'")';
-
-}
-
-function lookup(exp) {
-  let id = getString(exp);
-
-  console.log('{%s}', id);
-
-
-  // It's an asset
-  if (id in game.gfx) {
-    return game.gfx[id].cid;
-  }
-  if (id in game.sfx) {
-    return game.sfx[id].cid;
-  }
-
-  // It's a built-in library global or constant
-  if (id.match(/^(TRUE|FALSE|WIDTH|HEIGHT|WHITE|BLACK|INVERT)$/)) {
-    return id;
-  }
-
-  // Try to resolve identifier on the current scope
-  let scopes = walkParents(exp).reverse();
-  for (let i=0; i<scopes.length; ++i) {
-    if (scopes[i].$variables && scopes[i].$variables[id]) {
-      let v = scopes[i].$variables[id];
-
-      return v.cid;
-    }
-  }
-
-  // Trace back
-//  console.log( walkParents(exp)
-//    .map(x => x.type ? x.type : (x instanceof Array ? '[]' : typeof x) )
-//    .join(' > ') + ' "'+id+'"'
-//  );
-
-  // It's a global constant
-  if (id in game.constants) {
-    return game.constants[id].cid;
-  }
-
-  // It's a global variable
-  if (id in game.globals) {
-    return game.globals[id].cid;
-  }
-
-  return getString(id);
-}
 
 function loadAsset(exp) {
   let id = exp.left.name;
@@ -867,10 +438,10 @@ function loadGraphics(id, args) {
   // Parse hints and create constants for them
   game.gfx[id].meta = arrayInitializerHints(game.gfx[id].value);
 
-  createConstant(id+'Width', game.gfx[id].meta.w);
-  createConstant(id+'Height', game.gfx[id].meta.h);
-  createConstant(id+'Frames', game.gfx[id].meta.frames);
-  createConstant(id+'Framesize', Math.ceil(game.gfx[id].meta.h/8)*game.gfx[id].meta.w);
+  game.createConstant(id+'Width', game.gfx[id].meta.w);
+  game.createConstant(id+'Height', game.gfx[id].meta.h);
+  game.createConstant(id+'Frames', game.gfx[id].meta.frames);
+  game.createConstant(id+'Framesize', Math.ceil(game.gfx[id].meta.h/8)*game.gfx[id].meta.w);
 };
 
 function loadTune(id, args) {
@@ -903,13 +474,6 @@ function arrayInitializerHints(statement) {
   }
 
   return ret;
-}
-
-function guessType(id, value, hint) {
-  if (hint === 'constant' && typeof value == 'number' && value < 256) return 'byte';
-
-  // unsigned int, byte, char, char[]
-  return 'int';
 }
 
 function exportGame(target) {
@@ -945,7 +509,7 @@ function exportGame(target) {
       // Constants
       if (game.constants) {
         game.constants.forEach(c => {
-          b += 'const ' + (c.type ? c.type : guessType(c.id, c.value, 'constant')) + ' ';
+          b += 'const ' + (c.type ? c.type : game.guessType(c.id, c.value, 'constant')) + ' ';
           b += c.cid;
 
           if (typeof c.value !== 'undefined') {
@@ -960,7 +524,7 @@ function exportGame(target) {
       // Globals
       if (game.globals) {
         game.globals.filter(dec => dec.type!=='function').forEach(c => {
-          b += (c.type ? c.type : guessType(c.id, c.value)) + ' ';
+          b += (c.type ? c.type : game.guessType(c.id, c.value)) + ' ';
           b += c.cid;
 
           if (typeof c.value !== 'undefined') {
@@ -981,7 +545,7 @@ function exportGame(target) {
           b += '(';
           if (f.params) {
             f.params.forEach(param => {
-              b += (param.type ? param.type : guessType(param.id, param.value)) + ' ';
+              b += (param.type ? param.type : game.guessType(param.id, param.value)) + ' ';
               b += param.cid;
             })
           }

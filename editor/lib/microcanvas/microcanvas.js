@@ -19,6 +19,16 @@
       if (e.key==='ArrowDown') ctx.$buttons.down = true;
       if (e.key===' ') ctx.$buttons.A = true;
       if (e.key==='Enter') ctx.$buttons.B = true;
+
+      // 8bitdo controller support (Mode 2)
+      if (e.key==='e') ctx.$buttons.left = true;
+      if (e.key==='f') ctx.$buttons.right = true;
+      if (e.key==='c') ctx.$buttons.up = true;
+      if (e.key==='d') ctx.$buttons.down = true;
+      if (e.key==='j' || e.key==='i' || e.key==='k') ctx.$buttons.A = true;
+      if (e.key==='g' || e.key==='h' || e.key==='m') ctx.$buttons.B = true;
+      // Start button emulates A+B pressed simultaneously
+      if (e.key==='o') { ctx.$buttons.A = true; ctx.$buttons.B = true; }
     });
 
     window.addEventListener('keyup', e => {
@@ -28,6 +38,16 @@
       if (e.key==='ArrowDown') ctx.$buttons.down = false;
       if (e.key===' ' ) ctx.$buttons.A = false;
       if (e.key==='Enter') ctx.$buttons.B = false;
+
+      // 8bitdo controller support (Mode 2)
+      if (e.key==='e') ctx.$buttons.left = false;
+      if (e.key==='f') ctx.$buttons.right = false;
+      if (e.key==='c') ctx.$buttons.up = false;
+      if (e.key==='d') ctx.$buttons.down = false;
+      if (e.key==='j' || e.key==='i' || e.key==='k') ctx.$buttons.A = false;
+      if (e.key==='g' || e.key==='h' || e.key==='m') ctx.$buttons.B = false;
+      // Start button emulates A+B pressed simultaneously
+      if (e.key==='o') { ctx.$buttons.A = false; ctx.$buttons.B = false; }
     });
 
     // default fillStyle

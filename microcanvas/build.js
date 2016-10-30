@@ -99,6 +99,48 @@ function createConstant(id, value, type) {
   console.log('+ new const: %s = %s', game.constants[id].cid, value);
 }
 
+function createVariable(id, value, type, declaration) {
+  // If no type specified, try to guess it
+  // PS: constants shouldn't be affected by scope issues
+  //if (!type) type = guessType(id, value, 'constant');
+  // only explicit types here, do not guess here only on output
+
+  let newVar = {
+    id: id,
+    cid: toSnakeCase(id),
+    value: value,
+    type: type
+  };
+
+  // Find parent scope
+  let scope = declaration; // fallback
+  let scopes = walkParents(scope);
+  // TODO: find scope parent
+  // TODO: support var/function scope
+
+  let s = scopes.length;
+  while (--s > 0) if (scopes[s].type === 'BlockStatement') {
+    scope = scopes[s];
+    break;
+  }
+
+  // Make variable accessible via it's scope (defining element in AST)
+  scope.$variables = scope.$variables || [];
+  scope.$variables.push(newVar);
+  scope.$variables[id] = scope.$variables[scope.$variables.length-1];
+
+  Object.defineProperty(newVar, '$scope', { value: scope });
+
+  console.log('+ new var: %s = %s', scope.$variables[id].cid, value);
+  console.log('  scope: ' + scopes
+    .map(x => (x.type ? x.type : (x instanceof Array ? '[]' : typeof x)) + (x.body ? '('+(scope===x?'*':'S')+')':'') )
+    .join(' > ') + ' "'+id+'"'
+  );
+
+  return newVar;
+}
+
+
 // Collect global declarations
 function parseGlobals() {
   console.log('Processing globals');
@@ -274,17 +316,19 @@ function astAddParents(ast) {
   let addParent = function(n, parent) {
     if (!(n && typeof n == 'object')) return;
 
+    // Collections
+    if (n.length) return n.forEach(node => addParent(node, parent));
+
+    // Nodes
     if (n instanceof Node) {
       Object.defineProperty(n, '$parent', { value: parent });
     }
 
-    // Collections
-    if (n.length) n.forEach(node => addParent(node, n));
-
     // Walk subtree
     ['body', 'left', 'right', 'object', 'property',
      'callee', 'argument', 'arguments', 'expression',
-     'test', 'consequent', 'alternate'
+     'test', 'consequent', 'alternate',
+     'declarations'
     ].forEach(prop => {
       if (prop in n) addParent(n[prop], n);
     });
@@ -428,6 +472,23 @@ function translate(exp) {
         // Property expression
         return '? ' + (self(exp.object) + '[ ' + self(exp.property)) +' ]';
       }
+
+    // Define a new variable on the current scope
+    case 'VariableDeclaration':
+      return exp.declarations.map(dec => self(dec)).join(' ');
+
+    case 'VariableDeclarator':
+      let id = getString(exp.id),
+          initializer = self(exp.init);
+
+      let v = createVariable(id, initializer, undefined, exp);
+
+      return (
+        (v.type ? v.type : guessType(v.id, v.value, v.$scope)) + ' '
+        + v.cid
+        + (typeof v.value !== 'undefined' ? ' = ' + v.value : '')
+        + ';'
+      );
 
     // Just unwrap expression body
     case 'ExpressionStatement':
@@ -673,13 +734,21 @@ function lookup(exp) {
     return id;
   }
 
-  // Trace back
-  console.log( walkParents(exp)
-    .map(x => x.type ? x.type : (x instanceof Array ? '[]' : typeof x) )
-    .join(' > ') + ' "'+id+'"'
-  );
-
   // Try to resolve identifier on the current scope
+  let scopes = walkParents(exp).reverse();
+  for (let i=0; i<scopes.length; ++i) {
+    if (scopes[i].$variables && scopes[i].$variables[id]) {
+      let v = scopes[i].$variables[id];
+
+      return v.cid;
+    }
+  }
+
+  // Trace back
+//  console.log( walkParents(exp)
+//    .map(x => x.type ? x.type : (x instanceof Array ? '[]' : typeof x) )
+//    .join(' > ') + ' "'+id+'"'
+//  );
 
   // It's a global constant
   if (id in game.constants) {
@@ -691,7 +760,7 @@ function lookup(exp) {
     return game.globals[id].cid;
   }
 
-  return '%'+id+'%';
+  return getString(id);
 }
 
 function loadAsset(exp) {

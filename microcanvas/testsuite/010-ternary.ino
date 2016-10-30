@@ -49,7 +49,7 @@ void loop() {
 
 ////// LOOP CONTENTS TO FOLLOW //////
 arduboy.clear();
-arduboy.drawBitmap( 58, 28, floor( _microcanvas_frame_counter / 60 ) % 2 ? gfx_sprite_a : gfx_sprite_b, (floor( _microcanvas_frame_counter / 60 ) % 2 ? GFX_SPRITE_A_WIDTH : GFX_SPRITE_B_WIDTH), (floor( _microcanvas_frame_counter / 60 ) % 2 ? GFX_SPRITE_A_HEIGHT : GFX_SPRITE_B_HEIGHT), WHITE );
+arduboy.drawBitmap( 58, 28, (floor( _microcanvas_frame_counter / 60 ) % 2 ? gfx_sprite_a : gfx_sprite_b), (floor( _microcanvas_frame_counter / 60 ) % 2 ? GFX_SPRITE_A_WIDTH : GFX_SPRITE_B_WIDTH), (floor( _microcanvas_frame_counter / 60 ) % 2 ? GFX_SPRITE_A_HEIGHT : GFX_SPRITE_B_HEIGHT), WHITE );
 ////// END OF LOOP CONTENTS //////
 
   arduboy.display();

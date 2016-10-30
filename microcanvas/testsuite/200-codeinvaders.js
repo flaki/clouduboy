@@ -81,16 +81,16 @@ function draw() {
 //       game.drawImage(gfxInvader, 13*x+Math.abs(game.frameCount%30/5-3), 9*y);
 //     else
 ///      game.drawImage(gfxInvader, 13*x+4-Math.abs(game.frameCount%30/5-3), 9*y);
-    let d = game.frameCount%30<15 ? (3 - Math.floor(game.frameCount%30/5)) : (Math.floor(game.frameCount%30/5) - 3);
+    let d = game.frameCount%60<30 ? (game.frameCount%60/10|0) : (3 - (game.frameCount%60/10|0));
 
-    game.drawImage(Math.floor(game.frameCount/10)%2 ? gfxInvader : gfxInvader2, 13*x +(y%2 ? d : 4-d), 9*y);
+    game.drawImage((game.frameCount/10|0)%2 ? gfxInvader : gfxInvader2, 13*x +(y%2 ? d : 3-d) +3, 9*y);
 
      x = x + 1;
    }
    y = y + 1;
   }
 
-  game.drawText( Math.abs(game.frameCount%30/5-3), 100,0);
+  game.drawText( (game.frameCount%30/5|0)-3, 100,0);
 
   game.drawImage(gfxDefender , turretPosition-5, gameareaSize-8);
 

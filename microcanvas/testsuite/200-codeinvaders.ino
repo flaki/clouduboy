@@ -48,15 +48,15 @@ int y = 0;
 while (y < 4) {
   int x = 0;
   while (x < 5) {
-  int d = _microcanvas_frame_counter % 30 < 15 ? 3 - floor( _microcanvas_frame_counter % 30 / 5 ) : floor( _microcanvas_frame_counter % 30 / 5 ) - 3;
-  arduboy.drawBitmap( 13 * x + y % 2 ? d : 4 - d, 9 * y, floor( _microcanvas_frame_counter / 10 ) % 2 ? gfx_invader : gfx_invader_2, (floor( _microcanvas_frame_counter / 10 ) % 2 ? GFX_INVADER_WIDTH : GFX_INVADER_2_WIDTH), (floor( _microcanvas_frame_counter / 10 ) % 2 ? GFX_INVADER_HEIGHT : GFX_INVADER_2_HEIGHT), WHITE );
+  int d = (_microcanvas_frame_counter % 60 < 30 ? _microcanvas_frame_counter % 60 / 10 | 0 : 3 - _microcanvas_frame_counter % 60 / 10 | 0);
+  arduboy.drawBitmap( 13 * x + (y % 2 ? d : 3 - d) + 3, 9 * y, (_microcanvas_frame_counter / 10 | 0 % 2 ? gfx_invader : gfx_invader_2), (_microcanvas_frame_counter / 10 | 0 % 2 ? GFX_INVADER_WIDTH : GFX_INVADER_2_WIDTH), (_microcanvas_frame_counter / 10 | 0 % 2 ? GFX_INVADER_HEIGHT : GFX_INVADER_2_HEIGHT), WHITE );
   x = x + 1;
 }
   y = y + 1;
 }
 {
 arduboy.setCursor( 100, 0 );
-arduboy.print( abs( _microcanvas_frame_counter % 30 / 5 - 3 ) );
+arduboy.print( _microcanvas_frame_counter % 30 / 5 | 0 - 3 );
 };
 arduboy.drawBitmap( turret_position - 5, gamearea_size - 8, gfx_defender, GFX_DEFENDER_WIDTH, GFX_DEFENDER_HEIGHT, WHITE );
 if (arduboy.pressed( LEFT_BUTTON )) {

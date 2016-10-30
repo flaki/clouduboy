@@ -454,7 +454,7 @@ function translate(exp) {
 
     // Member expressions are usually translated to built-in methods
     case 'MemberExpression':
-      let obj = getString(exp.object);
+      let obj = self(exp.object);
 
       // MicroCanvas calls
       if (obj === game.alias
@@ -465,12 +465,16 @@ function translate(exp) {
       // Some other library
       } else {
         // Simple property access
-        if (exp.property.type === 'Identifier') {
-          return '? ' + (self(exp.object) + '.' + self(exp.property));
-        }
+        //if (exp.property.type === 'Identifier') {
+        //  return '? ' + (self(exp.object) + '.' + self(exp.property));
+        //} this shouldn't be needed now
 
         // Property expression
-        return '? ' + (self(exp.object) + '[ ' + self(exp.property)) +' ]';
+        return '(' + (self(exp.object) + ').' + self(exp.property));
+        // TODO: property access belongs to subexpressions, move it there
+        // TODO: add one-level-deep ternary support
+        // TODO: support bracket notation for complex properties
+        // TODO: do not parenthetise simple identifiers
       }
 
     // Define a new variable on the current scope
@@ -506,17 +510,17 @@ function translate(exp) {
     case 'IfStatement':
       return 'if ('+self(exp.test)+') '
         +( exp.consequent
-           ? self(exp.consequent) + ( exp.alternate ? self(exp.alternate) : '')
+           ? self(exp.consequent) + ( exp.alternate ? ' else ' + self(exp.alternate) : '')
            : ''
         );
 
     // Similarly, conditionals too
     case 'ConditionalExpression':
-      return self(exp.test)
+      return '('+self(exp.test)
         +( exp.consequent
            ? ' ? '+self(exp.consequent) + ( exp.alternate ? ' : '+self(exp.alternate) : '')
            : ''
-        );
+        )+')'; // TODO: smarter parens
 
     // Function calls
     case 'CallExpression':
@@ -548,7 +552,7 @@ function translate(exp) {
       );
 
     default:
-      return '? '+exp.type;
+      return '__translate("'+exp.type+'","'+getString(exp)+'")';
   }
 }
 
@@ -642,14 +646,53 @@ function translateLib(exp, callexp) {
       // game.clearImage(gfx,x,y);   >>>    arduboy.drawBitmap(x,y, gfx, GFX_WIDTH,GFX_HEIGHT, BLACK);
       if (prop === 'drawImage' || prop === 'clearImage' || prop === 'eraseImage') {
         let sA = callexp.arguments;
-        let gfx = getString(sA[0].object || sA[0]); // for MemberExpression & Identifier types
+        let argW, argH;
         // MemberExpression is e.g. gfxAnim[frame]-style declarations
+
+        if (sA[0] && sA[0].type) {
+          let gfx;
+
+          switch (sA[0].type) {
+            case 'Identifier':
+              gfx = getString(sA[0]);
+              argW = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'width' }};
+              argH = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'height' }};
+              break;
+            case 'MemberExpression':
+              gfx = getString(sA[0].object);
+              argW = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'width' }};
+              argH = { type: 'MemberExpression', object: gfx, property: { type: 'Identifier', name:'height' }};
+              break;
+            case 'ConditionalExpression':
+              let gfxC = getString(sA[0].consequent),
+                  gfxA = getString(sA[0].alternate);
+
+              argW = { type: 'ConditionalExpression',
+                       test: sA[0].test,
+                       consequent: { type: 'MemberExpression', object: gfxC, property: { type: 'Identifier', name:'width' }},
+                       alternate: { type: 'MemberExpression', object: gfxA, property: { type: 'Identifier', name:'width' }}
+                     };
+              argH = { type: 'ConditionalExpression',
+                       test: sA[0].test,
+                       consequent: { type: 'MemberExpression', object: gfxC, property: { type: 'Identifier', name:'height' }},
+                       alternate: { type: 'MemberExpression', object: gfxA, property: { type: 'Identifier', name:'height' }}
+                     };
+              break;
+
+            default:
+              argW = { type: '__translateLib('+sA[0].type+')', object: sA[0], property: { type: 'Identifier', name:'width' }};
+              argH = { type: '__translateLib('+sA[0].type+')', object: sA[0], property: { type: 'Identifier', name:'height' }};
+          }
+
+        } else {
+          argW = { type: 'MemberExpression', object: sA[0], property: { type: 'Identifier', name:'width' }};
+          argH = { type: 'MemberExpression', object: sA[0], property: { type: 'Identifier', name:'height' }};
+        }
 
         let clear = (prop === 'clearImage' || prop === 'eraseImage');
         let targetArgs = [
           sA[1], sA[2], sA[0],
-          { type: 'MemberExpression', object: { type: 'Identifier', name: gfx }, property: { type: 'Identifier', name:'width' }},
-          { type: 'MemberExpression', object: { type: 'Identifier', name: gfx }, property: { type: 'Identifier', name: 'height' }},
+          argW, argH,
           clear ? 'BLACK' : 'WHITE'
         ];
 
@@ -668,12 +711,27 @@ function translateLib(exp, callexp) {
         // TODO: proper string/concat/cast/etc expression handling
         let text = getString(sA[0]);
 
-        return (
+        return '{\n'+(
           ( sA[3] ? game.target+'.setTextSize'+translateArgs([ sA[3] ])+';\n' : '')+
           game.target+'.setCursor'+translateArgs([ sA[1], sA[2] ])+';\n'+
           game.target+'.print'+translateArgs([ sA[0] ])
-        );// todo subframe slice version
+        )+';\n}';// todo subframe slice version
       }
+
+      // fillRect
+      // game.fillRect(x,y,w,h);    >>>    arduboy.drawBitmap(x,y, w,h);
+      if (prop === 'fillRect' || prop === 'clearRect') {
+        let sA = callexp.arguments;
+        let clear = (prop === 'clearRect');
+
+        let targetArgs = [
+          sA[0], sA[1], sA[2], sA[3],
+          clear ? 'BLACK' : 'WHITE'
+        ];
+
+        return game.target+'.fillRect' + translateArgs(targetArgs);
+      }
+
 
     }
 
@@ -704,6 +762,9 @@ function translateLib(exp, callexp) {
 
       // Math.floor
       // Math.abs
+      case 'floor':
+        return 'floor' + translateArgs(callexp.arguments);
+
       case 'abs':
         return 'abs' + translateArgs(callexp.arguments);
 
@@ -711,7 +772,7 @@ function translateLib(exp, callexp) {
     }
   }
 
-  return '<'+getString(exp)+'>';
+  return '__translateLib("'+getString(exp)+'")';
 
 }
 

@@ -33,11 +33,11 @@ console.log('---');
 let lc = 0;
 d.forEach(c => {
   //console.log( c.added?'+': (c.removed?'-':''), c.count );
-  if (c.added) {
+  if (c.removed) {
     c.value.replace(/\n$/,'').split(/\n/).forEach((ln,idx) => {
       console.log( ' '.repeat(5-Math.log10(lc))+(lc+idx)+' | '+colors.green(ln) );
     });
-  } else if (c.removed) {
+  } else if (c.added) {
     c.value.replace(/\n$/,'').split(/\n/).forEach((ln,idx) => {
       console.log( ' '.repeat(5-Math.log10(lc))+(lc+idx)+' | '+colors.red(ln) );
     });

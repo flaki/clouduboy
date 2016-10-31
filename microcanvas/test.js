@@ -35,6 +35,24 @@ d = diff.diffTrimmedLines(a.replace(/\r\n/g,'\n').trim(),b.replace(/\r\n/,'\n').
 console.log('Compilation finished: ', testfile);
 fs.writeFileSync('.lasttest.ino', game.ino);
 
+// Check for missing library handlers
+let missingHandlers = game.ino.match(/\_\_\w+\([^\)]+\)/g)
+if (missingHandlers.length) {
+  console.log(colors.yellow('Missing conversion handlers found in compiler output - stopping.'));
+
+  missingHandlers.map(str => ({
+    ln: game.ino.substr(0,game.ino.indexOf(str)).split('\n').length,
+    str: str
+  })).forEach(obj => {
+    console.log( lpad(obj.ln, 5)+' | '+colors.red(obj.str) );
+  });
+
+  if (!process.argv.filter(arg => arg==='-f').length) {
+    console.log(colors.yellow('Run with "-f" to continue regardless.'));
+    process.exit(0);
+  }
+}
+
 // update testfile
 if (process.argv.filter(arg => arg==='-u').length) fs.writeFileSync(path.join(__dirname, 'testsuite', testfile+'.ino' ), game.ino);
 

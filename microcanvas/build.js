@@ -55,7 +55,7 @@ function buildGame(target, source, id) {
   game.target = target;
 
   game.ast = acorn.parse(source, { ecmaVersion: 6, sourceType: 'script' });
-  game.ast = astAddParents(game.ast);
+  game.ast = astAddParents(game.ast, source);
 
   // Parse
   parseGlobals(); // TODO: function declarations!
@@ -328,7 +328,7 @@ function parseGlobalFunctions() {
   });
 }
 
-function astAddParents(ast) {
+function astAddParents(ast, src) {
   let Node = astNode();
 
   let addParent = function(n, parent) {
@@ -340,6 +340,11 @@ function astAddParents(ast) {
     // Nodes
     if (n instanceof Node) {
       Object.defineProperty(n, '$parent', { value: parent });
+    }
+
+    // Raw content
+    if ('start' in n && 'end' in n) {
+      Object.defineProperty(n, '$raw', { value: src.substring(n.start,n.end) });
     }
 
     // Walk subtree

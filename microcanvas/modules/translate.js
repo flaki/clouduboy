@@ -146,7 +146,8 @@ function translate(exp) {
 
   }
 
-  return '__translate("'+exp.type+'", '+getString(exp)+')';
+console.log(exp);
+  return '__translate("'+exp.type+'", "'+(exp.$raw||'')+'")';
 }
 
 function translateArgs(args) {

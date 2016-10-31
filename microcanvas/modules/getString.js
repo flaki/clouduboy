@@ -5,7 +5,7 @@
 function getString(exp) {
   if (typeof exp === 'string') return exp;
 
-  if (!exp || !exp.type ) return '__getString("'+String(exp)+'")';
+  if (!exp || !exp.type ) return '<"'+String(exp)+'>"';
 
   let self = getString;
 
@@ -39,7 +39,7 @@ function getString(exp) {
       return self(exp.left) +' '+exp.operator+' '+ self(exp.right);
 
     default:
-      return '__getString("'+exp.type+'")';
+      return '"<'+exp.type+'>"';
   }
 }
 

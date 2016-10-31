@@ -248,7 +248,7 @@ function translateLib(exp, callexp) {
     }
   }
 
-  return '__translateLib("'+getString(exp)+'")';
+  return '__translateLib("'+(callexp.$raw||getString(exp))+'")';
 }
 
 

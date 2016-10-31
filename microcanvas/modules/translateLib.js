@@ -47,20 +47,18 @@ function translateLib(exp, callexp) {
       // Playback rate
       case 'playbackRate':
         let framerateArgs = [ {
-          type: 'BinaryExpression',
-          operator: '*',
-          left: { type: 'Literal', value: 60, raw: '60' },
-          right: {
-            type: 'CallExpression',
-            callee: {
-              type: 'MemberExpression',
-              object: { type: 'Identifier', name: 'Math' },
-              property: { type: 'Identifier', name: 'round' }
-            },
-            arguments: [
-              callexp.right
-            ]
-          }
+          type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            object: { type: 'Identifier', name: 'Math' },
+            property: { type: 'Identifier', name: 'round' }
+          },
+          arguments: [ {
+              type: 'BinaryExpression',
+              operator: '*',
+              left: { type: 'Literal', value: 60, raw: '60' },
+              right: callexp.right
+          } ]
         } ];
         return translate.game.target+'.setFrameRate' + translate.args( framerateArgs );
 

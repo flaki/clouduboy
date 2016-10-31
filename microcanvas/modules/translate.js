@@ -1,6 +1,8 @@
 'use strict';
 
 const getString = require('./getString.js');
+const getObject = require('./getObject.js');
+
 const lookup = require('./lookup.js');
 
 const translateLib = require('./translateLib.js')(translate);
@@ -78,6 +80,14 @@ function translate(exp) {
     case 'WhileStatement':
       return 'while ('+self(exp.test)+') ' + self(exp.body);
 
+    // For loop
+    case 'ForStatement':
+      console.log(exp);
+      // init / test / update / body
+
+      return 'for ('+self(exp.init).replace(/;$/,'')+'; '+self(exp.test)+'; '+self(exp.update)+') '+self(exp.body);
+      break;
+
     // If statements are all the same
     case 'IfStatement':
       return 'if ('+self(exp.test)+') '
@@ -117,15 +127,22 @@ function translate(exp) {
 
     // Unary expression (pre + postfix) work mostly the same
     // TODO: boolean tricks? (!something >>> 1-something)
+    case 'UpdateExpression':
     case 'UnaryExpression':
       return (exp.prefix
         ? exp.operator + self(exp.argument)
         : self(exp.argument) + exp.operator
       );
 
-    default:
-      return '__translate("'+exp.type+'","'+getString(exp)+'")';
+    // Yield has a special meaning in microcanvas
+    // (acts as a terminator of a generator-function frame)
+    case 'YieldExpression':
+      console.log(exp);
+      break;
+
   }
+
+  return '__translate("'+exp.type+'", '+getString(exp)+')';
 }
 
 function translateArgs(args) {

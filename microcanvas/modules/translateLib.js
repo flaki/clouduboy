@@ -3,6 +3,8 @@
 const utils = require('./utils.js');
 
 const getString = require('./getString.js');
+const getObject = require('./getObject.js');
+
 const lookup = require('./lookup.js');
 
 let translate;
@@ -61,6 +63,21 @@ function translateLib(exp, callexp) {
           }
         } ];
         return translate.game.target+'.setFrameRate' + translate.args( framerateArgs );
+
+      case 'custom':
+        let platforms = getObject(callexp.arguments[0]);
+        let target = translate.game.target;
+
+        console.log(platforms);
+        if (target in platforms) {
+          console.log("+ platform-specific code for", target);
+          console.log(platforms[target]);
+          return platforms[target];
+        }
+
+      case 'random':
+        return 'random'+translate.args( callexp.arguments);
+
     }
 
     // Function/library method calls

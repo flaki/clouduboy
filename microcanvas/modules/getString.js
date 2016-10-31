@@ -1,13 +1,11 @@
 'use strict';
 
-//const getString = require('./getString.js');
-
 
 
 function getString(exp) {
   if (typeof exp === 'string') return exp;
 
-  if (!exp || !exp.type ) return '?';
+  if (!exp || !exp.type ) return '__getString("'+String(exp)+'")';
 
   let self = getString;
 
@@ -41,7 +39,7 @@ function getString(exp) {
       return self(exp.left) +' '+exp.operator+' '+ self(exp.right);
 
     default:
-      return '? '+exp.type;
+      return '__getString("'+exp.type+'")';
   }
 }
 

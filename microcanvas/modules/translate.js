@@ -83,8 +83,9 @@ function translate(exp) {
     // For loop
     case 'ForStatement':
       // init / test / update / body
+      let loopInit = self(exp.init).replace(/;$/,'');
 
-      return 'for ('+self(exp.init).replace(/;$/,'')+'; '+self(exp.test)+'; '+self(exp.update)+') '+self(exp.body);
+      return 'for ('+loopInit+'; '+self(exp.test)+'; '+self(exp.update)+') '+self(exp.body);
       break;
 
     // If statements are all the same
@@ -142,7 +143,6 @@ function translate(exp) {
     // (acts as a terminator of a generator-function frame)
     case 'YieldExpression':
       return translate.game.target+'.display(); delay('+getString(exp.argument)+'*16)';
-      break;
 
   }
 

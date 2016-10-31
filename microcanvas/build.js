@@ -55,7 +55,7 @@ function buildGame(target, source, id) {
   game.target = target;
 
   game.ast = acorn.parse(source, { ecmaVersion: 6, sourceType: 'script' });
-  game.ast = astAddParents(game.ast, source);
+  game.ast = astAddParents(game.ast, source.toString());
 
   // Parse
   parseGlobals(); // TODO: function declarations!
@@ -127,7 +127,7 @@ Game.prototype.createVariable = function (id, value, type, declaration) {
 
   Object.defineProperty(newVar, '$scope', { value: scope });
 
-  console.log('+ new var: %s = %s', scope.$variables[id].cid, value);
+  console.log('+ new var: %s', scope.$variables[id].cid + ( value ? ' = '+value : ''));
   console.log('  scope: ' + scopes
     .map(x => (x.type ? x.type : (x instanceof Array ? '[]' : typeof x)) + (x.body ? '('+(scope===x?'*':'S')+')':'') )
     .join(' > ') + ' "'+id+'"'
@@ -199,15 +199,22 @@ function parseGlobals() {
   .filter(o => o.type === 'FunctionDeclaration')
   .forEach(function (dec) {
     let id = getString(dec.id);
-    console.log('+', dec.generator ? 'generator' : 'function', dec.id.name, dec.params.map(p => getString(p)));
+    let params = [];
+    console.log('+ new', dec.generator ? 'generator' : 'function', dec.id.name, dec.params.map(p => getString(p)));
 
     game.globals.push({
       id: id,
       cid: utils.toSnakeCase(id),
+      params: params,
       value: dec,
       type: dec.generator ? 'generator' : 'function'
     });
     game.globals[id] = game.globals[game.globals.length-1];
+
+    // parse function arguments to create local variables
+    dec.params.forEach(p => {
+      params.push(game.createVariable(getString(p), undefined, undefined, dec));
+    });
 
   });
 }
@@ -249,6 +256,7 @@ function parseSetupBody() {
     .body;
 
   // Walk the setup-body contents
+  // TODO: these should probably live in translate/translateLib
   sbody.forEach(exp => {
     // Load graphics or sound assets
     if (exp.expression
@@ -262,9 +270,9 @@ function parseSetupBody() {
     } else if (true) {
       let ln = translate(exp);
       game.setup.code.push(ln);
-      console.log('>>> '+ln);
 
     } else {
+      game.setup.code.push('__parseSetupBody("'+(exp.$raw||getString(exp))+'")');
       console.log('Unknown expression: '+getString(exp));
     }
   });
@@ -284,7 +292,6 @@ function parseLoopBody() {
   loopbody.forEach(exp => {
     let ln = translate(exp);
     game.loop.code.push(ln);
-    console.log('>>> '+ln);
   });
 }
 
@@ -351,7 +358,8 @@ function astAddParents(ast, src) {
     ['body', 'left', 'right', 'object', 'property',
      'callee', 'argument', 'arguments', 'expression',
      'test', 'consequent', 'alternate',
-     'declarations'
+     'declarations',
+     'init', 'test', 'update',
     ].forEach(prop => {
       if (prop in n) addParent(n[prop], n);
     });
@@ -550,8 +558,8 @@ function exportGame(target) {
           b += f.fobj.cid;
 
           b += '(';
-          if (f.params) {
-            f.params.forEach(param => {
+          if (f.fobj.params) {
+            f.fobj.params.forEach(param => {
               b += (param.type ? param.type : game.guessType(param.id, param.value)) + ' ';
               b += param.cid;
             })

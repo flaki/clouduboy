@@ -74,7 +74,7 @@ function translateLib(exp, callexp) {
         }
 
       case 'random':
-        return 'random'+translate.args( callexp.arguments);
+        return 'random'+translate.args( callexp.arguments );
 
     }
 

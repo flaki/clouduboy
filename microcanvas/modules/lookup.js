@@ -43,7 +43,7 @@ function lookup(exp) {
     return self.game.globals[id].cid;
   }
 
-  return getString(id);
+  return '__lookup("'+(scopes.map( scope => scope.type ).join('>'))+'>'+(exp.$raw||id)+'")';
 }
 
 

@@ -21,13 +21,23 @@ let source = fs.readFileSync( path.join(__dirname, 'testsuite', testfile+'.js' )
 
 let game = microCanvasBuild('arduboy', source, testfile+'.js');
 
-a = fs.readFileSync( path.join(__dirname, 'testsuite', testfile+'.ino' ) ).toString();
+try {
+  a = fs.readFileSync( path.join(__dirname, 'testsuite', testfile+'.ino' ) ).toString();
+} catch (e) {
+  a = '';
+  console.log('No compiled version found: ', e.stack);
+}
+
 b = game.ino;
 
 d = diff.diffTrimmedLines(a.replace(/\r\n/g,'\n').trim(),b.replace(/\r\n/,'\n').trim());
 
 console.log('Compilation finished: ', testfile);
 fs.writeFileSync('.lasttest.ino', game.ino);
+
+// update testfile
+if (process.argv[3] === '-u') fs.writeFileSync(path.join(__dirname, 'testsuite', testfile+'.ino' ), game.ino);
+
 console.log('---');
 //console.log(d);
 

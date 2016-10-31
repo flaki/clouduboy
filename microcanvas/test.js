@@ -36,7 +36,7 @@ console.log('Compilation finished: ', testfile);
 fs.writeFileSync('.lasttest.ino', game.ino);
 
 // update testfile
-if (process.argv[3] === '-u') fs.writeFileSync(path.join(__dirname, 'testsuite', testfile+'.ino' ), game.ino);
+if (process.argv.filter(arg => arg==='-u').length) fs.writeFileSync(path.join(__dirname, 'testsuite', testfile+'.ino' ), game.ino);
 
 console.log('---');
 //console.log(d);

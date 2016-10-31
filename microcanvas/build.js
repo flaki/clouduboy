@@ -547,6 +547,11 @@ function exportGame(target) {
         b+='\n';
       }
 
+      // Optional built-ins
+      if (game.collisions) {
+        b += arduboyBuiltins('collisions').trim()+'\n\n';
+      }
+
       // Functions
       if (game.functions) {
         game.functions.forEach(f => {
@@ -645,4 +650,16 @@ ${contents}
   arduboy.display();
 }
 `
+}
+
+function arduboyBuiltins(id) {
+  switch (id) {
+    case 'collisions':
+      // TODO: implement in C for the Arduboy/PROGMEM
+      return `
+boolean collides(const unsigned char* gfx1, int x1,int y1, const unsigned char* gfx2, int x2,int y2) {
+  return false;
+}
+    `;
+  }
 }

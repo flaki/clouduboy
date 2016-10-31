@@ -76,6 +76,11 @@ function translateLib(exp, callexp) {
       case 'random':
         return 'random'+translate.args( callexp.arguments );
 
+      case 'detectCollision':
+        translate.game.collisions = true;
+
+        return 'collides'+translate.args( callexp.arguments );
+        break;
     }
 
     // Function/library method calls

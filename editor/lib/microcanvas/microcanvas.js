@@ -159,6 +159,7 @@
     if (button in this.$buttons) return this.$buttons[button];
     if (button === "space") return !!this.$buttons.A;
     if (button === "enter") return !!this.$buttons.B;
+    if (button === "start") return !!(this.$buttons.A&&this.$buttons.B);
     return false;
   };
   MCP.custom = function (platforms) {

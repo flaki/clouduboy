@@ -305,7 +305,6 @@ function parseGlobalFunctions() {
       funcbody.forEach(exp => {
         let ln = translate(exp);
         f.code.push(ln);
-        console.log('>>> '+ln);
       });
 
       game.functions.push(f);
@@ -321,7 +320,6 @@ function parseGlobalFunctions() {
       funcbody.forEach(exp => {
         let ln = translate(exp);
         f.code.push(ln);
-        console.log('>>> '+ln);
       });
 
       game.functions.push(f);
@@ -523,7 +521,7 @@ function exportGame(target) {
 
       // Globals
       if (game.globals) {
-        game.globals.filter(dec => dec.type!=='function').forEach(c => {
+        game.globals.filter(dec => dec.type!=='function'&&dec.type!=='generator').forEach(c => {
           b += (c.type ? c.type : game.guessType(c.id, c.value)) + ' ';
           b += c.cid;
 
@@ -537,9 +535,13 @@ function exportGame(target) {
       }
 
       // Functions
-      if (game.globals) {
+      if (game.functions) {
         game.functions.forEach(f => {
-          b += (f.fobj.rtype ? f.fobj.rtype : 'void') + ' ';
+          if (f.fobj.type === 'generator') {
+            b += 'boolean ';
+          } else {
+            b += (f.fobj.rtype ? f.fobj.rtype : 'void') + ' ';
+          }
           b += f.fobj.cid;
 
           b += '(';

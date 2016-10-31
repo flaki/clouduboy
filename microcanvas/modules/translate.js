@@ -82,7 +82,6 @@ function translate(exp) {
 
     // For loop
     case 'ForStatement':
-      console.log(exp);
       // init / test / update / body
 
       return 'for ('+self(exp.init).replace(/;$/,'')+'; '+self(exp.test)+'; '+self(exp.update)+') '+self(exp.body);
@@ -123,7 +122,12 @@ function translate(exp) {
         return translateLib(exp.left, exp);
       }
 
-      return self(exp.left) +' '+exp.operator+' '+ self(exp.right);
+      let op = exp.operator
+
+      // Handle triple-equals
+      if (op === '===') op = '==';
+
+      return self(exp.left) +' '+op+' '+ self(exp.right);
 
     // Unary expression (pre + postfix) work mostly the same
     // TODO: boolean tricks? (!something >>> 1-something)
@@ -137,7 +141,7 @@ function translate(exp) {
     // Yield has a special meaning in microcanvas
     // (acts as a terminator of a generator-function frame)
     case 'YieldExpression':
-      console.log(exp);
+      return translate.game.target+'.display(); delay('+getString(exp.argument)+'*16)';
       break;
 
   }
@@ -158,5 +162,4 @@ function translateArgs(args) {
 
 
 translate.args = translateArgs;
-console.log(translate);
 module.exports = translate;

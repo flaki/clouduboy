@@ -20,7 +20,7 @@ function translateLib(exp, callexp) {
     obj = getString(exp.object);
     prop = exp.property.type == 'Identifier' ? getString(exp.property) : exp.property;
 
-    if (typeof prop == 'string') console.log('{%s.%s}', obj, prop); else console.log('{%s[%s]}', obj, getString(prop));
+    //if (typeof prop == 'string') console.log('{%s.%s}', obj, prop); else console.log('{%s[%s]}', obj, getString(prop));
 
   // A function name
   } else if (exp.type == 'Identifier') {
@@ -197,6 +197,12 @@ function translateLib(exp, callexp) {
       // game.soundPlaying()    >>>    arduboy.tunes.playing()
       if (prop === 'soundPlaying') {
         return translate.game.target+'.tunes.playing()';
+      }
+
+      // run
+      // game.run(generator)    >>>    generator()
+      if (prop === 'run') {
+        return lookup(callexp.arguments[0])+translate.args([]);
       }
 
     }

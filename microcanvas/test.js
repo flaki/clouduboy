@@ -37,7 +37,7 @@ fs.writeFileSync('.lasttest.ino', game.ino);
 
 // Check for missing library handlers
 let missingHandlers = game.ino.match(/\_\_\w+\([^\)]+\)/g)
-if (missingHandlers.length) {
+if (missingHandlers && missingHandlers.length) {
   console.log(colors.yellow('Missing conversion handlers found in compiler output - stopping.'));
 
   missingHandlers.map(str => ({

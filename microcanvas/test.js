@@ -35,6 +35,12 @@ d = diff.diffTrimmedLines(a.replace(/\r\n/g,'\n').trim(),b.replace(/\r\n/,'\n').
 console.log('Compilation finished: ', testfile);
 fs.writeFileSync('.lasttest.ino', game.ino);
 
+if (process.argv.filter(arg => arg==='--json').length) {
+  fs.writeFileSync('game.json', JSON.stringify(game));
+  console.log(colors.yellow('Updated ')+colors.green('game.json'));
+}
+
+
 // Check for missing library handlers
 let missingHandlers = game.ino.match(/\_\_\w+\([^\)]+\)/g)
 if (missingHandlers && missingHandlers.length) {

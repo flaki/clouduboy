@@ -112,6 +112,11 @@ function translate(exp) {
     case 'ReturnStatement':
       return 'return' + (exp.argument ? ' '+self(exp.argument) : '') + ';';
 
+    // Break statement
+    case 'BreakStatement':
+      return 'break;';
+
+
     // Assignment and binary expressions work pretty much unchanged across JS/C
     case 'LogicalExpression': // TODO: parens?
     case 'BinaryExpression': // TODO: parens!

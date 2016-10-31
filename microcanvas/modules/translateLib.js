@@ -176,6 +176,11 @@ function translateLib(exp, callexp) {
         return translate.game.target+'.fillRect' + translate.args(targetArgs);
       }
 
+      // soundPlaying
+      // game.soundPlaying()    >>>    arduboy.tunes.playing()
+      if (prop === 'soundPlaying') {
+        return translate.game.target+'.tunes.playing()';
+      }
 
     }
 
@@ -196,6 +201,10 @@ function translateLib(exp, callexp) {
       // TODO: proper type checking
       return lookup(obj) + ' + ' + lookup(obj+'Framesize')+'*('+translate(prop)+')';
     }
+
+  // Sfx (tune) object
+  } else if (obj.match(/^sfx/)) {
+    return translate.game.target + '.tunes.playScore' +translate.args([ lookup(obj) ]);
 
   // Standard maths calls cross-compilation
   } else if (obj === 'Math') {

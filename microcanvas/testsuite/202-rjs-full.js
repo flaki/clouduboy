@@ -174,12 +174,17 @@ game.setup(function(game) {
 
   // Starting game state
   game.state = S_INTRO;
+
+  //game.playbackRate = 1/3;
 });
 
 
 // Loop phase
 // Run the game states
 game.loop(function() {
+  // Slows the game down when "down" button is pressed ("bullet time" :) )
+  game.playbackRate = game.buttonPressed("down") ? 1/4 : 1;
+
   // Play intro animation
   if (game.state == S_INTRO) {
     // Skip intro animation
@@ -191,31 +196,6 @@ game.loop(function() {
 
     // Intro animation ended, start the game
     return gameSetup();
-  }
-
-  // Clear display
-  game.clear();
-
-  // Flash active controls
-  if (game.everyXFrames(5)) {
-    if (game.buttonPressed("left")) {
-      game.drawText("<", 80,50);
-    }
-    if (game.buttonPressed("right")) {
-      game.drawText(">", 93,50);
-    }
-    if (game.buttonPressed("up")) {
-      game.drawText("/\\", 84,45);
-    }
-    if (game.buttonPressed("down")) {
-      game.drawText("\\/", 84,55);
-    }
-      if (game.buttonPressed("space")) {
-      game.drawText("A", 102,50);
-    }
-    if (game.buttonPressed("enter")) {
-      game.drawText("B", 110,50);
-    }
   }
 
   if (game.state == S_PLAYING) {
@@ -238,44 +218,6 @@ game.loop(function() {
   }
 
 });
-
-
-
-// Variable to hold the distance ran (basically: score)
-let distance;
-
-// Obstacle (cactus) current X position
-let obsCactus1, obsCactus2;
-let obsCactus1Y, obsCactus2Y;
-let obsCactus1YType, obsCactus2YType;
-
-// Global to track dino jump state
-let dinoJumpFrame;
-
-// Dino Y coordinate
-let dinoJumpHeight = 0;
-
-// Current running speed (screen pixels travelled per second)
-let dinoRunSpeed;
-
-
-function gameSetup() {
-  // Switch game state
-  game.state = S_PLAYING;
-
-  // Reset distance (score)
-  distance = 0;
-
-  // Reset speed
-  dinoRunSpeed = START_SPEED;
-
-  // Cactus position
-  obsCactus1 = obsCactus2 = -game.width;
-  //updateTerrain(distance);
-
-  dinoJumpFrame = 0;
-  dinoJumpHeight = 0;
-}
 
 
 function *gameIntro() {
@@ -383,8 +325,326 @@ function *gameIntro() {
 }
 
 
-function *gamePlay() {}
-function *gameOver() {}
+// Variable to hold the distance ran (basically: score)
+let distance;
+
+// Obstacle (cactus) current X position
+let obsCactus1, obsCactus2;
+let obsCactus1Y, obsCactus2Y;
+let obsCactus1YType, obsCactus2YType;
+
+// Global to track dino jump state
+let dinoJumpFrame;
+
+// Dino Y coordinate
+let dinoJumpHeight = 0;
+
+// Current running speed (screen pixels travelled per second)
+let dinoRunSpeed;
 
 
-console.log("MicroCanvas: RuhrJS Dino (intro)");
+// used by calculateNextStep for more precise speed
+let calculateNextStepRemainder = 0;
+function calculateNextStep(runSpeed) {
+  let next = runSpeed/60|0;
+
+  // Accummulate remainders for more accurate speed reproduction
+  calculateNextStepRemainder += 100*runSpeed/60%100|0;
+
+  // Extra frames needed
+  while (calculateNextStepRemainder>50) {
+    next++;
+    calculateNextStepRemainder -= 100;
+  }
+
+  return next;
+}
+
+function calculateRunSpeed(distance, nextStep) {
+  let dn = distance/100|0 + nextStep/100|0;
+  return START_SPEED
+    + ( dn )   // increase by 1 every 100m
+    + ( 4*dn /5) // increase by 4 every 500m
+
+//  return START_SPEED
+//    + ( (distance+nextStep) /100|0)   // increase by 1 every 100m
+//    + ( (distance+nextStep) /500|0)*4 // increase by 5 every 500m
+}
+
+
+function *gamePlay() {
+  // Next frame in which another meter will be travelled
+  let nextStep;
+
+  // Reset game setup to startup values
+  gameSetup();
+
+  // Run the game
+  while (true) {
+    game.clear();
+
+    // Calculate next step
+    nextStep = calculateNextStep(dinoRunSpeed);
+
+    // Increase distance (score) whilst running
+    if ( nextStep ) {
+      // Increase speed at every 100 px-s
+      dinoRunSpeed = calculateRunSpeed(distance, nextStep);
+
+      // Increase distance
+      distance += nextStep;
+    }
+
+    // Update state
+    updateTerrain(distance);
+    updateDino();
+
+    // Draw
+    game.clear();
+    drawTerrain(distance);
+    drawDino();
+    drawUI();
+
+    // Collision detection
+    if (checkCollisions()) break;
+
+    // Next frame
+    yield 1;
+  }
+}
+
+function *gameOver() {
+  sfxEek.play();
+
+  // KaputCam TM
+  for(let i=0; i<24; i++) {
+    game.clear();
+
+    drawTerrain(0);
+
+    if (i!=7 && i!=8 && i!= 16 && i!=17) {
+      game.drawImage(gfxDinoEek, 0,baselineDino-dinoJumpHeight);
+    }
+
+    drawUI();
+    checkCollisions(); // only here for the UI drawing part
+
+    yield 1;
+  }
+
+  // Bust
+  let falling = true;
+  let nextStep;
+  let fallDistance = distance;
+
+  while (true) {
+
+    // Fall
+    if (dinoJumpHeight > -4) {
+      dinoJumpHeight -= 1;
+    }
+    if (falling && dinoJumpHeight <= -4) {
+      dinoJumpHeight = -4;
+      sfxBust.play();
+      falling = false;
+    }
+
+    // Gently slide off into the ground
+    if (dinoRunSpeed>0) {
+      nextStep = calculateNextStep(dinoRunSpeed);
+      dinoRunSpeed -= 1;
+      fallDistance += nextStep;
+    }
+
+    game.clear();
+
+    updateTerrain(fallDistance);
+    drawTerrain(fallDistance);
+
+    game.drawImage(gfxDinoKaput, 0,baselineDino-dinoJumpHeight);
+
+    drawUI();
+
+    yield 1;
+  }
+
+
+}
+
+function gameSetup() {
+  // Switch game state
+  game.state = S_PLAYING;
+
+  // Reset distance (score)
+  distance = 0;
+
+  // Reset speed
+  dinoRunSpeed = START_SPEED;
+
+  // Cactus position
+  obsCactus1 = obsCactus2 = -game.width;
+  updateTerrain(distance);
+
+  dinoJumpFrame = 0;
+  dinoJumpHeight = 0;
+}
+
+function updateTerrain(distance) {
+  // Place a new cactus
+  if (obsCactus1+gfxCactus.width < distance) {
+    obsCactus1 = distance + 175 + 5*game.random(1,10);
+    obsCactus1Y = game.random(baseline+1,game.height) - gfxCactus.height;
+  }
+
+  // Place a second cactus
+  if (distance > 500) {
+    if (obsCactus2+gfxCactus.width < distance) {
+      obsCactus2 = distance + 200 + 6*game.random(1,10);
+      obsCactus2Y = game.random(baseline+1,game.height) - gfxCactus.height;
+    }
+
+    // Make sure placement of cactii is not *too* evil :)
+    let obsDistance = obsCactus2-obsCactus1;
+
+    // too dense
+    if (obsDistance > 0 && obsDistance < gfxCactus.width/2) {
+      obsCactus2 += gfxCactus.width/2|0;
+    }
+    if (obsDistance < 0 && obsDistance > gfxCactus.width/-2) {
+      obsCactus1 += gfxCactus.width/2|0;
+    }
+
+    // too close
+    obsDistance = obsCactus2-obsCactus1;
+    if (obsDistance > gfxCactus.width+5 && obsDistance < gfxCactus.width+gfxDino.width) {
+      obsCactus2 += gfxDino.width;
+    }
+    if (obsDistance < -(gfxCactus.width+5) && obsDistance > -(gfxCactus.width+gfxDino.width)) {
+      obsCactus1 += gfxDino.width;
+    }
+
+  }
+}
+
+function updateDino() {
+  // Only in-game
+  if (game.state === S_PLAYING) {
+    if (!dinoJumpFrame && (game.buttonPressed("space") || game.buttonPressed("up"))) {
+      dinoJumpFrame = 1;
+      dinoJumpHeight=5;
+
+      sfxBoing.play();
+
+    } else if (dinoJumpFrame) {
+      ++dinoJumpFrame;
+
+      if (dinoJumpFrame<6) {
+        dinoJumpHeight +=6;
+      } else if (dinoJumpFrame<9) {
+        dinoJumpHeight +=2;
+      } else if (dinoJumpFrame<13) {
+        dinoJumpHeight +=1;
+      } else if (dinoJumpFrame == 16 || dinoJumpFrame == 18) {
+        dinoJumpHeight +=1;
+      } else if (dinoJumpFrame == 20 || dinoJumpFrame == 22) {
+        dinoJumpHeight -=1;
+      } else if (dinoJumpFrame>38) {
+        dinoJumpHeight = 0;
+        dinoJumpFrame = 0;
+      } else if (dinoJumpFrame>32) {
+        dinoJumpHeight -=6;
+      } else if (dinoJumpFrame>29) {
+        dinoJumpHeight -=2;
+      } else if (dinoJumpFrame>25) {
+        dinoJumpHeight -=1;
+      }
+    }
+  }
+}
+
+function drawTerrain(distance) {
+  // Parallax scrolling gfxClouds
+  game.drawImage(gfxClouds[0], game.width -(distance%(game.width+gfxClouds.width)),5);
+
+  // Terrain
+  if (dinoJumpHeight > 4) {
+    game.fillRect( 0,baseline, 128,1);
+  } else {
+    game.fillRect( 0,baseline, 4,1);
+    game.fillRect(12,baseline, 116,1); // => drawLine(x,y, x+w-1, y+h-1, WHITE )
+  }
+
+  // Obstacles
+  let c1 = obsCactus1-distance;
+  let c2 = obsCactus2-distance;
+  if (c1 < game.width) game.drawImage(gfxCactus[0], c1,obsCactus1Y);
+  if (c2 < game.width) game.drawImage(gfxCactus[1], c2,obsCactus2Y);
+}
+
+function drawDino() {
+  let dy = baselineDino - dinoJumpHeight;
+
+  game.custom({ arduboy: `
+  arduboy.setCursor( 60, 10 );
+  arduboy.print( itoa(dy, _microcanvas_textbuffer, 10 ) )`});
+
+  //game.drawImage(gfxDino, 0,0, 20,18, 0,dy ,20,18);
+  game.drawImage(gfxDino, 0,dy, 20,23);
+
+  // Run, gfxDino, Run!
+  if (!dinoJumpHeight) {
+    // TODO: fix: game.drawImage(gfxDinoLegs[ (distance/10|0)%2 ], 0,dy+18);
+    //game.drawImage(gfxDinoLegs[ distance%20<10 ? 1:0 ], 0,dy+18);
+    game.drawImage(gfxDinoLegs[ distance%20<10 ? 1:0 ], 0,dy+18);
+  } else {
+    //game.drawImage(gfxDino, 0,18, 20,5, 0,dy+18, 20,5);
+  }
+}
+
+function drawUI() {
+  // hud
+  //arduboy.setCursor(0, 0);
+  //sprintf(text,"DIST: %d",d);
+  //game.drawText("DIST: " + (distance/10|0) + " SPD: " + dinoRunSpeed, 0,0);
+  /* TODO: */ game.custom({ arduboy: `
+arduboy.setCursor( 0, 0 );
+arduboy.print( sprintf(_microcanvas_textbuffer, "DIST: %d SPD: %d", distance / 10 | 0, dino_run_speed ) )`});
+
+  // Flash active controls
+  if (game.everyXFrames(5)) {
+    if (game.buttonPressed("left")) {
+      game.drawText("<", 80,50);
+    }
+    if (game.buttonPressed("right")) {
+      game.drawText(">", 93,50);
+    }
+    if (game.buttonPressed("up")) {
+      game.drawText("/\\", 84,45);
+    }
+    if (game.buttonPressed("down")) {
+      game.drawText("\\/", 84,55);
+    }
+      if (game.buttonPressed("space")) {
+      game.drawText("A", 102,50);
+    }
+    if (game.buttonPressed("enter")) {
+      game.drawText("B", 110,50);
+    }
+  }
+}
+
+function checkCollisions() {
+  let c1 = obsCactus1 - distance;
+  let c2 = obsCactus2 - distance;
+  let dy = baselineDino - dinoJumpHeight;
+  let hit = false;
+
+  hit = hit
+    || ( c1<=gfxDino.width && game.detectCollision(gfxDino, 0,dy, gfxCactus[0], c1,obsCactus1Y) )
+    || ( c2<=gfxDino.width && game.detectCollision(gfxDino, 0,dy, gfxCactus[1], c2,obsCactus1Y) );
+
+  return hit;
+}
+
+
+console.log("MicroCanvas: Animate Demo with Generators");

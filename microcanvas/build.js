@@ -6,7 +6,6 @@ const acorn = require('acorn');
 const utils = require('./modules/utils.js')
 
 const translate = require('./modules/translate.js');
-const translateLib = require('./modules/translateLib.js');
 const lookup = require('./modules/lookup.js');
 const getString = require('./modules/getString.js');
 
@@ -49,7 +48,7 @@ module.exports = buildGame;
 
 
 function buildGame(target, source, id) {
-  translate.game = translateLib.game = lookup.game = game = new Game();
+  translate.game = lookup.game = game = new Game();
 
   game.id = id;
   game.target = target;
@@ -314,6 +313,17 @@ function parseGlobalFunctions() {
         f.code.push(ln);
       });
 
+      // Guess return type
+      if (f.code.filter(ln => ln.match(/return/)).length) {
+        f.fobj.rtype = 'int';
+
+      // no return statements: void
+      } else {
+        f.fobj.rtype = 'void';
+      }
+      // TODO: walk AST instead, find 'ReturnStatement'
+      // TODO: guess return type from 'ReturnStatement' value objecttype
+
       game.functions.push(f);
     } else if (dec.type === 'generator') {
       console.log('Translating generator function "'+dec.cid+'()"');
@@ -548,6 +558,9 @@ function exportGame(target) {
       }
 
       // Optional built-ins
+      if (game.generators) {
+        b += arduboyBuiltins('generators').trim()+'\n\n';
+      }
       if (game.collisions) {
         b += arduboyBuiltins('collisions').trim()+'\n\n';
       }
@@ -564,10 +577,9 @@ function exportGame(target) {
 
           b += '(';
           if (f.fobj.params) {
-            f.fobj.params.forEach(param => {
-              b += (param.type ? param.type : game.guessType(param.id, param.value)) + ' ';
-              b += param.cid;
-            })
+            b += f.fobj.params.map(param => {
+              return (param.type ? param.type : game.guessType(param.id, param.value)) + ' ' +param.cid;
+            }).join(', ');
           }
           b += ')';
 
@@ -654,12 +666,19 @@ ${contents}
 
 function arduboyBuiltins(id) {
   switch (id) {
-    case 'collisions':
-      // TODO: implement in C for the Arduboy/PROGMEM
-      return `
+    // TODO: implement in C for the Arduboy/PROGMEM
+    case 'collisions': return `
 boolean collides(const unsigned char* gfx1, int x1,int y1, const unsigned char* gfx2, int x2,int y2) {
   return false;
-}
-    `;
+}`;
+
+    case 'generators': return `
+void _microcanvas_yield(byte n) {
+  arduboy.display();
+  while(n>0) {
+    while (!arduboy.nextFrame()) delay(1);
+    --n;
+  }
+}`;
   }
 }

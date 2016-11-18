@@ -9,7 +9,7 @@ const translateLib = require('./translateLib.js')(translate);
 
 
 
-function translate(exp) {
+function translate(exp, callexp) {
   if (typeof exp === 'string') return exp;
 
   if (!exp || !exp.type ) return '?';
@@ -34,7 +34,7 @@ function translate(exp) {
       if (obj === self.game.alias
        || obj.match(/^(g|s)fx/) // Game asset properties (gfx & sfx)
      ) {
-        return translateLib(exp);
+        return translateLib(exp, callexp);
 
       // Some other library
       } else {
@@ -57,7 +57,7 @@ function translate(exp) {
 
     case 'VariableDeclarator':
       let id = getString(exp.id),
-          initializer = self(exp.init);
+          initializer = exp.init ? self(exp.init) : undefined;
 
       let v = self.game.createVariable(id, initializer, undefined, exp);
 
@@ -121,19 +121,19 @@ function translate(exp) {
     case 'LogicalExpression': // TODO: parens?
     case 'BinaryExpression': // TODO: parens!
     case 'AssignmentExpression':
-      // Special handling for game.playbackRate changes
+      let op = exp.operator
+
+      // Handle triple-equals
+      if (op === '===') op = '==';
+
+      // Special handling for game.* objects
       if (exp.type == 'AssignmentExpression'
        && getString(exp.left) == self.game.alias+'.playbackRate'
       ) {
         return translateLib(exp.left, exp);
       }
 
-      let op = exp.operator
-
-      // Handle triple-equals
-      if (op === '===') op = '==';
-
-      return self(exp.left) +' '+op+' '+ self(exp.right);
+      return self(exp.left, exp) +' '+op+' '+ self(exp.right, exp);
 
     // Unary expression (pre + postfix) work mostly the same
     // TODO: boolean tricks? (!something >>> 1-something)
@@ -147,11 +147,10 @@ function translate(exp) {
     // Yield has a special meaning in microcanvas
     // (acts as a terminator of a generator-function frame)
     case 'YieldExpression':
-      return translate.game.target+'.display(); delay('+getString(exp.argument)+'*16)';
-
+      translate.game.generators = true; // enable feature
+      return '_microcanvas_yield('+getString(exp.argument)+')';
   }
 
-console.log(exp);
   return '__translate("'+exp.type+'", "'+(exp.$raw||'')+'")';
 }
 

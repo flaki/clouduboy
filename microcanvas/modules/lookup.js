@@ -9,6 +9,8 @@ function lookup(exp) {
 
   let self = lookup;
 
+  // it's the MicroCanvas alias
+  if (id === self.game.alias) return id;
 
   // It's an asset
   if (id in self.game.gfx) {

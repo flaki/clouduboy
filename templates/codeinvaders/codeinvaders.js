@@ -6,8 +6,10 @@ let gfxInvader, gfxDefender;
 
 game.setup(function(game) {
   gfxInvader = game.loadSprite(
-    `PROGMEM const unsigned char invader[] = { /*9x6*/ 0x38, 0x1c, 0x35, 0x1e, 0x3c, 0x1e, 0x35, 0x1c, 0x38 }`
-  );
+    `PROGMEM const unsigned char invader[] = { /*9x8x2*/
+		0x38, 0x1c, 0x34, 0x1f, 0x3c, 0x1f, 0x34, 0x1c, 0x38,
+		0x18, 0x3c, 0x15, 0x3e, 0x1c, 0x3e, 0x15, 0x3c, 0x18,
+  }`);
   //let invader = new Image();
   //invader.src="https://happycodefriends.github.io/code-invaders/invader.png";
   //invader.onload=function(){ invader.loaded = true };
@@ -72,15 +74,25 @@ function draw() {
 
    let x = 0;
    while (x < 5) {
-     if (y % 2)
-       game.drawImage(gfxInvader, 13*x+Math.abs(game.frameCount%30/5-3), 9*y);
-     else
-       game.drawImage(gfxInvader, 13*x+4-Math.abs(game.frameCount%30/5-3), 9*y);
+
+// TODO: bugfix this
+//     if (y % 2)
+//       game.drawImage(gfxInvader, 13*x+Math.abs(game.frameCount%30/5-3), 9*y);
+//     else
+///      game.drawImage(gfxInvader, 13*x+4-Math.abs(game.frameCount%30/5-3), 9*y);
+    let d = game.frameCount%60<30 ? (3 - Math.floor(game.frameCount%60/10)) : (Math.floor(game.frameCount%60/10) - 3);
+	if (y % 2) {
+      game.drawImage(gfxInvader[game.frameCount%30<=15|0], 13*x+d, 9*y);
+    } else {
+      game.drawImage(gfxInvader[game.frameCount%30>15|0], 13*x+4-d, 9*y);
+    }
 
      x = x + 1;
    }
    y = y + 1;
   }
+
+  game.drawText( Math.abs(game.frameCount%60/10-3), 100,0);
 
   game.drawImage(gfxDefender , turretPosition-5, gameareaSize-8);
 

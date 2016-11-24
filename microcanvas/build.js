@@ -668,7 +668,26 @@ function arduboyBuiltins(id) {
   switch (id) {
     // TODO: implement in C for the Arduboy/PROGMEM
     case 'collisions': return `
-boolean collides(const unsigned char* gfx1, int x1,int y1, const unsigned char* gfx2, int x2,int y2) {
+boolean collides(const unsigned char* s1, int x1,int y1, const unsigned char* s2, int x2,int y2, boolean precise) {
+  boolean result = true;
+
+  // Basic collision rectangle
+  int cx = x1>x2 ? x1 : x2;
+  int cw = x1>x2 ? x2+s2.width-x1 : x1+s1.width-x2;
+
+  int cy = y1>y2 ? y1 : y2;
+  int ch = y1>y2 ? y2+s2.height-y1 : y1+s1.height-y2;
+
+  if (cw>0 && ch>0) {
+    result = true;
+  }
+
+  // No bounding rect collision or no precise check requested
+  if (!precise || !result) {
+    return result;
+  }
+
+
   return false;
 }`;
 

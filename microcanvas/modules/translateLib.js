@@ -79,6 +79,12 @@ function translateLib(exp, callexp) {
       case 'detectCollision':
         translate.game.collisions = true;
 
+        // Optional "precise" argument
+        if (callexp.arguments.length === 6) callexp.arguments.push({
+          type: 'Literal', value: 'false'
+        });
+        // TODO: Implement and set default to "true"
+
         return 'collides'+translate.args( callexp.arguments );
         break;
     }

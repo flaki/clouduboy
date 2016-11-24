@@ -24,7 +24,7 @@ let baseline, baselineDino;
 // Load assets, preconfigure globals, set up microcanvas subsystem
 game.setup(function(game) {
   gfxRjs = game.loadGraphics(
-    `PROGMEM const unsigned char gfxRjs[] = { /*77x15*/
+    `PROGMEM const unsigned char gfxRjs[] = { /*78x15*/
        0xfe, 0x01, 0xfe, 0x02, 0x85, 0x85, 0x05, 0xc5, 0xb9, 0xc2, 0x3c, 0x00, 0x00, 0x00,
        0xfe, 0x01, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfe, 0x01, 0xfe, 0x00, 0x00, 0x00, 0x00,
        0xfe, 0x01, 0x7e, 0x40, 0x40, 0x40, 0x40, 0x80, 0xfe, 0x01, 0xfe, 0x00, 0x00, 0x00,
@@ -269,14 +269,14 @@ function *gameIntro() {
   // Flash the RGB led on the Arduboy or the screen in the browser to a purple color!
   game.custom({
     canvas: `document.body.style.backgroundColor='rgb(96, 0, 128)'`,
-    arduboy: `setRGBled(96, 0, 128)`,
+    arduboy: `arduboy.setRGBled(96, 0, 128)`,
   });
 
   yield 6; // essentially delay(6*16);
 
   game.custom({
     canvas: `document.body.style.backgroundColor=''`,
-    arduboy: `setRGBled(0, 0, 0)`,
+    arduboy: `arduboy.setRGBled(0, 0, 0)`,
   });
 
   yield 60;

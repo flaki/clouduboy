@@ -166,17 +166,33 @@ function build(buildfile) {
         r.compiler = {};
 
         // Find compile errors/warnings
-        let rx = /([\w\/]+\.(?:ino|h|c|cpp))\:(\d+)\:(\d+)\:\s*(.*)/g
+        let rx = /([\w\.]+\.(?:ino|h|c|cpp))\:(?:(?:\sIn\s(\w+\s\'(?:[^\n]+)\'):)|(?:(\d+)\:(\d+)\:\s(\w+)\:\s*(.*)))/g
 
-        let e = null;
+        let e = null, inFile, inFunc;
         while ((e = rx.exec(r.error)) !== null) {
           if (!r.compiler[ e[1] ]) r.compiler[ e[1] ]= [];
 
-          r.compiler[ e[1] ].push({
-            line: e[2],
-            col: e[3],
-            msg: e[4]
-          });
+          // 'in function' prefixes
+          if (e[2]) {
+            inFile = e[1];
+            inFunc = e[2];
+
+          // 'declared here' suffixes
+          } else if (e[5] === 'note' && e[6] === 'declared here') {
+            r.compiler[ e[1] ][ r.compiler[ e[1] ].length-1 ].declared = {
+              line: e[3],
+              col: e[4],
+            };
+
+          } else {
+            r.compiler[ e[1] ].push({
+              line: e[3],
+              col: e[4],
+              type: e[5],
+              msg: e[6],
+              in: inFunc
+            });
+          }
         }
       }
 

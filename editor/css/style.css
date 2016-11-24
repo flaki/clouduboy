@@ -113,6 +113,11 @@ iframe.preview {
 	top: 1em;
 	right: 1em;
 	box-shadow: -.5em -.5em .75em black;
+
+  width: 66vw;
+  height: 33vw;
+  left: 50vw;
+  margin-left: -33vw;
 }
 
 iframe.preview::hover {

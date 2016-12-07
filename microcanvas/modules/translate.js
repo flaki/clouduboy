@@ -29,11 +29,13 @@ function translate(exp, callexp) {
     // Member expressions are usually translated to built-in methods
     case 'MemberExpression':
       let obj = self(exp.object);
+      let deepObj = typeof exp.object === 'object' && 'object' in exp.object ? self(exp.object.object) : null;
 
       // MicroCanvas calls
-      if (obj === self.game.alias
-       || obj.match(/^(g|s)fx/) // Game asset properties (gfx & sfx)
-     ) {
+      if (obj === self.game.alias || obj.match(/^(g|s)fx/)){ // Game asset properties (gfx & sfx)
+        return translateLib(exp, callexp);
+
+      } else if (deeoObj && deepObj.match(/^(g|s)fx/)) { // Game asset properties (gfx & sfx)
         return translateLib(exp, callexp);
 
       // Some other library

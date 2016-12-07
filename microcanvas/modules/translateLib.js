@@ -11,7 +11,7 @@ let translate;
 
 
 function translateLib(exp, callexp) {
-  let obj, prop, id;
+  let obj, deepObj, prop, id;
 
   const self = translateLib;
 
@@ -19,6 +19,8 @@ function translateLib(exp, callexp) {
   if (exp.type == 'MemberExpression') {
     obj = getString(exp.object);
     prop = exp.property.type == 'Identifier' ? getString(exp.property) : exp.property;
+
+    if (typeof exp.object === 'object' && 'object' in exp.object) deepObj = getString(exp.object.object);
 
     //if (typeof prop == 'string') console.log('{%s.%s}', obj, prop); else console.log('{%s[%s]}', obj, getString(prop));
 
@@ -85,7 +87,24 @@ function translateLib(exp, callexp) {
         });
         // TODO: Implement and set default to "true"
 
-        return 'collides'+translate.args( callexp.arguments );
+        let s1 = callexp.arguments[0];
+        let s2 = callexp.arguments[3];
+
+        return 'collides'+translate.args([
+          callexp.arguments[0],
+          callexp.arguments[1],
+          callexp.arguments[2],
+          astMemberExpression(s1, astID('width')),
+          astMemberExpression(s1, astID('height')),
+
+          callexp.arguments[3+0],
+          callexp.arguments[3+1],
+          callexp.arguments[3+2],
+          astMemberExpression(s2, astID('width')),
+          astMemberExpression(s2, astID('height')),
+
+          astLiteral( callexp.arguments[3+3+1] ? true : false )
+        ]);
         break;
     }
 
@@ -217,14 +236,18 @@ function translateLib(exp, callexp) {
     }
 
   // Graphics asset property
-  } else if (obj.match(/^gfx/)) {
+  } else if (obj.match(/^gfx/) ||
+    deepObj && deepObj.match(/^gfx/)
+  ) {
     switch (prop) {
       case 'width':
       case 'height':
       case 'frames':
-        let id = obj + prop[0].toUpperCase() + prop.slice(1);
+        let id = (deepObj||obj) + prop[0].toUpperCase() + prop.slice(1);
         if (id in translate.game.constants) {
           return translate.game.constants[id].cid;
+        } else {
+          console.log('[!] Constant not found: ', id);
         }
     }
 
@@ -254,10 +277,12 @@ function translateLib(exp, callexp) {
         return 'abs' + translate.args(callexp.arguments);
 
       // Math.random
+      case 'random':
+        return 'random' + translate.args(callexp.arguments);
     }
   }
 
-  return '__translateLib("'+(callexp.$raw||getString(exp))+'")';
+  return '__translateLib("'+(callexp&&callexp.$raw||getString(exp))+'")';
 }
 
 
@@ -266,3 +291,23 @@ module.exports = function(callback) {
   translate = callback;
   return translateLib;
 };
+
+
+function astID(name) {
+  return { type: 'Identifier', name: name };
+}
+
+function astLiteral(value) {
+  let raw = JSON.stringify(value);
+  if (typeof value !== 'string') raw = `"${raw}";`
+
+  return { type: 'Literal', value: value, raw: raw };
+}
+
+function astMemberExpression(object, property) {
+  return {
+    type: 'MemberExpression',
+    object: object,
+    property: property
+  };
+}

@@ -35,5 +35,14 @@
     <script src="/lib/pif/lib.js"></script>
 
     <script src="/edit/"></script>
+    <script>
+      window.addEventListener('keypress', e => {
+        if (window.parent) window.parent.postMessage({
+          source: 'microcanvas_preview',
+          type: 'keypress',
+          value: e.key,
+        }, '*');
+      });
+    </script>
   </body>
 </html>

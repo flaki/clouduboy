@@ -11,6 +11,8 @@
 
     document.querySelector('.toolbar button[name="preview"]')
       .addEventListener('click', showPreview);
+
+    window.addEventListener("message", iframeEventHandler, false);
   }
 
 
@@ -94,6 +96,21 @@
       }
     });
     i.src = '/microcanvas.html';
+  }
+
+  function dismissPreview() {
+    Array.from( document.querySelectorAll('iframe.preview') ).forEach(iframe => iframe.parentNode.removeChild(iframe));
+  }
+
+  function iframeEventHandler(event) {
+    let origin = event.origin || event.originalEvent.origin,
+        data = event.data;
+
+    if (origin && data.source === 'microcanvas_preview') {
+      if (data.type === 'keypress' && data.value === 'Escape') {
+        dismissPreview();
+      }
+    }
   }
 
   // Add plugin

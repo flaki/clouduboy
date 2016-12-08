@@ -68,7 +68,7 @@ function init(src, sources, aboylib) {
           return require('fs-promise').copy( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(BUILDDIR, 'lib/Arduboy/') );
         }
 
-        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(BUILDDIR, 'lib/Arduboy/') );
+        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(BUILDDIR, 'lib/Arduboy') );
       }
     })
 

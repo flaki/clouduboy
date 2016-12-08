@@ -81,6 +81,9 @@ let sesslog = log.bind(log,'session');
 // If a session cookie was sent along with the request, init the session
 cdb.use(cdbSession.cookieHandler);
 
+// Serve templates dir
+cdb.use('/templates', express.static(CFG.ROOT_DIR + '/templates'));
+
 // Check for saved beta keys
 cdb.use(require('./api/beta.js').check);
 

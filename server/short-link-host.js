@@ -23,6 +23,9 @@ function init() {
 
   // Find session id if supplied
   slh.param('sid', function(req, res, next, sid) {
+    // Splendid Fox demo
+    if (sid === 'firefox') res.redirect('http://'+CFG.SERVER_HOST+'/templates/splendidfox/');
+
     // Check if a valid sid
     // TODO: more thorough checks
     if (!sid.match(/^\w+\-\w+\-\w+$/)) return next();

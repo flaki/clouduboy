@@ -18,7 +18,7 @@
       <button name="flash" title="Flash Arduboy...">⚡️</button>
       <button name="download" title="Download sketch...">💾</button>
       <button name="build" title="Rebuild and flash">💱</button>
-      <button name="preview" title="Preview">👁🗨</button>
+      <button name="preview" title="Preview">👁</button>
       <select name="load">
         <option value="" default>---</option>
       </select>
@@ -28,13 +28,21 @@
       </select>
     </aside>
 
-    <form>
-      <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>
-      <input id="codeeditor-filename" type="hidden" name="filename" value="" />
-    </form>
-    <div id="servermsgs" class="servermsgs"></div>
+    <main>
+      <form class="editor">
+        <textarea id="codeeditor" name="code" contenteditable="true" rows="10" cols="80"></textarea>
+        <input id="codeeditor-filename" type="hidden" name="filename" value="" />
+      </form>
 
-    <iframe id="codeplugin" src="" style="display:none"></iframe>
+      <aside class="sidebar">
+        <div id="bitmap" class="bitmap">
+          <canvas id="framestrip" width="100" height="32" style="background: black;image-rendering: -moz-crisp-edges;image-rendering: crisp-edges;"></canvas>
+        </div>
+        <div id="logs" class="logs"></div>
+      </aside>
+    </main>
+
+    <iframe id="codeplugin" class="pixeleditor" src="" style="display:none"></iframe>
 
     <script src="/lib/codemirror/codemirror.js"></script>
     <script src="/lib/codemirror/clike.js"></script>

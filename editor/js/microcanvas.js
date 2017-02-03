@@ -22,60 +22,24 @@
       .then(r => {
         // Success
         if (r.memory && 'program' in r.memory) {
-          console.log('Program size: ', r.memory.program.bytes, 'bytes / ', r.memory.program.used, '%');
-          console.log('Data size: ', r.memory.data.bytes, 'bytes / ', r.memory.data.used, '%');
+          sidebar.log(`Program size: ${memory.program.bytes} bytes / ${memory.program.used}%
+Data size: ${r.memory.data.bytes}+' bytes / ${r.memory.data.used}%`, 'notice');
 
         // Failed
         } else {
           let targetKey = (Object.keys(r.compiler).filter(k => k.match(/\.arduboy\.ino$/)))[0];
           let target = r.compiler[targetKey];
+          let messageList = arrange(target, ['type','in']);
+          console.log(messageList);
 
-          function arrange(arr, field) {
-            if (!field && typeof arr != 'object') {
-              field = arr;
-              arr = this;
-            }
-
-            let dict = {}, ret = [], fields;
-
-            // Multiple level arrange
-            if (typeof field === 'object' && field.length>0) {
-              fields = field;
-              field = fields[0];
-            }
-
-            // Arrange items
-            arr.forEach( e => {
-              let fn = e[field] ? e[field] : '…';
-              if (!dict[fn]) {
-                dict[fn] = [];
-                ret.push({ [field]: fn, items: dict[fn] });
-              }
-
-              dict[fn].push(e);
-            });
-
-            // Multiple level deep arrange
-            if (fields && fields.length>1) {
-              fields = fields.slice(1);
-              ret = ret.map(r => {
-                r.items = arrange(r.items, fields);
-                return r;
-              });
-            }
-
-            return ret;
-          }
-
-          arrange(target, ['type','in']).forEach(t => {
-            console.log(`${t.type} (${t.items.length}):`);
-            t.items.forEach(msg => {
-              console.log( msg.in +'\n' +
-                msg.items.map(e => `${e.line}:${e.col}: ${e.msg}`)
-                .join('\n')
+          let out = messageList.map(t => {
+            return `${t.type} (${t.items.length}):\n` + t.items.map(msg => {
+              return (msg.in +'\n' +
+                msg.items.map(e => `${e.line}:${e.col}: ${e.msg}`).join('\n')
               );
             })
-          })
+          });
+          sidebar.log(out, 'error');
         }
       })
       .then(Clouduboy.reinit.filesDropdown);
@@ -113,6 +77,47 @@
     }
   }
 
+
   // Add plugin
   Clouduboy.on("contentloaded", init);
+
+
+
+
+  function arrange(arr, field) {
+    if (!field && typeof arr != 'object') {
+      field = arr;
+      arr = this;
+    }
+
+    let dict = {}, ret = [], fields;
+
+    // Multiple level arrange
+    if (typeof field === 'object' && field.length>0) {
+      fields = field;
+      field = fields[0];
+    }
+
+    // Arrange items
+    arr.forEach( e => {
+      let fn = e[field] ? e[field] : '…';
+      if (!dict[fn]) {
+        dict[fn] = [];
+        ret.push({ [field]: fn, items: dict[fn] });
+      }
+
+      dict[fn].push(e);
+    });
+
+    // Multiple level deep arrange
+    if (fields && fields.length>1) {
+      fields = fields.slice(1);
+      ret = ret.map(r => {
+        r.items = arrange(r.items, fields);
+        return r;
+      });
+    }
+
+    return ret;
+  }
 })(window);

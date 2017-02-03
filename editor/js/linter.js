@@ -57,25 +57,23 @@
       lastBuild = res;
 
       if (lastBuild.error) {
-        var msgs = document.getElementById("servermsgs")
-          msgs.classList.add("error");
-          msgs.textContent = lastBuild.error;
+        sidebar.log(lastBuild.error, 'error');
 
-          if (lastBuild.compiler['build.ino'] && lastBuild.compiler['build.ino'].length > 0) {
-            lastBuild.compiler['build.ino'].forEach(function(err) {
-              //console.log(err);
-              var blip = document.createElement("div");
-                blip.appendChild(document.createTextNode(err.msg));
-                blip.className = "build-error";
+        if (lastBuild.compiler['build.ino'] && lastBuild.compiler['build.ino'].length > 0) {
+          lastBuild.compiler['build.ino'].forEach(function(err) {
+            //console.log(err);
+            var blip = document.createElement("div");
+              blip.appendChild(document.createTextNode(err.msg));
+              blip.className = "build-error";
 
-              // Collect line widgets
-              widgets.push(
-                editor.addLineWidget(err.line - 1, blip, {
-                  coverGutter: false, noHScroll: true
-                })
-              );
-            });
-          }
+            // Collect line widgets
+            widgets.push(
+              editor.addLineWidget(err.line - 1, blip, {
+                coverGutter: false, noHScroll: true
+              })
+            );
+          });
+        }
       }
     }).catch(function(error) {
       console.error("Error checking build: ", error.stack||error);

@@ -15,4 +15,17 @@
   self.util = {
     cleanComments: cleanComments
   };
+
+
+  self.sidebar = (function() {
+    var sidebarEmt =document.querySelector('.sidebar > .logs')
+    return ({
+      log: function(msg, type) {
+        let e = document.createElement('div');
+        e.textContent = msg;
+        if (type) e.className = type;
+        sidebarEmt.appendChild(e);
+      }
+    })
+  })()
 })();

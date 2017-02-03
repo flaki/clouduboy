@@ -267,7 +267,7 @@ function createFrom(sourceFile) {
     .then(_ => fs.copy(
         sourceFile, buildFile
       )
-    ).then(_ => buildFile);
+    ).then(_ => this.buildfile = buildFile);
 }
 
 

@@ -77,18 +77,21 @@ body {
 }
 
 
-.servermsgs {
-  background: #112 none repeat scroll 0% 0%;
+.sidebar > .logs {
   font-family: monospace;
   line-height: 1.5;
   font-size: 8pt;
-  margin: 0.5em;
-  padding: 0.5em 0.75em;
-  white-space: pre;
-  overflow: auto;
+  overflow-y: auto;
 }
-.servermsgs.error {
+.sidebar > .logs > * {
+  white-space: pre-wrap;
+  margin-bottom: .5em;
+}
+.sidebar > .logs .error {
   color: #f22;
+}
+.sidebar > .logs .notice {
+  color: yellow;
 }
 
 .build-error {
@@ -123,4 +126,40 @@ iframe.preview {
 iframe.preview::hover {
   width: 80vw;
   height: 40vw;
+}
+
+
+/* Layout */
+main {
+	display: flex;
+}
+
+main > .editor {
+  flex: 1.5;
+}
+
+main > .sidebar {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+main > .sidebar > * {
+  background: #112;
+  margin: 0.5em;
+  padding: 0.5em 0.75em;
+  border: 1px solid #225;
+}
+
+.pspreview {
+  display: block;
+  margin: auto;
+
+  border: 1px solid #fff;
+  background: black;
+
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: crisp-edges;
 }

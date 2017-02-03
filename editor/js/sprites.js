@@ -1,7 +1,16 @@
 (function(exports) {
   'use strict';
 
+  let currentOperation = {};
+
+
   function ClouduboySprites() {
+  }
+
+  function init() {
+    markSprites();
+
+    window.addEventListener("message", iframeEventHandler, false);
   }
 
   function replaceSprite(start, end, sObj) {
@@ -60,11 +69,14 @@
       }).then(function() {
         sprite.classList.add("editing");
         document.body.classList.add("pixel-editor");
-        document.querySelector("iframe").style.display="block";
-        document.querySelector("iframe").src="/editor/painter";
+        document.querySelector("iframe.pixeleditor").style.display="block";
+        document.querySelector("iframe.pixeleditor").src="/editor/painter";
 
         sprite.removeEventListener("click", editSprite);
         sprite.addEventListener("click", editSaveSprite);
+
+        currentOperation.save = editSaveSprite.bind(this);
+
       }).catch(function(e) {
         console.error(e);
       });
@@ -72,7 +84,7 @@
 
     function editSaveSprite(e) {
       document.body.classList.remove("pixel-editor");
-      document.querySelector("iframe").style.display="none";
+      document.querySelector("iframe.pixeleditor").style.display="none";
 
       sprite.removeEventListener("click", editSaveSprite);
       sprite.addEventListener("click", editSprite);
@@ -154,10 +166,28 @@
     return pdata;
   }
 
+  function dismissPreview() {
+    Array.from( document.querySelectorAll('iframe.pixeleditor') ).forEach(iframe => iframe.parentNode.removeChild(iframe));
+  }
+
+  function iframeEventHandler(event) {
+    let origin = event.origin || event.originalEvent.origin,
+        data = event.data;
+
+    if (origin && data.source === 'microcanvas_preview') {
+      if (data.type === 'keypress' && data.value === 'Escape') {
+        dismissPreview();
+      }
+      if (data.type === 'keypress' && data.value === 'Enter') {
+        if (typeof currentOperation.save === 'function') currentOperation.save();
+      }
+    }
+  }
+
 
   // Expose
   exports.ClouduboySprites = ClouduboySprites;
 
   // Add plugin
-  Clouduboy.on("contentloaded", markSprites);
+  Clouduboy.on("contentloaded", init);
 })(window);

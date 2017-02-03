@@ -1,6 +1,86 @@
 (function () {
   'use strict';
 
+  const PixelSprite = (function() {
+    function PixelSprite() {};
+
+    PixelSprite.prototype = new PixelSprite();
+
+    // Getters for transitive dependent properties
+    Object.defineProperty(PixelSprite.prototype, 'rows',      { get: function() { return this.h+7 >> 3; }});  // === Math.ceil(h/8)
+    Object.defineProperty(PixelSprite.prototype, 'framesize', { get: function() { return this.rows * this.w; }});
+
+    // Render PixelSprite content to canvas context
+    PixelSprite.prototype.render = function(ctx, options = {}) {
+      // Pixeldata properties
+      let { data, w, h, rows, framesize, highlight } = this;
+
+      // Overridable properties
+      framesize = options.framesize || framesize;
+      highlight = (options && 'highlight' in options ? options.highlight : highlight) || {};
+
+
+      // Rendered frame based on requested (r.frame) or highlighted (p.highlight) frame
+      let f = options.frame|(highlight&&highlight.byte/framesize)|0;
+
+
+      // Clear frame
+      ctx.clearRect(0,0, w,h);
+
+      // Draw frame
+      ctx.fillStyle = 'white';
+      for (let y=0; y<h; ++y) {
+        for (let x=0; x<w; ++x) {
+          if (data[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) {
+            ctx.fillRect( x, y, 1, 1 );
+          }
+        }
+      }
+
+      // Draw highlight
+      if (highlight.byte) {
+        ctx.fillStyle = 'rgba(0,255,0,.3)';
+
+        let highlightX = highlight.byte % w;
+        let seg = ((highlight.byte - f*framesize)/w)|0;
+
+        for (let y = 0; y < 8; ++y) {
+          if ((seg<<3)+y >= h) break;
+          ctx.fillRect( highlightX, seg*8+y, 1, 1 );
+        }
+      }
+    }
+
+
+    // PixelSprite factory
+    PixelSprite.from = function(statement) {
+      let pdata = Object.create(PixelSprite.prototype);
+
+      pdata.data = util.cleanComments(statement)
+        .trim().replace(/,\s*$/,'') // get rid of useless whitespace and trailing commas
+        .split(',') // get values
+          .map(function(n) { return parseInt(n); }); // parse values
+
+      // Pixelsprite dimensions can be declared in comments besides the
+      // binary pixeldata in the format WWWxHHH where WWW and HHH are both
+      // integer pixel values for width/height
+      // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
+      // Optionally, a single pixelsprite can contain...
+      var m = statement.match(/(?:\/\/|\/\*)\s*(\d+)x(\d+)(?:x(\d+))?/);
+      if (m && m[1] && m[2]) {
+        pdata.w = parseInt(m[1],10);
+        pdata.h = parseInt(m[2],10);
+        pdata.frames = m[3] ? parseInt(m[3],10) : 0;
+        pdata.ambiguous = false;
+      }
+
+      return pdata;
+    }
+
+    return PixelSprite;
+  }());
+
+
   function CodePlugin(editor, start, end, options) {
     options = options || {};
     this.editor = editor;
@@ -81,7 +161,7 @@
   let pP, pCanvas;
 
   function cleanUpPreview(p) {
-    if (pP) document.body.removeChild(document.querySelector('.pspreview'));
+    if (pP) document.querySelector('.sidebar .bitmap').removeChild(document.querySelector('.pspreview'));
     pCanvas = null;
     pP = p;
   }
@@ -91,62 +171,25 @@
 
     pCanvas = pCanvas || (_ => {
       let c = document.createElement('canvas');
+      let zoomlevel = 8;
       c.className = 'pspreview';
       c.width = p.w; c.height = p.h;
-      c.style = `
-  position: fixed;
-  top: 1em;
-  right: 1em;
-  width: ${p.w/2}rem;
-  height: ${p.h/2}rem;
-  border: 1px solid #fff;
-  background: black;
+      c.style = `width: ${p.w*zoomlevel}px; height: ${p.h*zoomlevel}px;`;
 
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -webkit-crisp-edges;
-  image-rendering: crisp-edges;
-`;
-      document.body.appendChild(c);
+      document.querySelector('.sidebar .bitmap').appendChild(c);
       return c;
     })();
     let pCtx = pCanvas.getContext('2d');
-    pCtx.clearRect(0,0,p.w,p.h);
+    p.render(pCtx);
 
-    let framesize = (p.h+7 >> 3) * p.w, // === Math.ceil(p.h/8)*p.w,
-      f = (p.highlight.byte/framesize)|0,
-      bytes = p.data,
-      w = p.w, h = p.h,
-      rows = Math.ceil(h/8);
-
-    // Draw frame
-    pCtx.fillStyle = 'white';
-    for (let y=0; y<h; ++y) {
-      for (let x=0; x<w; ++x) {
-        //        bitmap[y][x + f*w] = (bytes[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) ? 1 : 0;
-        if (bytes[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) {
-          pCtx.fillRect( x, y, 1, 1 );
-        }
-      }
+    {
+      let stripCtx = document.getElementById('framestrip').getContext('2d');
+      stripCtx.save();
+      p.render(stripCtx, { highlight: null, frame: 0 });
+      stripCtx.translate(11, 0);
+      p.render(stripCtx, { highlight: null, frame: 1 });
+      stripCtx.restore();
     }
-
-    // Draw highlight
-    if (p.highlight) {
-      pCtx.fillStyle = 'rgba(0,255,0,.3)';
-
-      let cb = p.highlight.byte;
-      let x = cb % w;
-      let seg = ((cb - f*framesize)/w)|0;
-
-console.log(seg,h,'seg/h');
-      for (let y = 0; y < 8; ++y) {
-        if ((seg<<3)+y >= h) break;
-        //v |= bitmap[seg+y][x] << y;
-        //if (bytes[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) {
-          pCtx.fillRect( x, seg*8+y, 1, 1 );
-        //}
-      }
-    }
-
   }
 
   function cursorBetween(editor, start, end) {
@@ -157,7 +200,7 @@ console.log(seg,h,'seg/h');
 
     let cIdx = editor.indexFromPos(cur) - editor.indexFromPos(start);
     let cont = editor.getRange(start,end);
-    let meta = pixelSprite(cont);
+    let meta = PixelSprite.from(cont);
 
     cont = cont
       .replace(/\/\*[^*]+?\*\//g,e => ' '.repeat(e.length)) // blank out comments
@@ -189,8 +232,8 @@ console.log(seg,h,'seg/h');
         meta
       );
       */
-      previewPixelSprite(meta);
 
+      previewPixelSprite(meta);
     }
 
     // One line, check character positions
@@ -207,32 +250,6 @@ console.log(seg,h,'seg/h');
 
 
 
-
-
-
-  function pixelSprite(statement) {
-    let pdata = {};
-
-    pdata.data = util.cleanComments(statement)
-      .trim().replace(/,\s*$/,'') // get rid of useless whitespace and trailing commas
-      .split(',') // get values
-        .map(function(n) { return parseInt(n); }); // parse values
-
-    // Pixelsprite dimensions can be declared in comments besides the
-    // binary pixeldata in the format WWWxHHH where WWW and HHH are both
-    // integer pixel values for width/height
-    // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
-    // Optionally, a single pixelsprite can contain...
-    var m = statement.match(/(?:\/\/|\/\*)\s*(\d+)x(\d+)(?:x(\d+))?/);
-    if (m && m[1] && m[2]) {
-      pdata.w = parseInt(m[1],10);
-      pdata.h = parseInt(m[2],10);
-      pdata.frames = m[3] ? parseInt(m[3],10) : 0;
-      pdata.ambiguous = false;
-    }
-
-    return pdata;
-  }
 
 
   CodePlugin.prototype = Object.create(CodePlugin);

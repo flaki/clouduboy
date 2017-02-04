@@ -1,7 +1,11 @@
 window.addEventListener('keypress', e => {
-  if (window.parent) window.parent.postMessage({
+  let msg = {
     source: 'microcanvas_preview',
     type: 'keypress',
     value: e.key,
-  }, '*');
+  };
+
+  if (window.parent) {
+    window.parent.postMessage(msg, '*');
+  }
 });

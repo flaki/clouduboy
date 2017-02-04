@@ -10,6 +10,16 @@
   function init() {
     markSprites();
 
+    // Create preview iframe
+    let i = document.createElement('iframe');
+
+    i.id = "codeplugin";
+    i.className = "pixeleditor";
+    i.style.display = "none";
+
+    document.body.appendChild(i);
+    // TODO: create on-demand?
+
     window.addEventListener("message", iframeEventHandler, false);
   }
 
@@ -69,11 +79,18 @@
       }).then(function() {
         sprite.classList.add("editing");
         document.body.classList.add("pixel-editor");
-        document.querySelector("iframe.pixeleditor").style.display="block";
-        document.querySelector("iframe.pixeleditor").src="/editor/painter";
 
-        sprite.removeEventListener("click", editSprite);
-        sprite.addEventListener("click", editSaveSprite);
+        // Set up iframe
+        let frame = document.querySelector("iframe.pixeleditor");
+
+        // Put keyboard focus on the iframe
+        frame.onload = function() {
+          frame.contentWindow.focus()
+        };
+
+        // Load & show
+        frame.src="/editor/painter";
+        frame.style.display="block";
 
         currentOperation.save = editSaveSprite.bind(this);
 
@@ -167,7 +184,7 @@
   }
 
   function dismissPreview() {
-    Array.from( document.querySelectorAll('iframe.pixeleditor') ).forEach(iframe => iframe.parentNode.removeChild(iframe));
+    Array.from( document.querySelectorAll('iframe.pixeleditor') ).forEach(iframe => iframe.style.display="none");
   }
 
   function iframeEventHandler(event) {

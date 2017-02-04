@@ -60,6 +60,9 @@ Data size: ${r.memory.data.bytes}+' bytes / ${r.memory.data.used}%`, 'notice');
       }
     });
     i.src = '/microcanvas.html';
+
+    // Put (keyboard) focus on the iframe
+    i.contentWindow.focus();
   }
 
   function dismissPreview() {

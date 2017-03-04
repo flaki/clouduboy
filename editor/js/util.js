@@ -18,14 +18,17 @@
 
 
   self.sidebar = (function() {
-    var sidebarEmt =document.querySelector('.sidebar > .logs')
+    const sidebarEmt = document.querySelector('.sidebar > .logs')
     return ({
-      log: function(msg, type) {
+      log(msg, type) {
         let e = document.createElement('div');
         e.textContent = msg;
         if (type) e.className = type;
         sidebarEmt.appendChild(e);
-      }
+      },
+      clearLog() {
+        Array.from(sidebarEmt.children).forEach( e => sidebarEmt.removeChild(e) )
+      },
     })
   })()
 })();

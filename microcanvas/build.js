@@ -24,7 +24,14 @@ function Game(target) {
   });
 }
 
-Game.prototype.export = exportGame;
+Object.assign(Game.prototype, {
+  createConstant: pCreateConstant,
+  createVariable: pCreateVariable,
+
+  guessType: pGuessType,
+
+  export: exportGame
+})
 
 
 // Commandline
@@ -75,7 +82,8 @@ function buildGame(target, source, id) {
 }
 
 
-Game.prototype.createConstant = function(id, value, type) {
+// Methods available on the Game prototype
+function pCreateConstant(id, value, type) {
   // If no type specified, try to guess it
   // PS: constants shouldn't be affected by scope issues
   //if (!type) type = guessType(id, value, 'constant');
@@ -94,7 +102,7 @@ Game.prototype.createConstant = function(id, value, type) {
   console.log('+ new const: %s = %s', game.constants[id].cid, value);
 }
 
-Game.prototype.createVariable = function (id, value, type, declaration) {
+function pCreateVariable(id, value, type, declaration) {
   // If no type specified, try to guess it
   // PS: constants shouldn't be affected by scope issues
   //if (!type) type = guessType(id, value, 'constant');
@@ -135,7 +143,7 @@ Game.prototype.createVariable = function (id, value, type, declaration) {
   return newVar;
 }
 
-Game.prototype.guessType = function (id, value, hint) {
+function pGuessType(id, value, hint) {
   if (hint === 'constant' && typeof value == 'number' && value < 256) return 'byte';
 
   // unsigned int, byte, char, char[]

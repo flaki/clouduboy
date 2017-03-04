@@ -63,13 +63,13 @@
   let MCP = MicroCanvas.prototype;
 
   MCP.loadGraphics = function(src) {
-    return loadBytestream(src);
+    return loadGraphics(src);
   };
   MCP.loadSprite = function(src) {
-    return loadBytestream(src);
+    return loadGraphics(src);
   }
   MCP.loadTune = function(src) {
-    let contents = arrayInitializerContent(src);
+    let contents = PixelData.util.arrayInitializerContent(src);
 
     return new ArduboyScore(contents);
   }
@@ -222,100 +222,58 @@
 
 
   function loadBitmap(bmp) {
-    let bitmap = bmp.replace(/[\t\r\n]/g,' ').trim().split(/\s+/);
+    let bitmap = bmp.split('\n').map(r => r.trim()).filter(r => r !== '' );
+    let rows = bitmap.filter(r => r[0].match(/^[a-z0-0\.\#]/i))
+    let meta = bitmap.filter(r => r[0].match(/^[^a-z0-0\.\#]/i))
 
     let canvas = document.createElement('canvas');
     let ctx = canvas.getContext('2d');
 
-    canvas.width = ctx.width = bitmap[0].length;
-    canvas.height = ctx.height = bitmap.length;
+    canvas.width = ctx.width = rows[0].length;
+    canvas.height = ctx.height = rows.length;
 
     ctx.fillStyle = 'white';
 
-    bitmap.forEach(function(row, y) {
+    rows.forEach(function(row, y) {
       row.split('').forEach(function(px, x) {
-        if (px === '#') ctx.fillRect(x, y, 1, 1);
+        if (px === '#' || parseInt(px,16)&1) ctx.fillRect(x, y, 1, 1);
       });
     });
 
     return canvas;
   }
 
+  function loadGraphics(g) {
+    let ret = loadBytestream(g)
+    return ret
+  }
+
   function loadBytestream(bs) {
     let ret;
 
-    let pix = new PixelData(codeToPif(bs));
+    let pix = new PixelData(bs);
 
     if (pix.frames) {
       ret = [...Array(pix.frames).keys()].map(i => loadBitmap(pix.frame(i).pif) );
-
-      ret.width = ret[0].width;
-      ret.height = ret[0].height;
       // ^ same as Array(pix.frames).fill(null).map((_,i) => ... );
+      // | in essence: [ 0, 1, .., pix.frames-1 ].map( ... )
+      // | Array(..).keys() returns a Symbol.iterator that [...<iterator>] expands
+      // | this is the same as saying Array.from(Array(pix.frames).keys())
+
+      Object.defineProperty(ret, 'width', { value: ret[0].width });
+      Object.defineProperty(ret, 'height', { value: ret[0].height });
     } else {
       ret = loadBitmap(pix.pif);
+      Object.defineProperty(ret, '0', { value: ret })
     }
-    ret.pixeldata = pix;
+
+    Object.defineProperty(ret, 'pixeldata', { value: pix });
+
     return ret;
   }
 
-  function arrayInitializerContent(statement) {
-    try {
-      return ( statement
-        .replace(/\r|\n|\t/g, ' ') // remove line breaks and tabs
-        .match(/=\s*[{\[](.*)[}\]]/)[1] // match core data
-        .replace(/\s+/g, ' ').trim() // clean up whitespace
-      ) || statement;
-    } catch(e) {};
 
-    return statement;
-  }
 
-  function codeToPif(contents, label, statement) {
-    var pdata = {};
-    statement = statement || contents;
-
-    contents = arrayInitializerContent(statement);
-
-    // Pixelsprite id (label)
-    pdata.id = label;
-
-    // Serialized binary Pixelsprite data in PROGMEM format
-    pdata.data = cleanComments(contents)
-      .trim().replace(/,\s*$/,'') // get rid of useless whitespace and trailing commas
-      .split(',') // get values
-        .map(function(n) { return parseInt(n); }); // parse values
-
-    // Try to guess image width/height
-    pdata.w = parseInt( (statement.match(/w\:\s*(\d+)[^\n]+/) || [])[1] );
-    pdata.h = Math.floor(pdata.data.length / pdata.w) * 8;
-    pdata.frames = 0;
-    pdata.ambiguous = true;
-
-    // Pixelsprite dimensions can be declared in comments besides the
-    // binary pixeldata in the format WWWxHHH where WWW and HHH are both
-    // integer pixel values for width/height
-    // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
-    // Optionally, a single pixelsprite can contain...
-    var m = statement.match(/(?:\/\/|\/\*)\s*(\d+)x(\d+)(?:x(\d+))?/);
-    if (m && m[1] && m[2]) {
-      pdata.w = parseInt(m[1],10);
-      pdata.h = parseInt(m[2],10);
-      pdata.frames = m[3] ? parseInt(m[3],10) : 0;
-      pdata.ambiguous = false;
-    }
-
-    return pdata;
-  }
-
-  var RX_CLEANCOMMENTS = /(\/\/[^\n]*\n|\/\*(.*?\*\/))/g;
-
-  function cleanComments(str) {
-    return str.replace(
-      RX_CLEANCOMMENTS,
-      function(i) { return ' '.repeat(i.length); }
-    );
-  }
 
   function setFont(graphicsFont) {
     this.gfont = graphicsFont || loadBytestream(`

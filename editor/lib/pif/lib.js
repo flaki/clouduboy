@@ -3,6 +3,7 @@
 (function() {
 
 function PixelData(input) {
+  console.log('new PixelData('+typeof input+'):', input)
   // Buffer object - should be some binary image file.
   // Supported import formats: BMP
   if (typeof input === 'object' && typeof Buffer !== 'undefined' && input instanceof Buffer) {
@@ -43,21 +44,26 @@ function PixelData(input) {
     }
   }
 
-  // String, try parsing as PIF
+  // String
   if (typeof input === 'string') {
+    // Try parsing as Code Snippet
+    let parsed = loadCode(input)
+
+    if (parsed) {
+      console.log('Successfully parsed as Code Snippet', parsed)
+      return parsed
+    }
+
+
+    // Try parsing as PIF (ASCII)
     try {
-      this.bitmap = pif2bitmap(input);
-      this.w = this.bitmap[0].length;
-      this.h = this.bitmap.length;
-
-      // Try to read embedded id tag
-      try {
-        this.id = input.match(/\:(\w+)/)[1];
-      } catch (e) {
-        console.log('No embedded id found in PIF string');
+      let parsed = loadPif(input)
+      if (parsed) {
+        console.log('Successfully parsed as PIF imagedata', parsed)
+        return parsed
       }
-      return;
 
+    // Nonrecognized format
     } catch (e) {
       console.log('Invalid PIF data!');
       throw e;
@@ -81,7 +87,7 @@ PixelData.prototype = {
     if ('$f' in this) {
       return bitmap2pif(
         this.bitmap
-          .map(row => row.slice(this.$f*this.w, (this.$f+1)*this.w))
+          .slice(this.$f*this.h, (this.$f+1)*this.h)
         , (this.id ? this.id+'_'+this.$f : void 0)
       );
     }
@@ -112,7 +118,6 @@ PixelData.prototype = {
   // A "view" into the PixelData object, representing just a single frame
   frame: function(n) {
     if (n > (this.frames||0)) return this;
-
     var fobj = Object.create(this);
     fobj.$f = n;
     return fobj;
@@ -131,7 +136,7 @@ PixelData.prototype = {
 
 
 function bitmap2pif(bitmap, id) {
-  return (id ? ':' + id + ':\n' : '') +
+  return (id ? '! ' + id + ' ' +bitmap[0].length+ 'x' +bitmap.length+ '\n' : '') +
     bitmap.reduce(function(out,row) {
       out.push(row.join(''));
       return out;
@@ -222,17 +227,19 @@ function bytes2bitmap(bytes,w,h,frames,explicit) {
     }
   }
 
-  var x,y,f;
-  var bitmap = [];
-  var rows = Math.ceil(h/8);
+  // Stores the image as a bitmap
+  let bitmap = []
 
-  f = 0;
+  // Real height of the frame is this divisible by 8
+  let rows = Math.ceil(h/8)
+
+  let f = 0;
   do {
 
-    for (y = 0; y<h; ++y) {
-      bitmap[y] = bitmap[y] || [];
-      for (x = 0; x<w; ++x) {
-        bitmap[y][x + f*w] = (bytes[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) ? 1 : 0;
+    for (let y = 0; y<h; ++y) {
+      bitmap[y+f*h] = bitmap[y+f*h] || [];
+      for (let x = 0; x<w; ++x) {
+        bitmap[y+f*h][x] = (bytes[w * (f*rows + (y >> 3)) + x] & (1 << (y % 8))) ? 1 : 0;
       }
     }
 
@@ -307,6 +314,131 @@ function bmp2bitmap(b) {
   }
 
   return bitmap;
+}
+
+function loadPif(contents) {
+  // Skip empty rows and trim unneeded whitespace, split to lines
+  let bitmap = contents.split('\n').map(r => r.trim()).filter(r => r !== '' );
+
+  // Retrieve DATA and META rows separately
+  let rows = bitmap.filter(r => r[0].match(/^[a-z0-0\.\#]/i))
+  let meta = bitmap.filter(r => r[0].match(/^[^a-z0-0\.\#]/i)).join(' ')
+
+  let pdata = Object.create(PixelData.prototype);
+
+  // Dimensions
+  pdata.w = rows[0].length;
+  pdata.h = rows.length;
+
+  // Metadata
+  detectDimensions(meta, pdata)
+
+  let m = meta.match(/[a-z]\w+/)
+  if (m) {
+    pdata.id = m[0]
+  }
+
+  pdata.bitmap = rows.map(row => row.split('').map(i => i==='#' ? 1 : parseInt(i,16)||0) )
+
+  return pdata
+}
+
+function loadCode(contents, label, statement) {
+  let pdata = Object.create(PixelData.prototype);
+  statement = statement || contents;
+
+  // Check for validarray initializer
+  contents = arrayInitializerContent(statement);
+
+  if (!contents) {
+    console.log('No valid array initializer found')
+    return null
+  }
+
+  // Pixelsprite id (label)
+  if (!label) {
+    let match;
+    // try to guess from source
+    // char|byte label[]
+    // TODO: char|byte* label
+    match = statement.match(/(?:char|byte)\s+(\w+)\[\]/)
+    if (match) {
+      label = match[1]
+    }
+  }
+
+  pdata.id = label;
+
+  // Serialized binary Pixelsprite data in PROGMEM format
+  pdata.data = cleanComments(contents)
+    .trim().replace(/,\s*$/,'') // get rid of useless whitespace and trailing commas
+    .split(',') // get values
+      .map(function(n) { return parseInt(n); }); // parse values
+
+
+  // Try to guess image width/height
+  pdata.w = parseInt( (statement.match(/w\:\s*(\d+)[^\n]+/) || [])[1] );
+  pdata.h = Math.floor(pdata.data.length / pdata.w) * 8;
+  pdata.frames = 0;
+  pdata.ambiguous = true;
+
+  // Try to detect/load dimensions from metadata
+  detectDimensions(statement, pdata)
+
+  // Generate bitmap
+  pdata.bitmap = bytes2bitmap(pdata.data,pdata.w,pdata.h,pdata.frames,true)
+
+  return pdata;
+}
+
+// Pixelsprite dimensions can be declared in comments besides the
+// binary pixeldata in the format WWWxHHH where WWW and HHH are both
+// integer pixel values for width/height
+// eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
+// Optionally, a single pixelsprite can contain multiple sprites (frames)...
+function detectDimensions(source, pdata) {
+  var m = source.match(/(?:!|\/\/|\/\*)?\s*([1-9]\d*)x([1-9]\d*)(?:x(\d+))?(?:@(\d+))?/);
+
+  if (m && m[1] && m[2]) {
+    pdata.w = parseInt(m[1],10);
+    pdata.h = parseInt(m[2],10);
+    pdata.frames = m[3] ? parseInt(m[3],10) : 0;
+    pdata.palette = m[4] ? parseInt(m[4],10) : 1;
+    pdata.ambiguous = false;
+  }
+
+}
+
+
+const RX_CLEANCOMMENTS = /(\/\/[^\n]*\n|\/\*(.*?\*\/))/g;
+
+function cleanComments(str) {
+  return str.replace(
+    RX_CLEANCOMMENTS,
+    function(i) { return ' '.repeat(i.length); }
+  );
+}
+
+function arrayInitializerContent(statement) {
+  try {
+    return ( statement
+      .replace(/\r|\n|\t/g, ' ') // remove line breaks and tabs
+      .match(/=\s*[{\[](.*)[}\]]/)[1] // match core data
+      .replace(/\s+/g, ' ').trim() // clean up whitespace
+    ) || statement;
+  } catch(e) {
+    return null
+  };
+
+  return statement;
+}
+
+
+PixelData.codeToPif = loadCode
+PixelData.loadPif = loadPif
+
+PixelData.util = {
+  cleanComments, arrayInitializerContent
 }
 
 /*

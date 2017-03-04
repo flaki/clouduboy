@@ -107,6 +107,21 @@ function pCreateVariable(id, value, type, declaration) {
   // PS: constants shouldn't be affected by scope issues
   //if (!type) type = guessType(id, value, 'constant');
   // only explicit types here, do not guess here only on output
+  if (!type) {
+    type = game.guessType(id, undefined, declaration)
+    console.log('- no type information, guessed: ', type)
+  }
+
+  // Value based on type
+  if (!value && type) {
+    if (declaration.init && declaration.init.type == 'ArrayExpression') {
+      value = declaration.init.elements.map(e => e.raw)
+    } else {
+      value = declaration.init ? declaration.init.value : void 0
+    }
+
+    console.log('- no initial value supplied, detected: ', value)
+  }
 
   let newVar = {
     id: id,
@@ -145,6 +160,18 @@ function pCreateVariable(id, value, type, declaration) {
 
 function pGuessType(id, value, hint) {
   if (hint === 'constant' && typeof value == 'number' && value < 256) return 'byte';
+
+  if (typeof hint == 'object') {
+    if (hint.init) {
+      console.log('- guessing type based on decl.: ', hint.type, hint.init)
+      switch (hint.init.type) {
+        case 'Literal':
+          return 'int' // TODO: strings, floats, bytes & unsigneds
+        case 'ArrayExpression':
+          return 'byte[]'
+      }
+    }
+  }
 
   // unsigned int, byte, char, char[]
   return 'int';
@@ -189,13 +216,13 @@ function parseGlobals() {
           console.log("MicroCanvas uses the alias: game")
 
         } else {
-          game.globals.push({
-            id: dec.id.name,
-            cid: utils.toSnakeCase(dec.id.name),
-            value: dec.init ? dec.init.value : void 0,
-            scope: 'let'
-          });
-          game.globals[dec.id.name] = game.globals[game.globals.length-1];
+          let v = game.createVariable(dec.id.name, undefined, undefined, dec)
+
+          game.globals.push(v)
+
+          // Make global accessible via its name
+          // TODO: maybe use a WeakMap instead?
+          Object.defineProperty(game.globals, dec.id.name, { value: game.globals[game.globals.length-1] })
         }
       });
     }
@@ -553,11 +580,22 @@ function exportGame(target) {
       // Globals
       if (game.globals) {
         game.globals.filter(dec => dec.type!=='function'&&dec.type!=='generator').forEach(c => {
-          b += (c.type ? c.type : game.guessType(c.id, c.value)) + ' ';
-          b += c.cid;
+          // Array initializer
+          if (c.type && (c.type == 'char[]' || c.type == 'byte[]')) {
+            b += c.type.substr(0,4) +' '+ c.cid +'[]'
+
+          } else {
+            b += (c.type ? c.type : game.guessType(c.id, c.value)) +' ';
+            b += c.cid;
+          }
 
           if (typeof c.value !== 'undefined') {
-            b += ' = ' + c.value;
+            // Array initializer value
+            if (typeof c.value == 'object' && c.value.length) {
+              b += ' = { ' +c.value.join(', ')+ ' }'
+            } else {
+              b += ' = ' + c.value;
+            }
           }
 
           b+=';\n';

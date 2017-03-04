@@ -31,11 +31,22 @@ function translate(exp, callexp) {
       let obj = self(exp.object);
       let deepObj = typeof exp.object === 'object' && 'object' in exp.object ? self(exp.object.object) : null;
 
+      // Computed expression, could be array access
+      if (exp.computed) {
+        // Check in globals, TODO: find variable in-scope
+        let glob = self.game.globals[obj]
+
+        // Some kind of Array on the global scope -> render as element access
+        if (glob && glob.type.substr(-2) == '[]') {
+          return obj+'[' +self(exp.property)+ ']'
+        }
+      }
+
       // MicroCanvas calls
       if (obj === self.game.alias || obj.match(/^(g|s)fx/)){ // Game asset properties (gfx & sfx)
         return translateLib(exp, callexp);
 
-      } else if (deeoObj && deepObj.match(/^(g|s)fx/)) { // Game asset properties (gfx & sfx)
+      } else if (deepObj && deepObj.match(/^(g|s)fx/)) { // Game asset properties (gfx & sfx)
         return translateLib(exp, callexp);
 
       // Some other library
@@ -135,7 +146,25 @@ function translate(exp, callexp) {
         return translateLib(exp.left, exp);
       }
 
-      return self(exp.left, exp) +' '+op+' '+ self(exp.right, exp);
+      let parens = false;
+
+      // Add parentesis for binary +/- operators
+      if (exp.type === 'BinaryExpression' && (op === '+' || op === '-')) {
+        parens = true;
+      }
+
+      // Add parentesis for bitwise <</>> operators
+      if (exp.type === 'BinaryExpression' && (op === '<<' || op === '>>')) {
+        parens = true;
+      }
+
+      return (
+        (parens ? '(' : '')
+        + self(exp.left, exp)
+        + ' ' + op + ' '
+        + self(exp.right, exp)
+        + (parens?')':'')
+      );
 
     // Unary expression (pre + postfix) work mostly the same
     // TODO: boolean tricks? (!something >>> 1-something)

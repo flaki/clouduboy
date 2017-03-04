@@ -18,25 +18,42 @@ let invaders = [ 0xff, 0xff, 0xff, 0xff ];
 // Initialize game
 game.setup(function(game) {
   // Set up graphics
-  gfxInvader = game.loadSprite(
-    `PROGMEM const unsigned char invader[] = { /*9x8*/ 0x70, 0x38, 0x6a, 0x3c, 0x78, 0x3c, 0x6a, 0x38, 0x70 }`
-  );
+  gfxInvader = game.loadSprite(`! invader 9x8
+    .........
+    ..#...#..
+    ...#.#...
+    .#######.
+    ##.###.##
+    #########
+    #.#.#.#.#
+    .........
+  `);
 
-  gfxInvader2 = game.loadSprite(
-    `PROGMEM const unsigned char invader2[] = { /*9x8*/ 0x28, 0x10, 0xba, 0x6a, 0x3f, 0x6a, 0xba, 0x10, 0x28 }`
-  );
+  gfxInvader2 = game.loadSprite(`! gfx_invader_2 9x8
+    ....#....
+    ..#####..
+    ....#....
+    #.#####.#
+    .##.#.##.
+    #.#####.#
+    ...#.#...
+    ..#...#..
+  `);
 
-  gfxDefender = game.loadSprite(
-    `PROGMEM const unsigned char defender[] = {
-      /*9x6*/ 0x38, 0x30, 0x3c, 0x2e, 0x27, 0x2e, 0x3c, 0x30, 0x38
-    }`
-  );
+  gfxDefender = game.loadSprite(`! gfx_defender 9x6
+    ....#....
+    ...###...
+    ..#####..
+    #.##.##.#
+    ###...###
+    #########
+  `);
 
-  gfxRocket = game.loadSprite(
-    `PROGMEM const unsigned char rocket[] = {
-      /*1x3*/ 0x07
-    }`
-  );
+  gfxRocket = game.loadSprite(`! rocket 1x3
+    #
+    #
+    #
+  `);
 
   // Place defender in the middle of the playing field
   turretX = game.width/2;

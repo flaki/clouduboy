@@ -9,6 +9,8 @@ const translate = require('./modules/translate.js');
 const lookup = require('./modules/lookup.js');
 const getString = require('./modules/getString.js');
 
+const PixelData = require('../editor/lib/pif/lib.js')
+
 let srcFile = process.argv[2] || './game.js';
 let targetSystem = process.argv[3] || 'arduboy';
 
@@ -489,15 +491,19 @@ function loadGraphics(id, args) {
   let str = getString(args[0]);
 
   // Load graphics data
-  game.gfx[id].value = arrayInitializerContent(str);
+  //game.gfx[id].value = arrayInitializerContent(str);
 
   // Parse hints and create constants for them
-  game.gfx[id].meta = arrayInitializerHints(game.gfx[id].value);
+  //game.gfx[id].meta = arrayInitializerHints(game.gfx[id].value);
+  let px = new PixelData(str)
 
-  game.createConstant(id+'Width', game.gfx[id].meta.w);
-  game.createConstant(id+'Height', game.gfx[id].meta.h);
-  game.createConstant(id+'Frames', game.gfx[id].meta.frames);
-  game.createConstant(id+'Framesize', Math.ceil(game.gfx[id].meta.h/8)*game.gfx[id].meta.w);
+  game.gfx[id].meta = px
+  game.gfx[id].value = px.c;
+
+  game.createConstant(id+'Width', px.w);
+  game.createConstant(id+'Height', px.h);
+  game.createConstant(id+'Frames', px.frames);
+  game.createConstant(id+'Framesize', Math.ceil(px.h/8)*px.w);
 };
 
 function loadTune(id, args) {

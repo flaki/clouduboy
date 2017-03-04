@@ -1,6 +1,7 @@
 /* PixelData manipulation and storage library
 */
 (function() {
+  'use strict'
 
 function PixelData(input) {
   console.log('new PixelData('+typeof input+'):', input)
@@ -91,10 +92,10 @@ PixelData.prototype = {
         , (this.id ? this.id+'_'+this.$f : void 0)
       );
     }
-    return bitmap2pif(this.bitmap, this.id);
+    return bitmap2pif(this.bitmap, this.id, this.frames);
   },
   get bytes() {
-    return bitmap2bytes(this.bitmap);
+    return bitmap2bytes(this.bitmap, this.w,this.h, this.frames);
   },
   get rgba() {
     return bitmap2rgba(this.bitmap)
@@ -103,6 +104,9 @@ PixelData.prototype = {
     return this.bytes.reduce(function(sprite, v) {
       return sprite += (sprite === '' ? '' : ', ') + ( v<16 ? '0x0' : '0x' ) + v.toString(16);
     }, '');
+  },
+  get c() {
+    return '/*'+ this.w+'x'+this.h +(this.frames>1 ? 'x'+this.frames : '') +'*/ ' + this.sprite
   },
 
   // Compare two PixelData objects
@@ -135,8 +139,8 @@ PixelData.prototype = {
 }
 
 
-function bitmap2pif(bitmap, id) {
-  return (id ? '! ' + id + ' ' +bitmap[0].length+ 'x' +bitmap.length+ '\n' : '') +
+function bitmap2pif(bitmap, id, frames) {
+  return (id ? '! ' + id + ' ' +bitmap[0].length+ 'x' +bitmap.length+ (frames>1 ? 'x'+frames : '') +'\n' : '') +
     bitmap.reduce(function(out,row) {
       out.push(row.join(''));
       return out;
@@ -164,19 +168,23 @@ function pif2bytes(pif) {
   return bitmap2bytes( pif2bitmap( pif ));
 }
 
-function bitmap2bytes(bitmap) {
-  var x,y,seg,ymax,v;
-  var w = bitmap[0].length, h = bitmap.length;
-  var bytes = [];
+function bitmap2bytes(bitmap, w,h, frames) {
+  w = w||bitmap[0].length
+  h = h||bitmap.length
+  frames = frames||1
 
-  seg = 0;
-  while (seg < h) {
-    for (x = 0; x < w; ++x) {
-      v = 0;
-      ymax = (h-seg < 8 ? h-seg : 8);
+  let bytes = []
 
-      for (y = 0; y < ymax; ++y) {
-        v |= bitmap[seg+y][x] << y;
+  let fr = 0
+  let seg = 0
+
+  while (fr < frames && seg < h) {
+    for (let x = 0; x < w; ++x) {
+      let v = 0;
+      let ymax = (h-seg < 8 ? h-seg : 8);
+
+      for (let y = 0; y < ymax; ++y) {
+        v |= bitmap[fr*h +seg +y][x] << y;
       }
 
       // Save byte values
@@ -184,24 +192,28 @@ function bitmap2bytes(bitmap) {
     }
 
     seg += 8;
+    if (seg > h) {
+      ++fr;
+      seg = 0;
+    }
   }
 
   return bytes;
 }
 
-function bitmap2rgba(bitmap, fg, bg) {
-  var w = bitmap[0].length, h = bitmap.length;
-  var rgba = new Uint8ClampedArray(w * h * 4);
-  var bg = bg || [0,0,0,0];
-  var fg = fg || [255,255,255,255];
-  var cc;
+function bitmap2rgba(bitmap, fg, bg) { //TODO: frames
+  let w = bitmap[0].length, h = bitmap.length;
+  let rgba = new Uint8ClampedArray(w * h * 4);
+
+  bg = bg || [0,0,0,0];
+  fg = fg || [255,255,255,255];
 
 
-  var y = 0;
+  let y = 0;
   while (y < h) {
 
-    for (x = 0; x < w; ++x) {
-      cc = (bitmap[y][x] ? fg : bg);
+    for (let x = 0; x < w; ++x) {
+      let cc = (bitmap[y][x] ? fg : bg);
 
       rgba[ (y*w + x)*4 + 0 ] = cc[0];
       rgba[ (y*w + x)*4 + 1 ] = cc[1];

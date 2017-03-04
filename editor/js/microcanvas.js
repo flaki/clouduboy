@@ -22,7 +22,7 @@
       .then(r => {
         // Success
         if (r.memory && 'program' in r.memory) {
-          sidebar.log(`Program size: ${memory.program.bytes} bytes / ${memory.program.used}%
+          sidebar.log(`Program size: ${r.memory.program.bytes} bytes / ${r.memory.program.used}%
 Data size: ${r.memory.data.bytes}+' bytes / ${r.memory.data.used}%`, 'notice');
 
         // Failed

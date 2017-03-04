@@ -7,8 +7,11 @@
     ctx.height = ctx.canvas.height;
 
     // Disables interpolation on drawImage calls
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.imageSmoothingEnabled = false;
+    if ('imageSmoothingEnabled' in ctx) {
+      ctx.imageSmoothingEnabled = false;
+    } else {
+      ctx.mozImageSmoothingEnabled = false;
+    }
 
     // Keystroke emulation
     ctx.$buttons = {};

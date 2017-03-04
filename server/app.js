@@ -201,7 +201,7 @@ cdb.use('/download', express.static(CFG.ROOT_DIR + '/flasher/dist'));
 
 // Start server
 let server = app.listen(CFG.SERVER_PORT, function () {
-  let host = server.address().address;
+  let host = CFG.SERVER_HOST||server.address().address;
   let port = server.address().port;
 
   console.log('Clouduboy %s/%s starting %s at http://%s:%s',

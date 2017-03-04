@@ -92,7 +92,15 @@ function flash(req, res) {
 
   // Try reflashing
   .then(function() {
-    let cmd = 'avrgirl-arduino flash -a leonardo -f "'+ path.join(req.$session.builddir, '.pioenvs/leonardo/firmware.hex').replace(/\\/g,'\\\\') +'"';
+    let cmd = (
+      path.join(CFG.ROOT_DIR, 'node_modules/.bin/avrgirl-arduino')
+      + (require('os').platform()==='win32'?'.cmd':'')
+      + ' flash'
+      + ' -a arduboy'
+      + ' -f "'+ path.join(
+          req.$session.builddir, '.pioenvs/leonardo/firmware.hex'
+        ).replace(/\\/g,'\\\\')
+      + '"');
 
     return exec(cmd)
       .catch(function(failed) {

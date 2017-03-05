@@ -437,7 +437,7 @@ function *gameOver() {
   // KaputCam TM
   for(let i=0; i<24; i++) {
 
-    drawTerrain();
+    drawTerrain(distance);
 
     if (i!=7 && i!=8 && i!= 16 && i!=17) {
       game.drawImage(gfxDinoEek, 0,baselineDino-dinoJumpHeight);
@@ -615,7 +615,13 @@ function drawUI() {
   // hud
   //arduboy.setCursor(0, 0);
   //sprintf(text,"DIST: %d",d);
-  game.drawText("DIST: " + (distance/10|0) + " SPD: " + dinoRunSpeed, 0,0);
+  //game.drawText("DIST: " + (distance/10|0) + " SPD: " + dinoRunSpeed, 0,0);
+  game.custom({
+    canvas: `game.drawText("DIST: " + (distance/10|0) + " SPD: " + dinoRunSpeed, 0,0)`,
+    arduboy: `arduboy.setCursor(0, 0);
+              sprintf(_microcanvas_textbuffer, "DIST: %d  SPD: %d", (distance/10), dino_run_speed);
+              arduboy.print(_microcanvas_textbuffer);`
+  });
 }
 
 function checkCollisions() {

@@ -638,6 +638,10 @@ function exportGame(target) {
           b += ' {\n';
           b += '////// FUNCTION BODY //////\n';
           b += f.code.join('\n')+'\n';
+
+          if (f.fobj.type === 'generator') {
+            b += 'return true;' // ended
+          }
           b += '\n}\n';
         });
         b+='\n';

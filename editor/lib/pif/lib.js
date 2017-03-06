@@ -140,7 +140,7 @@ PixelData.prototype = {
 
 
 function bitmap2pif(bitmap, id, frames) {
-  return (id ? '! ' + id + ' ' +bitmap[0].length+ 'x' +bitmap.length+ (frames>1 ? 'x'+frames : '') +'\n' : '') +
+  return (id ? '! ' + id + ' ' +bitmap[0].length+ 'x' + (frames>1 ? (bitmap.length/frames)+ 'x'+frames : bitmap.length) +'\n' : '') +
     bitmap.reduce(function(out,row) {
       out.push(row.join(''));
       return out;

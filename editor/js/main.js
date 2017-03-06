@@ -293,7 +293,7 @@
       Clouduboy.editor.setOption('mode', cmode);
 
       target.dataset.ctype = ctype[0];
-      target.dataset.cmode = cmode;
+      target.dataset.cmode = typeof cmode == 'object' ? cmode.name : cmode;
 
       console.log("New document mode: ", (typeof cmode=='object' ? cmode.name : cmode));
     }
@@ -302,6 +302,10 @@
     document.querySelector('select[name="file"]').value = filename;
 
     return r;
+  }
+
+  function getCurrentFile() {
+    return document.getElementById('codeeditor-filename').dataset
   }
 
   // Initialize
@@ -358,6 +362,8 @@
   Clouduboy.reinit = {
     filesDropdown: initFiles
   };
+
+  Object.defineProperty(Clouduboy, 'currentFile', { get: getCurrentFile })
 
   // Auto-init
   setTimeout(Clouduboy, 0);

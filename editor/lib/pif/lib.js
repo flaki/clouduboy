@@ -192,7 +192,7 @@ function bitmap2bytes(bitmap, w,h, frames) {
     }
 
     seg += 8;
-    if (seg > h) {
+    if (seg >= h) {
       ++fr;
       seg = 0;
     }

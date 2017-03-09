@@ -6,9 +6,14 @@
     <title>Clouduboy Editor</title>
 
     <link rel="stylesheet" href="/lib/codemirror/codemirror.css">
-    <link rel="stylesheet" href="/lib/codemirror/night.css">
 
+    <!-- Default (Dark) theme -->
+    <link rel="stylesheet" href="/lib/codemirror/night.css">
     <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Light theme -->
+    <link rel="stylesheet" href="/lib/codemirror/neat.css">
+    <link rel="stylesheet" href="/css/style-light.css">
 
     <link rel="stylesheet" href="/css/painter.css">
   </head>
@@ -36,7 +41,7 @@
 
       <aside class="sidebar">
         <div id="bitmap" class="bitmap">
-          <canvas id="framestrip" width="100" height="32" style="background: black;image-rendering: -moz-crisp-edges;image-rendering: crisp-edges;"></canvas>
+          <canvas id="framestrip" width="100" height="32"></canvas>
         </div>
         <div id="logs" class="logs"></div>
       </aside>

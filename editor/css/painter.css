@@ -21,29 +21,43 @@ body.pixel-editor #codeplugin {
   image-rendering: -webkit-crisp-edges;
   image-rendering: crisp-edges;
 
+  border: .25em solid transparent;
+  background-color: transparent;
+
   margin: -.15em .25em -.15em .25em;
-  border: .25em solid black;
-  background: black;
   padding: .1em;
+  border: 1px solid black;
   border-radius: 0.25em;
   vertical-align: middle;
   box-shadow: 0 0 .5em #555;
   height: .66em;
-  transition: height 0s linear;
-}
-
-.CodeMirror-line:hover {
-  z-index: 10;
-}
-.CodeMirror-widget .sprite canvas:hover {
-  position: absolute;
-  z-index: 10;
-  height: 2em;
   transition: height .2s ease;
 }
 
+/* Color based on theme */
+.CodeMirror.cm-s-neat .CodeMirror-widget .sprite canvas {
+  background-color: rgb(250, 240, 230); /* TODO: css vars? */
+  border-color: rgb(250, 240, 230);
+  color: black;
+}
+.CodeMirror.cm-s-night .CodeMirror-widget .sprite canvas {
+  background-color: rgb(0, 0, 0);
+  border-color: rgb(0, 0, 0);
+  color: white;
+}
+
+
+.CodeMirror-widget .sprite.active canvas {
+	border: 1px solid rgba(0,150,200,1);
+	box-shadow: 0 0 .5em rgba(0,150,200,.9);
+}
+
 /* Being edited */
-.CodeMirror-line .open-marker {
+.CodeMirror.cm-s-neat .CodeMirror-line .open-marker {
+	background: rgba(255,255,0,.2);
+	border-color: #EEE;
+}
+.CodeMirror.cm-s-night .CodeMirror-line .open-marker {
   background-color: rgba(0,0,0,.5);
   padding: .1em 0 .1em;
   font-style: italic;

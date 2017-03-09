@@ -75,7 +75,8 @@
   editor = CodeMirror.fromTextArea(
     document.getElementById("codeeditor"),
     {
-      theme: "night",
+//      theme: "night",
+      theme: "neat",
       tabsize: 2,
       lineNumbers: true,
       lineWrapping: true

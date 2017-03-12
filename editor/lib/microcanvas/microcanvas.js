@@ -247,6 +247,9 @@
     canvas = canvas || document.createElement('canvas')
     const ctx = canvas.getContext('2d')
 
+    canvas.width = ctx.width = px.w
+    canvas.height = ctx.height = px.h
+
     ctx.putImageData(new ImageData(px.rgba, px.w,px.h*(px.frames||1)) ,0,0)
 
     return canvas

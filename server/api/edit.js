@@ -17,13 +17,14 @@ const path = require('path');
 function all(req, res) {
   // Load session and check supplied filename in request params
   req.$session.load().then(function() {
-    // :file param defaults to session.buildfile
+    // :file param defaults to session.activeFile
     let newfile = req.params.file || req.$session.activeFile;
-    let files = Build.files(req.$session.builddir, req.$session.buildfile);
+    let files = Build.files(req.$session.builddir);
 
     // No such file exists in the current source
     if (!newfile || files.indexOf(newfile)===-1) {
-      return res.sendStatus(403);
+      console.log(files)
+      return res.status(403).send('[edit] Unknown source file: `'+newfile+'`');
     };
 
     req.$session.activeFile = newfile;
@@ -31,7 +32,7 @@ function all(req, res) {
     return req.$session.save().then(function() {
       console.log('Switched to: ', newfile);
 
-      if (newfile.match(/\.ino$/)) res.type('text/x-arduino; charset=utf-8');
+      if (newfile.match(/\.ino$/)) res.type(CFG.MIME.ARDUINO);
       res.download( path.join( req.$session.builddir, 'editor', newfile), newfile);
     });
   })

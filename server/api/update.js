@@ -52,26 +52,28 @@ function all(req, res) {
     };
 
     // write file
-    // ?TODO: cleanup
-    //filename = filename.replace('.ino', '.arduboy.ino');
-    FS.writeFileSync( path.join(req.$session.builddir, 'editor', filename), fd.fields.code);
+    const outFile = path.join(req.$session.builddir, 'editor', filename)
+    FS.writeFileSync(outFile, fd.fields.code)
     // TODO: also, make this async
+
+    // Configure build process
+    const builder = new Build(req.$session)
+
+    return builder.from(outFile)
   })
 
   // Rebuild project
-  .then(function() {
-    return new Build(req.$session).build();
-  })
+  .then( builder => builder.build() )
 
   // Return build results as a JSON
-  .then(res.json.bind(res))
+  .then(builder => res.json(builder.lastresult) )
 
   // Something went wrong
   .catch(function(e) {
-    console.error('Failed to build: ', e);
+    console.error('Failed to build: ', e.stack||e);
 
     res.json({
-      'error': e.toString()
+      'error': e.stack||e.toString()
     });
   });
 }

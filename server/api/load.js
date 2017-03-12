@@ -54,26 +54,27 @@ function all(req, res) {
     }
 
 
-    // Copy build sources
+    // Copy build source
     let build = new Build(req.$session);
     let buildSources = Build.sources( path.join( CFG.ROOT_DIR, source.src) );
     console.log('New Build Sources: ', buildSources);
 
     return build.init(
       template,
-      buildSources,
+      path.join(CFG.ROOT_DIR, source.src),
       arduboyLib //TODO: selection UI & setting for Arduboy lib version
     )
   })
 
   // Update buildfile in session data
   .then(function(build) {
-    const loadedfile = build.templateName + '.js'; // TODO: do not assume .js root
-
     return req.$session.set({
-      buildFile: loadedfile,
+      builddir: build.dir,
+
       activeTemplate: build.template,
-      activeFile: loadedfile
+
+      buildFile:  build.mainFile,
+      activeFile: build.mainFile
     });
   })
 
@@ -90,7 +91,7 @@ function all(req, res) {
 
   // Error
   .catch(function(err) {
-    console.log("Request failed: ", err);
+    console.log("Request failed: ", err.stack||err);
     res.sendStatus(500);
   });
 }

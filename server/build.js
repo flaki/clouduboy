@@ -26,18 +26,19 @@ const RX_BUILD_DATAMEM = /Data:\s*(\d+) bytes \(([\d\.]+)\%/;
 
 
 // Initialize build directory
-function init(src, sources, aboylib) {
-  const sessionid = this.session.strid, builder = this;
+function init(templateId, mainSource, aboylib) {
+  const builder = this;
+
+  // List sources
+  const sources = listSources(mainSource)
 
   // Build root for current session
-  const BUILDDIR = path.join( CFG.BUILD_DIR, 'compile/', sessionid, '/');
-
-  const DIR_BUILD_EDITOR = path.join( BUILDDIR, PATH_TO_PROJECT_SRC );
-  const DIR_BUILD_SRC = path.join( BUILDDIR, PATH_TO_BUILD_SRC );
+  const DIR_BUILD_EDITOR = path.join( builder.dir, PATH_TO_PROJECT_SRC );
+  const DIR_BUILD_SRC = path.join( builder.dir, PATH_TO_BUILD_SRC );
 
 
   // Make sure session dir exists, but clean any contents
-  return fs.emptyDir(BUILDDIR)
+  return fs.emptyDir(builder.dir)
 
     // "src" directory for sources
     .then( function() {
@@ -57,7 +58,7 @@ function init(src, sources, aboylib) {
     // "lib" directory for extra libraries
     .then( function() {
       // TODO: group these
-      return fs.ensureDir( path.join(BUILDDIR, 'lib/') );
+      return fs.ensureDir( path.join(builder.dir, 'lib/') );
     })
 
     // link arduboy lib if needed
@@ -65,36 +66,37 @@ function init(src, sources, aboylib) {
       if (aboylib) {
         // No symlinking on Windows, just copy the thing
         if (require('os').platform() === 'win32') {
-          return require('fs-promise').copy( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(BUILDDIR, 'lib/Arduboy/') );
+          return require('fs-promise').copy( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib/Arduboy/') );
         }
 
-        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(BUILDDIR, 'lib/Arduboy') );
+        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib/Arduboy') );
       }
     })
 
     // create platformio.ini
     .then(function() {
-      return fs.writeFile( path.join(BUILDDIR, 'platformio.ini'), fs.readFileSync( path.join(ROOTDIR, 'build/platformio.ini') ));
+      return fs.writeFile( path.join(builder.dir, 'platformio.ini'), fs.readFileSync( path.join(ROOTDIR, 'build/platformio.ini') ));
     })
 
     // Builder object initialized
     .then(function() {
       // Source/template identifier
-      builder.src = src; // TODO: deprecated
-      builder.template = src;
-      builder.templatePath = path.join(ROOTDIR, src);
-
-      // Build directory
-      builder.dir = BUILDDIR;
+      //builder.src = src; // TODO: deprecated
+      // Template ID from config.json (<template-group>/<template-name>)
+      builder.template = templateId;
+      builder.templatePath = path.join(ROOTDIR, templateId);
 
       // Main source (arduino .ino file)
-      builder.ino = path.basename(
+      Object.defineProperty(builder, 'ino', { get: function() {
+      console.log('[!] The <build>.ino property is deprecated.')
+      return path.basename(
         sources.filter(function (file) {
           return file.match(/\.ino$/);
         })[0]
-      ); // TODO: deprecated
-      builder.templateName = path.basename(src);
+      ); }}); // TODO: deprecated
 
+      // Main source file
+      builder.mainFile = sources.main;
 
       // Build sources & other parameters
       builder.sources = sources;
@@ -113,9 +115,8 @@ function init(src, sources, aboylib) {
 
 
 function build(buildfile) {
-  const BUILDDIR = this.dir,
-    BUILDFILE = path.basename(this.buildfile || buildfile),
-    builder = this;
+  const builder = this,
+    BUILDFILE = path.basename(this.fileToBuild || buildfile);
 
   //  Program:   10232 bytes (31.2% Full)
   //  (.text + .data + .bootloader)
@@ -123,7 +124,7 @@ function build(buildfile) {
   //  Data:       1275 bytes (49.8% Full)
   //  (.data + .bss + .noinit)
 
-  let cmd = 'platformio run --disable-auto-clean --project-dir "' + path.normalize(BUILDDIR).replace(/\\/g,'\\\\') + '"';
+  let cmd = 'platformio run --disable-auto-clean --project-dir "' + path.normalize(builder.dir).replace(/\\/g,'\\\\') + '"';
 
   return exec(cmd)
     .catch(function(failed) {
@@ -206,8 +207,8 @@ function build(buildfile) {
         r.lastbuild = BUILDFILE.replace('.ino','.hex');
 
         return fs.copy(
-          path.join( BUILDDIR, '/.pioenvs/leonardo/firmware.hex' ),
-          path.join( BUILDDIR, '/'+ r.lastbuild ),
+          path.join( builder.dir, '/.pioenvs/leonardo/firmware.hex' ),
+          path.join( builder.dir, '/'+ r.lastbuild ),
           { clobber: true }
         );
       }
@@ -215,10 +216,11 @@ function build(buildfile) {
 
     // Return build result
     .then(function() {
-      return builder.lastresult;
+      console.log('BUILDER:'+JSON.stringify(builder,0,2))
+      return builder;
     })
     .catch(function(err) {
-      console.log('Build error in exec: ', err);
+      console.log('Build error in exec: ', err.stack||err);
       throw(err);
     });
 }
@@ -226,38 +228,45 @@ function build(buildfile) {
 
 // List relevant source files in a directory
 function listSources(p) {
-  let dir = path.dirname(p);
+  let dir = path.extname(p) === '' ? p : path.dirname(p);
 
   // List all source files in source directory
-  return fs.readdirSync(dir).filter(function(f) {
+  let sources = fs.readdirSync(dir).filter(function(f) {
     return f.match(/\.(ino|h|c|cpp|js)$/);
 
   // Create absolute paths
   }).map(function(f) {
-    return dir + '/'+ f;
+    return path.join(dir, f);
   });
+
+  // Main source file
+  Object.defineProperty(sources, 'main', {
+    value: (path.basename(p)
+      || path.basename(sources.filter(f => f.match(/\.js/))[0])
+      || path.basename(sources.filter(f => f.match(/\.ino/))[0])
+      || path.basename(sources[0])
+    )})
+
+  return sources
 }
 
 // List files in current build
-function listFiles(builddir, buildfile) { // TODO: we don't really need buildfile
-  // Make sure we have an initialized session
-  if (!builddir || !buildfile) return [];
+function listFiles(builddir) {
+  if (!builddir) return [];
 
   // List files
   return listSources(
-    path.join( builddir, PATH_TO_PROJECT_SRC, buildfile)
+    path.join( builddir, PATH_TO_PROJECT_SRC)
   ).map((p) => path.basename(p));
 }
 
 // Clean build dir and prep build with file presented here
 function createFrom(sourceFile) {
-  const sessionid = this.session.strid, builder = this;
+  const builder = this;
 
-  // Build root for current session
-  const BUILDDIR = path.join( CFG.BUILD_DIR, 'compile/', sessionid, '/');
-
-  const DIR_BUILD_EDITOR = path.join( BUILDDIR, PATH_TO_PROJECT_SRC );
-  const DIR_BUILD_SRC = path.join( BUILDDIR, PATH_TO_BUILD_SRC );
+  // Build folders for current session
+  const DIR_BUILD_EDITOR = path.join( builder.dir, PATH_TO_PROJECT_SRC );
+  const DIR_BUILD_SRC =    path.join( builder.dir, PATH_TO_BUILD_SRC );
 
   console.log('Empty ', DIR_BUILD_SRC, ' & copy ', sourceFile, ' into it.');
 
@@ -267,7 +276,10 @@ function createFrom(sourceFile) {
     .then(_ => fs.copy(
         sourceFile, buildFile
       )
-    ).then(_ => this.buildfile = buildFile);
+    ).then(_ => {
+      this.fileToBuild = buildFile
+      return builder
+    });
 }
 
 
@@ -276,7 +288,7 @@ function Builder(session) {
   this.session = session;
 
   // Retrieve build dir from session if there is one
-  this.dir = session.builddir;
+  this.dir = session.builddir || path.join( CFG.BUILD_DIR, 'compile', session.strid);
 }
 
 Builder.prototype = Object.create(null);

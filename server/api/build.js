@@ -43,8 +43,8 @@ function all(req, res) {
 
   // Write file changes
   .then(function() {
-    let filename = fd.fields.filename || req.$session.buildfile;
-    let files = Build.files(req.$session.builddir, req.$session.buildfile);
+    let filename = fd.fields.filename || req.$session.activeFile;
+    let files = Build.files(req.$session.builddir);
 
     // No such file exists in the current source
     if (!filename || files.indexOf(filename)===-1) {

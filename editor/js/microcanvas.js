@@ -6,8 +6,11 @@
 
 
   function init () {
-    document.querySelector('.toolbar button[name="build"]')
+    document.querySelector('.toolbar button[name="convert"]')
       .addEventListener('click', buildMicroCanvas);
+
+    document.querySelector('.toolbar button[name="compile-and-flash"]')
+      .addEventListener('click', flashMicroCanvas);
 
     document.querySelector('.toolbar button[name="preview"]')
       .addEventListener('click', showPreview);
@@ -17,33 +20,60 @@
 
 
   function buildMicroCanvas() {
+    let result;
+
+    Clouduboy.API.fetch('/compile/convert')
+      .then(r => r.json())
+      .then( buildMessages )
+
+      // Reload the "Files" dropdown and switch to the new target .ino file
+      .then(r => {
+        Clouduboy.reinit.filesDropdown().then(_ => Clouduboy.switchTo(r))
+      })
+  }
+
+  function flashMicroCanvas() {
+    let result;
+
     Clouduboy.API.fetch('/compile/flash')
       .then(r => r.json())
-      .then(r => {
-        // Success
-        if (r.memory && 'program' in r.memory) {
-          sidebar.log(`Program size: ${r.memory.program.bytes} bytes / ${r.memory.program.used}%
-Data size: ${r.memory.data.bytes}+' bytes / ${r.memory.data.used}%`, 'notice');
-
-        // Failed
-        } else {
-          let targetKey = (Object.keys(r.compiler).filter(k => k.match(/\.arduboy\.ino$/)))[0];
-          let target = r.compiler[targetKey];
-          let messageList = arrange(target, ['type','in']);
-          console.log(messageList);
-
-          let out = messageList.map(t => {
-            return `${t.type} (${t.items.length}):\n` + t.items.map(msg => {
-              return (msg.in +'\n' +
-                msg.items.map(e => `${e.line}:${e.col}: ${e.msg}`).join('\n')
-              );
-            })
-          });
-          sidebar.log(out, 'error');
-        }
-      })
-      .then(Clouduboy.reinit.filesDropdown);
+      .then( buildMessages )
   }
+
+
+
+  function buildMessages(r) {
+    // Arduino compiler messages
+    if (r.compiler) {
+      let targetKey = (Object.keys(r.compiler).filter(k => k.match(/\.arduboy\.ino$/)))[0];
+      let target = r.compiler[targetKey];
+      let messageList = arrange(target, ['type','in']);
+      console.log(messageList);
+
+      let out = messageList.map(t => {
+       return `${t.type} (${t.items.length}):\n` + t.items.map(msg => {
+         return (msg.in +'\n' +
+           msg.items.map(e => `${e.line}:${e.col}: ${e.msg}`).join('\n')
+         );
+       })
+      });
+      sidebar.log(out, 'error');
+    }
+
+    // Arduino build results
+    if (r.memory && 'program' in r.memory) {
+      sidebar.log(`
+        Program size: ${r.memory.program.bytes} bytes / ${r.memory.program.used}%
+        Data size: ${r.memory.data.bytes}+' bytes / ${r.memory.data.used}%
+      `, 'notice');
+    }
+
+    // TODO: MicroCanvas compiler messages
+    if (r.microcanvas) {}
+
+    return r
+  }
+
 
   function showPreview() {
     let i = document.createElement('iframe');

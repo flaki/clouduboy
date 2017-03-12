@@ -21,6 +21,10 @@ CFG.APP_DIR = __dirname;
 // Root directory for the served content
 CFG.WEB_DIR = CFG.ROOT_DIR + '/editor';
 
+// MIME Types
+CFG.MIME = {
+  ARDUINO: 'text/x-arduino; charset=utf-8'
+}
 
 // Production/development host/port setup
 if (!CFG.DIST) {

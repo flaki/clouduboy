@@ -21,6 +21,9 @@
     // TODO: create on-demand?
 
     window.addEventListener("message", iframeEventHandler, false);
+
+    // Make sure we re-render the document
+    setTimeout(_ => Clouduboy.editor.refresh(), 100)
   }
 
   function replaceSprite(start, end, sObj) {
@@ -45,7 +48,7 @@
 
     // Customize replacement element
     repl.onchange = function() {
-      pdata = new PixelData(codeToPif(repl.editor.getRange(repl.pos.start,repl.pos.end), sid));
+      pdata = new PixelData(repl.editor.getRange(repl.pos.start,repl.pos.end));
       console.log("PData changed", pdata.pif);
     }
 
@@ -59,13 +62,32 @@
       /* Canvas thumbnail previews */
       canvas.width = pdata.w;
       canvas.height = pdata.h;
-      canvas.getContext("2d").putImageData(new ImageData(pdata.rgba, pdata.w,pdata.h) ,0,0);
-      console.log("Seal sprite updated", sid);
+      //canvas.getContext("2d").putImageData(new ImageData(pdata.rgba, pdata.w,pdata.h*(pdata.frames||1)) ,0,0);
+      canvas.getContext("2d").putImageData(new ImageData(pdata.toRGBA([0,0,0,255]), pdata.w,pdata.h*(pdata.frames||1)) ,0,0);
+      console.log("Seal sprite updated: " + sid);
     }
 
-    repl.onchange();
+    //repl.onchange();
     repl.onseal();
 
+    function selectSprite() {
+      let active = ! sprite.classList.contains('active')
+
+      // Deselect all sprites
+      Array.from(document.querySelectorAll('.sprite.active')).forEach( s => {
+        s.classList.remove('active')
+        s.firstElementChild.style.height = ''
+      })
+
+      sprite.classList.toggle('active', active)
+      sprite.firstElementChild.style.height = active ? (pdata.h*2)+'px' : ''
+
+      // Make sure we update the line height - note the transition is async
+      // TODO: more precise timing?
+      setTimeout(function() {
+        repl.marker.changed()
+      },333)
+    }
 
     function editSprite(e) {
       Clouduboy.API.fetch('/sprite', {
@@ -104,7 +126,7 @@
       document.querySelector("iframe.pixeleditor").style.display="none";
 
       sprite.removeEventListener("click", editSaveSprite);
-      sprite.addEventListener("click", editSprite);
+      //sprite.addEventListener("click", editSprite);
 
       Clouduboy.API.fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {
         var pdata = new PixelData(sprite);
@@ -126,13 +148,15 @@
     }
 
     // Event handling
-    sprite.addEventListener("click", editSprite);
+    //sprite.addEventListener("click", editSprite);
+    sprite.addEventListener('click', selectSprite)
 
     return repl;
   }
 
   //var RX_SPRITES = /PROGMEM const unsigned char (\w+)\[\][\s\r\n]*=(?:[\s\r\n]|\r?\n\/\/[^\n]*)*{([^\}]+)}/g;
   var RX_SPRITES = /(?:\/\/[^\n]+\n)?PROGMEM const unsigned char (\w+)\[\][\s\r\n]*=[^{;]*{([^\}]+)}/g;
+  var RX_SPRITES_JS = /load(?:Graphics|Sprite)\([\s\n\r]*`([^`]+)`[\s\n\r]*\)/g;
 
   function markSprites(src) {
     var e;
@@ -140,47 +164,38 @@
     var src = src || editor.getValue();
     var pdata, markers = [];
 
-    while ((e = RX_SPRITES.exec(src)) !== null) {
-      pdata = codeToPif(e[2], e[1], e[0]);
+    // Detect C-sprites
+    console.log('Detecting sprites in `' + Clouduboy.currentFile.cmode + '` mode...')
+    switch (Clouduboy.currentFile.cmode) {
+      case 'clike':
+        while ((e = RX_SPRITES.exec(src)) !== null) {
+          pdata = new PixelData(e[0]);
 
-      // Add marker
-      markers.push(replaceSprite(
-        (RX_SPRITES.lastIndex - 1 - e[2].length),
-        (RX_SPRITES.lastIndex - 1),
-        pdata
-      ));
-    }
-  }
+          // Add marker
+          markers.push(replaceSprite(
+            (RX_SPRITES.lastIndex - 1 - e[2].length),
+            (RX_SPRITES.lastIndex - 1),
+            pdata
+          ));
+        }
+        break;
 
-  // Translate source code into Pixelsprite image descriptor
-  function codeToPif(contents, label, statement) {
-    var pdata = {};
-    statement = statement || contents;
+      case 'javascript':
+        // Detect sprites in MicroCanvas
+        while ((e = RX_SPRITES_JS.exec(src)) !== null) {
+          let px = new PixelData(e[1])
+          console.log('MicroCanvas Pixelsprite detected', px)
 
-    // Pixelsprite id (label)
-    pdata.id = label;
-
-    // Serialized binary Pixelsprite data in PROGMEM format
-    pdata.data = util.cleanComments(contents).split(',').map(function(n) { return parseInt(n); });
-
-    // Try to guess image width/height
-    pdata.w = parseInt( (statement.match(/w\:\s*(\d+)[^\n]+/) || [])[1] );
-    pdata.h = Math.floor(pdata.data.length / pdata.w) * 8;
-    pdata.ambiguous = true;
-
-    // Pixelsprite dimensions can be declared in comments besides the
-    // binary pixeldata in the format WWWxHHH where WWW and HHH are both
-    // integer pixel values for width/height
-    // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
-    var m = statement.match(/(?:\/\/|\/\*)\s*(\d+)x(\d+)/);
-    if (m && m[1] && m[2]) {
-      pdata.w = parseInt(m[1],10);
-      pdata.h = parseInt(m[2],10);
-      pdata.ambiguous = false;
-    }
-
-    console.log(pdata);
-    return pdata;
+          // Add marker
+          let idx = RX_SPRITES_JS.lastIndex -e[0].length +e[0].indexOf(e[1])
+          markers.push(replaceSprite(
+            idx,
+            idx +e[1].length,
+            px
+          ));
+        }
+        break;
+    } // switch
   }
 
   function dismissPreview() {

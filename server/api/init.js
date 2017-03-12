@@ -8,6 +8,8 @@ module.exports = {
 // Dependencies
 const CFG = require('../cfg.js');
 
+const path = require('path');
+
 const Session = require('../session.js');
 const Build = require('../build.js');
 
@@ -34,7 +36,7 @@ function post(req, res) {
     // Initialize build sources (async)
     return build.init(
       DEFAULT_TEMPLATE.id,
-      Build.sources(CFG.ROOT_DIR+'/'+DEFAULT_TEMPLATE.src),
+      path.join(CFG.ROOT_DIR, DEFAULT_TEMPLATE.src),
       DEFAULT_ARDUBOY //TODO: selection UI & setting for Arduboy lib version
     );
 
@@ -44,7 +46,11 @@ function post(req, res) {
     // Build source/file for the session
     return req.$session.set({
       builddir: build.dir,
-      buildfile: build.ino
+
+      activeTemplate: build.template,
+
+      buildFile:  build.mainFile,
+      activeFile: build.mainFile // TODO: move into Build.init()??
     });
 
   // Redirect to the editor

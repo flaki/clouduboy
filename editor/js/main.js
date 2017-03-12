@@ -106,14 +106,11 @@
         return r.text().then(alert);
       }
 
-      return r.text().then(function(body) {
-        setEditorContents(body);
-      });
-
-    // Plain ole' string stuff
-    } else {
-      setEditorContents(r);
+      return r.text().then(setEditorContents);
     }
+
+    // Fallback as string
+    return Promise.resolve(setEditorContents(r ||''));
   }
   Clouduboy.update = function(v) {
     return updateEditorContents(v);
@@ -169,9 +166,6 @@
                 .then(storeCurrentFilename.bind(null, res)); // TODO: Use "this" instead?
             })
 
-            // Receive .ino file contents
-            .then(updateEditorContents)
-
             // Reset selected item
             .then(() => {
               //toolbarLoad.value = '';
@@ -218,9 +212,6 @@
 
           // Parse out current filename and store it
           .then(storeCurrentFilename)
-
-          // Update editor contents
-          .then(updateEditorContents);
 
           // Initialized
           select.dataset.inited = 'yes';
@@ -277,8 +268,23 @@
   }
 
   function storeCurrentFilename(r) {
-    let disposition = r.headers.get('Content-Disposition') || '';
-    let filename = (disposition.match(/filename="([^"]+)"/)||[])[1];
+    let disposition, filename, contentType, contents;
+
+    // r is an result of a fetch
+    if (r.headers) {
+      disposition = r.headers.get('Content-Disposition') || ''
+      filename = (disposition.match(/filename="([^"]+)"/)||[])[1]
+
+      contentType = r.headers.get('Content-Type') || ''
+      contents = r
+    }
+
+    // Result is a returned JSON
+    if (!disposition && 'file' in r) {
+      filename = r.file.filename
+      contentType = r.file.contentType
+      contents = r.file.contents
+    }
 
     //Clouduboy.editor.display.wrapper.dataset.file = filename;
     let target = document.getElementById("codeeditor-filename");
@@ -286,9 +292,8 @@
     target.dataset.filename = filename;
 
     // Update document syntax mode
-    let ctype = ( r.headers.get('Content-Type') || '' ).match(/^[^\s;]+/);
+    let ctype = contentType ? contentType.match(/^[^\s;]+/) : '?';
     let cmode = CodeMirror.mimeModes[ctype && ctype[0]];
-    console.log("c-type & mode", ctype, cmode);
 
     if (ctype && cmode !== target.dataset.cmode) {
       Clouduboy.editor.setOption('mode', cmode);
@@ -296,13 +301,16 @@
       target.dataset.ctype = ctype[0];
       target.dataset.cmode = typeof cmode == 'object' ? cmode.name : cmode;
 
-      console.log("New document mode: ", (typeof cmode=='object' ? cmode.name : cmode));
+      console.log("New document mode: " + (
+          typeof cmode=='object' ? cmode.name : cmode
+        ) + ' (' + ctype + ')'
+      );
     }
 
     // Update file selector dropdown
     document.querySelector('select[name="file"]').value = filename;
 
-    return r;
+    return updateEditorContents(contents);
   }
 
   function getCurrentFile() {
@@ -327,14 +335,13 @@
   }
 
   // Fetch last build source
-  function load() {
-    // Fetch last edited source
-    return API.fetch("/edit")
-      // Parse out current filename and store it
-      .then(storeCurrentFilename)
+  function load(response) {
+    // Use provided response, or fetch last edited source
+    const p = response ? Promise.resolve(response) : API.fetch("/edit")
 
-      // Update editor to last build source
-      .then(updateEditorContents)
+    return p
+      // Parse out current filename and store it
+      .then(storeCurrentFilename) //TODO: rename to switchToFile
 
       // Listen for changes & compile
       .then(() => {
@@ -351,7 +358,7 @@
 
   // Create instance, initialize & load
   function start() {
-    return init().then(load).catch(function(error) {console.log(error);
+    return init().then(_ => load()).catch(function(error) {console.log(error);
       console.log('Failed to initialize: ', error.stack||error);
     });
   }
@@ -363,6 +370,8 @@
   Clouduboy.reinit = {
     filesDropdown: initFiles
   };
+
+  Clouduboy.switchTo = load
 
   Object.defineProperty(Clouduboy, 'currentFile', { get: getCurrentFile })
 

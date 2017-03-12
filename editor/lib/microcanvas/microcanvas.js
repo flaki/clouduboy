@@ -243,18 +243,55 @@
     return canvas;
   }
 
-  function loadGraphics(g) {
-    let ret = loadBytestream(g)
-    return ret
+  function quickRenderSprite(px, canvas) {
+    canvas = canvas || document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    ctx.putImageData(new ImageData(px.rgba, px.w,px.h*(px.frames||1)) ,0,0)
+
+    return canvas
   }
 
-  function loadBytestream(bs) {
+  function renderSprite(px, canvas) {
+    canvas = canvas || document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    const rows = px.bitmap
+    const colors = px.palette && px.palette.length || 1
+
+    canvas.width = ctx.width = px.w;
+    canvas.height = ctx.height = px.h;
+
+    ctx.fillStyle = 'white';
+
+    rows.forEach(function(row, y) {
+      row.forEach(function(pixelcolor, x) {
+        // Color
+        if (colors > 1 && pixelcolor < colors) {
+          // Non-transparent color
+          if (px.palette[pixelcolor][3]) {
+            ctx.fillStyle = 'rgb('+px.palette[pixelcolor].slice(0,3).join(',')+')';
+            ctx.fillRect(x, y, 1, 1);
+          }
+
+        // Monochrome
+        } else {
+          if (pixelcolor&1) ctx.fillRect(x, y, 1, 1);
+        }
+      });
+    });
+
+    return canvas;
+  }
+
+  function loadGraphics(g) {
     let ret;
 
-    let pix = new PixelData(bs);
+    let pix = typeof g == 'object' && g instanceof PixelData ? g : new PixelData(g)
 
+    // Multiframe image?
     if (pix.frames) {
-      ret = [...Array(pix.frames).keys()].map(i => loadBitmap(pix.frame(i).pif) );
+      ret = [...Array(pix.frames).keys()].map(i => quickRenderSprite(pix.frame(i)) );
       // ^ same as Array(pix.frames).fill(null).map((_,i) => ... );
       // | in essence: [ 0, 1, .., pix.frames-1 ].map( ... )
       // | Array(..).keys() returns a Symbol.iterator that [...<iterator>] expands
@@ -263,8 +300,11 @@
       Object.defineProperty(ret, 'width', { value: ret[0].width });
       Object.defineProperty(ret, 'height', { value: ret[0].height });
     } else {
-      ret = loadBitmap(pix.pif);
-      Object.defineProperty(ret, '0', { value: ret })
+      //ret = renderSprite(pix);
+      ret = quickRenderSprite(pix);
+
+      // Single-frame sprite, sprite[0] is the object itself
+      Object.defineProperty(ret, '0', { get: function() { return this } })
     }
 
     Object.defineProperty(ret, 'pixeldata', { value: pix });
@@ -276,8 +316,8 @@
 
 
   function setFont(graphicsFont) {
-    this.gfont = graphicsFont || loadBytestream(`
-const static unsigned char  font[] PROGMEM =
+    this.gfont = graphicsFont || loadGraphics(`
+const static unsigned char font[] PROGMEM =
 { /*5x7x256*/
     0x00, 0x00, 0x00, 0x00, 0x00,
     0x3E, 0x5B, 0x4F, 0x5B, 0x3E,

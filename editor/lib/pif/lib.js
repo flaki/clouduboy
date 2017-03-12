@@ -5,6 +5,14 @@
 
 function PixelData(input) {
   console.log('new PixelData('+typeof input+'):', input)
+
+  // Already a PixelData object
+  if (typeof input === 'object' && input instanceof PixelData) {
+    // Copy props to this object
+    Object.assign(this, input.$host || input, input)
+    return this
+  }
+
   // Buffer object - should be some binary image file.
   // Supported import formats: BMP
   if (typeof input === 'object' && typeof Buffer !== 'undefined' && input instanceof Buffer) {
@@ -84,21 +92,13 @@ function PixelData(input) {
 
 PixelData.prototype = {
   get pif() {
-    // frames support
-    if ('$f' in this) {
-      return bitmap2pif(
-        this.bitmap
-          .slice(this.$f*this.h, (this.$f+1)*this.h)
-        , (this.id ? this.id+'_'+this.$f : void 0)
-      );
-    }
     return bitmap2pif(this.bitmap, this.id, this.frames);
   },
   get bytes() {
     return bitmap2bytes(this.bitmap, this.w,this.h, this.frames);
   },
   get rgba() {
-    return bitmap2rgba(this.bitmap)
+    return bitmap2rgba(this.bitmap, this.palette)
   },
   get sprite() {
     return this.bytes.reduce(function(sprite, v) {
@@ -123,8 +123,72 @@ PixelData.prototype = {
   frame: function(n) {
     if (n > (this.frames||0)) return this;
     var fobj = Object.create(this);
-    fobj.$f = n;
+
+    Object.defineProperty(fobj, '$host', { value: this })
+    Object.defineProperty(fobj, '$f', { value: n })
+    Object.defineProperty(fobj, 'frames', { value: 0 })
+
+    Object.defineProperty(fobj, 'id', { get: function() {
+      return (this.$host.id ? this.$host.id+'_'+this.$f : void 0)
+    } })
+    Object.defineProperty(fobj, 'bitmap', { get: function() {
+      return this.$host.bitmap
+        .slice(this.$f*this.h, (this.$f+1)*this.h)
+    } })
+
     return fobj;
+  },
+
+  // A "view" into the PixelData object, overriding the color palette
+  colors: function(palette) {
+    // Keep the same host object
+    let host = this.$host || this
+    if (!palette || !palette.length) return host
+
+    const view = Object.create(host)
+    view.palette = palette
+
+    Object.defineProperty(view, '$host', { value: host })
+    return view
+  },
+
+  // A "view" into the PixelData object, converting to 5-level grayscale
+  // The optional palette specified can contain any number of colors, it will be
+  // used to calculate the greyscale palette
+  grayscale: function(palette) {
+    // Keep the same host object
+    let host = this.$host || this
+
+    // Palette is optional
+    // Use "this" instead of "host", in case it has a palette set already
+    const view = Object.create(palette ? host.colors(palette) : this)
+
+    // Generate grayscale palette
+    const grayscale = colorsToGrayscale(view.palette, view.bitmap)
+
+    view.palette = grayscale.palette
+    view.bitmap = grayscale.bitmap
+
+    // PWM (Arduboy) multiframe intensity mapped version
+    Object.defineProperty(view, 'pwm', { get: function() {
+      const pwm = Object.create(view)
+      pwm.frames = 4
+
+      Object.defineProperty(pwm, 'bitmap', { get: function() {
+        return [].concat(
+          view.bitmap.map(r => r.map(c => c==4|0)),
+          view.bitmap.map(r => r.map(c => c==3|0)),
+          view.bitmap.map(r => r.map(c => c==2|0)),
+          view.bitmap.map(r => r.map(c => c==1|0))
+        )
+      } })
+
+      return pwm
+    } })
+
+
+    Object.defineProperty(view, '$host', { value: host })
+    return view
   },
 
   // Create an object with all properties
@@ -135,6 +199,11 @@ PixelData.prototype = {
       h: this.h,
       data: this.bytes
     };
+  },
+
+  // More flexible RGBA
+  toRGBA(foreground, background) {
+    return bitmap2rgba(this.bitmap, [ background||[0,0,0,0], foreground||[255,255,255,255] ])
   }
 }
 
@@ -184,7 +253,7 @@ function bitmap2bytes(bitmap, w,h, frames) {
       let ymax = (h-seg < 8 ? h-seg : 8);
 
       for (let y = 0; y < ymax; ++y) {
-        v |= bitmap[fr*h +seg +y][x] << y;
+        v |= (bitmap[fr*h +seg +y][x]&0x1) << y;
       }
 
       // Save byte values
@@ -201,19 +270,20 @@ function bitmap2bytes(bitmap, w,h, frames) {
   return bytes;
 }
 
-function bitmap2rgba(bitmap, fg, bg) { //TODO: frames
+function bitmap2rgba(bitmap, pal) { //TODO: frames
   let w = bitmap[0].length, h = bitmap.length;
   let rgba = new Uint8ClampedArray(w * h * 4);
 
-  bg = bg || [0,0,0,0];
-  fg = fg || [255,255,255,255];
+  // default palette: transparent black background, opaque white foreground
+  pal = pal || [ [0,0,0,0] , [255,255,255,255] ]
 
+  let paletteColors = pal.length
 
   let y = 0;
   while (y < h) {
 
     for (let x = 0; x < w; ++x) {
-      let cc = (bitmap[y][x] ? fg : bg);
+      let cc = (bitmap[y][x]>0 ? (bitmap[y][x] < paletteColors ? pal[bitmap[y][x]] : pal[1]) : pal[0]);
 
       rgba[ (y*w + x)*4 + 0 ] = cc[0];
       rgba[ (y*w + x)*4 + 1 ] = cc[1];
@@ -409,16 +479,46 @@ function loadCode(contents, label, statement) {
 // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
 // Optionally, a single pixelsprite can contain multiple sprites (frames)...
 function detectDimensions(source, pdata) {
-  var m = source.match(/(?:!|\/\/|\/\*)?\s*([1-9]\d*)x([1-9]\d*)(?:x(\d+))?(?:@(\d+))?/);
+  var m = source.match(/(?:!|\/\/|\/\*)?\s*([1-9]\d*)x([1-9]\d*)(?:x(\d+))?(?:@(\d+|(?:#[a-fA-F0-9]{3,8}[,;|\/]?)+))?/);
 
   if (m && m[1] && m[2]) {
     pdata.w = parseInt(m[1],10);
     pdata.h = parseInt(m[2],10);
     pdata.frames = m[3] ? parseInt(m[3],10) : 0;
-    pdata.palette = m[4] ? parseInt(m[4],10) : 1;
+    pdata.bpp = m[4] ? detectPalette(m[4], pdata) : 1;
     pdata.ambiguous = false;
   }
+}
 
+function detectPalette(pal, pdata) {
+  if (parseInt(pal, 10)) {
+    pdata.palette = [ [0,0,0,0] , [255,255,255,255] ]
+    pdata.frames = parseInt(pal, 10)
+
+    return pdata.frames
+  }
+
+  const colors = pal.split(/[,;|\/]/)
+  if (colors.length) {
+    pdata.palette = [ [0,0,0,0] ].concat(
+      colors.map(h => {
+        // Skip hashmark and parse as a hex integer
+        let i
+        switch (h.length-1) {
+          case 6:
+            i = parseInt(h.substring(1), 16)
+            return [ i>>16&0xFF , i>>8&0xFF , i&0xFF, 255 ]
+          case 3:
+            i = parseInt(h.substring(1), 16)
+            return [ i>>4&0xF0|i>>8&0xF , i&0xF0|i>>4&0xF , i<<4&0xF0|i&0xF, 255 ]
+          //TODO: #RGBA, #RRGGBBAA
+        }
+      })
+    )
+
+    // For bit depth take into account transparency (color idx #0)
+    return Math.ceil(Math.log2(colors.length+1))
+  }
 }
 
 
@@ -444,6 +544,49 @@ function arrayInitializerContent(statement) {
 
   return statement;
 }
+
+
+const GS5PAL = [ [0,0,0,0], [85,85,85,255], [128,128,128,255], [170,170,170,255], [255,255,255,255] ]
+const GS5MAP = GS5PAL.map(e => e[0])
+
+function colorsToGrayscale(palette, bitmap) {
+  let ret = {}
+
+  ret.mappedPalette = palette.map(toGray)
+  ret.mapping = ret.mappedPalette.map(c => c[3]>0 ? GS5MAP.indexOf(c[0]) : 0)
+
+  ret.palette = GS5PAL
+
+  ret.bitmap =  bitmap.map(row => row.map(idx => ret.mapping[idx]))
+
+  return ret
+}
+
+function toGray(color) {
+  let avg
+
+  // Simple average
+  avg = ((color[0]+color[1]+color[2])/3)|0
+  // Luma coded - https://en.wikipedia.org/wiki/Grayscale
+  //avg = Math.floor(0.299*color[0]+0.587*color[1]+0.114*color[2])
+
+  //const pts = [ 0, 96, 160, 255 ]
+  const pts = GS5MAP
+  let sel
+  let d = 255
+
+  // reduce to bit depth
+  pts.forEach(p => {
+    if (Math.abs(avg-p)<d) {
+      d = Math.abs(avg-p)
+      sel = p
+    }
+  })
+
+  return [sel,sel,sel, color[3]]
+}
+
+
 
 
 PixelData.codeToPif = loadCode

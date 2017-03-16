@@ -66,16 +66,22 @@ function init(templateId, mainSource, aboylib) {
       if (aboylib) {
         // No symlinking on Windows, just copy the thing
         if (require('os').platform() === 'win32') {
-          return require('fs-promise').copy( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib/Arduboy/') );
+          return require('fs-promise').copy( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib/') );
         }
 
-        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib/Arduboy') );
+        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib') );
       }
     })
 
     // create platformio.ini
     .then(function() {
-      return fs.writeFile( path.join(builder.dir, 'platformio.ini'), fs.readFileSync( path.join(ROOTDIR, 'build/platformio.ini') ));
+      return require('fs-promise').copy(
+        path.join(ROOTDIR, 'build/lib/', aboylib, 'platformio.ini'), path.join(builder.dir, 'platformio.ini')
+
+      // Fallback: platformio.ini in the main build dir
+      ).catch(e => {
+        return fs.writeFile( path.join(builder.dir, 'platformio.ini'), fs.readFileSync( path.join(ROOTDIR, 'build/platformio.ini') ));
+      });
     })
 
     // Builder object initialized

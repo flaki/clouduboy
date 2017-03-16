@@ -17,7 +17,13 @@ const Build = require('../build.js');
 function build_all(req, res) {
   // Load session and fetch build file
   req.$session.load().then(function() {
-    res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+    switch (req.$session.activeTarget) {
+      case 'tinyarcade':
+        return res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/tinyarcade/firmware.bin', 'build.bin');
+
+      default:
+        res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+    }
   })
 
   // Error

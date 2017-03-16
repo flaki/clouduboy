@@ -100,13 +100,65 @@ PixelData.prototype = {
   get rgba() {
     return bitmap2rgba(this.bitmap, this.palette)
   },
+  get b3g3r2() {
+    return bitmap2rgba(this.bitmap, this.palette).reduce(
+      // Chunk into 4-byte arrays - TODO: generalize as ext function for 16bit
+      (arr,i) => {
+        //TODO: transparency
+        if (arr.length && arr[arr.length-1].length<4) {
+          arr[arr.length-1].push(i)
+        } else {
+          arr.push([i])
+        }
+
+        return arr
+
+      // Reduce bit depth to 8-bit
+      }, []).map(
+        pixel => pixel[2]&0xE0 | ((pixel[1]&0xE0)>>3) | ((pixel[0]&0xC0)>>6)
+      )
+  },
+  get b5g6r5() {
+    return bitmap2rgba(this.bitmap, this.palette).reduce( rgbaToPixels, []
+      // Reduce bit depth to 8-bit
+      ).map(
+        pixel => ((pixel[2]&0xF8)<<8) | ((pixel[1]&0xFC)<<3) | ((pixel[0]&0xF8)>>3)
+      )
+  },
   get sprite() {
     return this.bytes.reduce(function(sprite, v) {
       return sprite += (sprite === '' ? '' : ', ') + ( v<16 ? '0x0' : '0x' ) + v.toString(16);
     }, '');
   },
-  get c() {
-    return '/*'+ this.w+'x'+this.h +(this.frames>1 ? 'x'+this.frames : '') +'*/ ' + this.sprite
+
+  // Monochrome C source (1 bit/pixel)
+  c: function(bits) {
+    let data, colors
+
+    switch (bits) {
+      // 8/16 bit color matrices
+      case '8bit':
+      case 8:
+        data = this.b3g3r2.map(pixel => '0x'+(pixel<16?'0':'')+pixel.toString(16) ).join(', ')
+        colors = '8b'
+        break
+      case 16:
+        data = this.b5g6r5.map(pixel => '0x'+('0'.repeat(4-Math.ceil(Math.log2(pixel|2)/4)))+pixel.toString(16) ).join(', ')
+        colors = '16b'
+        break
+
+      // Monochrome
+      default:
+        data = this.sprite
+    }
+
+    return ('/*'
+      + this.w+'x'+this.h
+      + (this.frames>1 ? 'x'+this.frames : '')
+      + (colors ? '@'+colors : '')
+      + '*/ '
+      + data
+    )
   },
 
   // Compare two PixelData objects
@@ -584,6 +636,18 @@ function toGray(color) {
   })
 
   return [sel,sel,sel, color[3]]
+}
+
+// Chunk into 4-byte arrays - TODO: generalize as ext function for 16bit
+function rgbaToPixels(arr,i) {
+  //TODO: transparency
+  if (arr.length && arr[arr.length-1].length<4) {
+    arr[arr.length-1].push(i)
+  } else {
+    arr.push([i])
+  }
+
+  return arr
 }
 
 

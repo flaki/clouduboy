@@ -498,7 +498,7 @@ function loadGraphics(id, args) {
   let px = new PixelData(str)
 
   game.gfx[id].meta = px
-  game.gfx[id].value = px.c;
+  game.gfx[id].value = px.c();
 
   game.createConstant(id+'Width', px.w);
   game.createConstant(id+'Height', px.h);

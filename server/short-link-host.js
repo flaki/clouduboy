@@ -23,8 +23,10 @@ function init() {
 
   // Find session id if supplied
   slh.param('sid', function(req, res, next, sid) {
-    // Splendid Fox demo
+    // Microcanvas demo shortcuts
     if (sid === 'firefox') res.redirect('http://'+CFG.SERVER_HOST+'/templates/splendidfox/');
+    if (sid === 'ruhrjs') res.redirect('http://'+CFG.SERVER_HOST+'/templates/ruhrjs/');
+    if (sid === 'happycodefriends') res.redirect('http://'+CFG.SERVER_HOST+'/templates/hci/');
 
     // Check if a valid sid
     // TODO: more thorough checks

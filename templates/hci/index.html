@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sprites Demo</title>
+    <style>
+    canvas {
+      image-rendering: -moz-crisp-edges;         /* Firefox */
+      image-rendering: -webkit-optimize-contrast;/* Webkit (non-standard naming) */
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+    }
+    html,body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow:hidden;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      width: 60vw;
+    }
+    </style>
+  </head>
+  <body>
+    <canvas class="microcanvas" width="128" height="64"></canvas>
+
+    <script src="/js/util.js"></script>
+    <script src="/js/score.js"></script>
+    <script src="/js/synth.js"></script>
+    <script src="/lib/microcanvas/microcanvas.js"></script>
+    <script src="/lib/pif/lib.js"></script>
+
+    <script src="hci.js"></script>
+  </body>
+</html>

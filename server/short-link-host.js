@@ -25,8 +25,9 @@ function init() {
   slh.param('sid', function(req, res, next, sid) {
     // Microcanvas demo shortcuts
     if (sid === 'firefox') res.redirect('http://'+CFG.SERVER_HOST+'/templates/splendidfox/');
-    if (sid === 'ruhrjs') res.redirect('http://'+CFG.SERVER_HOST+'/templates/ruhrjs/');
+    if (sid === 'ruhrjs') res.redirect('http://'+CFG.SERVER_HOST+'/templates/rjs/');
     if (sid === 'happycodefriends') res.redirect('http://'+CFG.SERVER_HOST+'/templates/hci/');
+    if (sid === 'invaders') res.redirect('http://'+CFG.SERVER_HOST+'/templates/hci/');
 
     // Check if a valid sid
     // TODO: more thorough checks

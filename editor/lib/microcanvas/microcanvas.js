@@ -53,6 +53,48 @@
       if (e.key==='o') { ctx.$buttons.A = false; ctx.$buttons.B = false; }
     });
 
+    // TODO: daydream controller emulation
+    // TODO: tilt detection
+
+    // Touchscreen support
+    window.addEventListener('touchstart', e => {
+      const eX = Math.floor(e.changedTouches[0].clientX / window.innerWidth * 100);
+
+      // Left
+      if (eX < 25) {
+        ctx.$buttons.left = true;
+
+      // Right
+    } else if (eX < 50) {
+        ctx.$buttons.right = true;
+
+      // Fire
+      } else {
+        ctx.$buttons.A = true;
+      }
+
+      console.log(e)
+    })
+    window.addEventListener('touchend', e => {
+      const eX = Math.floor(e.changedTouches[0].clientX / window.innerWidth * 100);
+
+      // Left
+      if (eX < 25) {
+        ctx.$buttons.left = false;
+
+      // Right
+    } else if (eX < 50) {
+        ctx.$buttons.right = false;
+
+      // Fire
+      } else {
+        ctx.$buttons.A = false;
+      }
+
+
+      console.log(e)
+    })
+
     // default fillStyle
     ctx.fillStyle = "white";
 

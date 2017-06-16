@@ -7,8 +7,8 @@ npm-debug.log
 # Server databases
 server/data/*.db
 
-# Configuration file
-/config.json
+# Configuration file(s)
+/config*.json
 
 # Generated build files
 dist

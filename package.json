@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node server/app.js",
     "start:prod": "node server/app.js --dist",
+    "dev": "babel-node server/app.js",
     "flasher": "electron flasher/app",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:transpile": "babel editor/js -d editor/dist/js",
@@ -34,6 +35,7 @@
   "devDependencies": {
     "babel-cli": "^6.5.1",
     "babel-preset-es2015": "^6.5.0",
+    "babel-preset-es2015-node6": "^0.4.0",
     "shelljs": "^0.6.0",
     "whatwg-fetch": "^0.11.0"
   }

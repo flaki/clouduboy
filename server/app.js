@@ -84,11 +84,13 @@ cdb.use(cdbSession.cookieHandler);
 // Serve templates dir
 cdb.use('/templates', express.static(CFG.ROOT_DIR + '/templates'));
 
-// Check for saved beta keys
-cdb.use(require('./api/beta.js').check);
+// Check for saved beta keys (if limited access is enabled via config.json)
+if (CFG.BETA_KEYS) {
+  cdb.use(require('./api/beta.js').check);
 
-cdb.get('/beta', require('./api/beta.js').get);
-cdb.post('/beta', require('./api/beta.js').post);
+  cdb.get('/beta', require('./api/beta.js').get);
+  cdb.post('/beta', require('./api/beta.js').post);
+}
 
 // Create a new session
 cdb.all('/init', require('./api/init.js').post);

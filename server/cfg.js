@@ -2,8 +2,17 @@
 
 const CFG = {};
 
+const path = require('path')
+const jsonfile = require('jsonfile')
+
 // Copy app configuration from config.json
-Object.assign( CFG, require('../config.json') );
+Object.assign(CFG, jsonfile.readFileSync(path.join(__dirname, '../config.json'), { throws: false }));
+
+// If config.json doesn't exist generate one with sensible defaults
+if (!CFG.SOURCE_LIST) {
+  console.log('[!] config.json not found!\nGenerating initial configuration, please wait...')
+  Object.assign(CFG, require(path.join(__dirname, 'first-run.js')))
+}
 
 // App version is loaded from package.json
 CFG.APP_VERSION = process.env.npm_package_version || (require('../package.json').version);
@@ -13,7 +22,7 @@ CFG.DIST = (process.argv.indexOf("--dist") >= 0);
 
 
 // Root directory
-CFG.ROOT_DIR = require('path').normalize( __dirname + '/..' );
+CFG.ROOT_DIR = path.normalize( __dirname + '/..' );
 
 // Root directory for the webapp
 CFG.APP_DIR = __dirname;

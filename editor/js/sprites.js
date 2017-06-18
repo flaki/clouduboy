@@ -125,12 +125,13 @@
       document.body.classList.remove("pixel-editor");
       document.querySelector("iframe.pixeleditor").style.display="none";
 
-      sprite.removeEventListener("click", editSaveSprite);
-      //sprite.addEventListener("click", editSprite);
+      //sprite.removeEventListener("click", editSaveSprite);
+      sprite.addEventListener("click", editSprite);
 
       Clouduboy.API.fetch('/sprite').then(function(r) { return r.json(); }).then(function(sprite) {
         var pdata = new PixelData(sprite);
-        var sdata = ' /*'+pdata.w+'x'+pdata.h+'*/ '+pdata.bytes.map(function(i) { return '0x'+i.toString(16); }).join(', ')+' ';
+        //var sdata = ' /*'+pdata.w+'x'+pdata.h+'*/ '+pdata.bytes.map(function(i) { return '0x'+i.toString(16); }).join(', ')+' ';
+        var sdata = pdata.pif;
 
         // Update editor contents
         repl.editor.operation(function() {
@@ -148,8 +149,8 @@
     }
 
     // Event handling
-    //sprite.addEventListener("click", editSprite);
-    sprite.addEventListener('click', selectSprite)
+    sprite.addEventListener("click", editSprite);
+    //sprite.addEventListener('click', selectSprite)
 
     return repl;
   }

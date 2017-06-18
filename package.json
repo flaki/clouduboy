@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server/app.js",
     "start:prod": "node server/app.js --dist",
-    "dev": "babel-node server/app.js",
+
     "flasher": "electron flasher/app",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:transpile": "babel editor/js -d editor/dist/js",
@@ -25,12 +25,14 @@
     "cors": "^2.7.1",
     "express": "^4.13.3",
     "formidable": "^1.0.17",
-    "fs-extra": "^0.26.5",
+    "fs-extra": "^3.0.1",
     "fs-promise": "^0.4.1",
     "jsonfile": "^3.0.0",
     "nedb": "^1.7.4",
     "tar": "^3.1.5",
-    "vhost": "^3.0.2"
+    "shelljs": "^0.7.7",
+    "vhost": "^3.0.2",
+    "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
     "babel-cli": "^6.5.1",

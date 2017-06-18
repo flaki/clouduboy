@@ -72,4 +72,5 @@ function render() {
     j = Math.floor(i / (idata.width*4));
   }
   console.log(res, res.map(r=>r.join('')).join('\n'));
+  console.log(new PixelData(idata))
 }

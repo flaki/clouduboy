@@ -7,16 +7,12 @@
   "scripts": {
     "start": "node server/app.js",
     "start:prod": "node server/app.js --dist",
-
     "flasher": "electron flasher/app",
-
     "test": "echo \"Error: no test specified\" && exit 1",
-
     "build:transpile": "babel editor/js -d editor/dist/js",
     "build:copy-libs": "node scripts/build-copy-libs.js",
     "build:dist-html": "node scripts/build-dist-html.js",
     "build:dist-js": "npm run build:transpile & npm run build:copy-libs",
-
     "build": "npm run build:dist-html & npm run build:dist-js"
   },
   "author": "Flaki (https://twitter.com/slsoftworks)",
@@ -28,10 +24,12 @@
     "cors": "^2.7.1",
     "express": "^4.13.3",
     "formidable": "^1.0.17",
-    "fs-extra": "^0.26.5",
+    "fs-extra": "^3.0.1",
     "fs-promise": "^0.4.1",
     "nedb": "^1.7.4",
-    "vhost": "^3.0.2"
+    "shelljs": "^0.7.7",
+    "vhost": "^3.0.2",
+    "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
     "babel-cli": "^6.5.1",

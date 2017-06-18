@@ -7,5 +7,6 @@ window.addEventListener('keypress', e => {
 
   if (window.parent) {
     window.parent.postMessage(msg, '*');
+    console.log(msg);
   }
 });

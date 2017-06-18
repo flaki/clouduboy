@@ -13,6 +13,11 @@ function PixelData(input) {
     return this
   }
 
+  // ImageData object (import)
+  if (typeof input === 'object' && (input instanceof ImageData || ('data' in input && input.data instanceof Uint8ClampedArray))) {
+    return rgba2bitmap(input.data, input.width, input.height)
+  }
+
   // Buffer object - should be some binary image file.
   // Supported import formats: BMP
   if (typeof input === 'object' && typeof Buffer !== 'undefined' && input instanceof Buffer) {
@@ -261,14 +266,19 @@ PixelData.prototype = {
 
 
 function bitmap2pif(bitmap, id, frames) {
+  console.log('[!] deprecated legacy call to "bitmap2pif()"')
+
   return (id ? '! ' + id + ' ' +bitmap[0].length+ 'x' + (frames>1 ? (bitmap.length/frames)+ 'x'+frames : bitmap.length) +'\n' : '') +
     bitmap.reduce(function(out,row) {
       out.push(row.join(''));
       return out;
-    },[]).join('\n').replace(/0/g,'.').replace(/1/g,'#');
+    },[]).join('\n').replace(/0/g,'.').replace(/1/g,'#'); // TODO!!
 }
 
 function pif2bitmap(pif) {
+  console.log('[!] deprecated legacy call to "pif2bitmap()"')
+  return loadPif(pif).bitmap;
+
   var rows = pif.replace(/[^\.\#]+/g,' ').trim().split(/\s+/g);
 
   var matrix = rows.map(function(s) {
@@ -347,6 +357,48 @@ function bitmap2rgba(bitmap, pal) { //TODO: frames
   }
 
   return rgba;
+}
+
+function rgba2bitmap(rgba,w,h) {
+  let bitmap = Array(h).fill(1).map(_ => []);
+  let pal = [];
+
+  let x = 0, y = 0
+  rgba.reduce(rgbaToPixels, []).forEach(px => {
+    let idx = colorIndex(pal, px[0], px[1], px[2])
+    bitmap[y][x] = idx
+
+    x += 1
+    if (x >= w) {
+      x = 0
+      y += 1
+    }
+  })
+  // TODO: swap (0,0,0) to idx #0, (255,255,255) to idx #1
+  // TODO: handle alpha transparency
+
+  let pdata = Object.create(PixelData.prototype)
+
+  pdata.w = w
+  pdata.h = h
+  pdata.bitmap = bitmap
+  pdata.palette = pal
+
+  return pdata
+}
+
+function colorIndex(pal, r,g,b, extendPalette=true) {
+  let i = 0
+  while (i<pal.length) {
+    if (pal[i][0] === r && pal[i][1] === g && pal[i][2] === b) return i
+    ++i
+  }
+
+  // extend palette
+  if (!extendPalette) return 0
+
+  pal.push([r,g,b])
+  return pal.length-1
 }
 
 
@@ -455,13 +507,13 @@ function loadPif(contents) {
   let bitmap = contents.split('\n').map(r => r.trim()).filter(r => r !== '' );
 
   // Retrieve DATA and META rows separately
-  let rows = bitmap.filter(r => r[0].match(/^[a-z0-0\.\#]/i))
-  let meta = bitmap.filter(r => r[0].match(/^[^a-z0-0\.\#]/i)).join(' ')
+  let rows = bitmap.filter(r => r[0].match(/^[a-z0-9\.\#]/i))
+  let meta = bitmap.filter(r => r[0].match(/^[^a-z0-9\.\#]/i)).join(' ') //TODO
 
   let pdata = Object.create(PixelData.prototype);
 
   // Dimensions
-  pdata.w = rows[0].length;
+  pdata.w = Math.max(...rows.map(r=>r.length));
   pdata.h = rows.length;
 
   // Metadata
@@ -473,6 +525,9 @@ function loadPif(contents) {
   }
 
   pdata.bitmap = rows.map(row => row.split('').map(i => i==='#' ? 1 : parseInt(i,16)||0) )
+
+  // ensure bitmap row size
+  pdata.bitmap.forEach(r => r.length = pdata.w)
 
   return pdata
 }
@@ -531,11 +586,11 @@ function loadCode(contents, label, statement) {
 // eg.: PROGMEM ... sprite[] = { /*128x64*/ 0xa3, 0x... }
 // Optionally, a single pixelsprite can contain multiple sprites (frames)...
 function detectDimensions(source, pdata) {
-  var m = source.match(/(?:!|\/\/|\/\*)?\s*([1-9]\d*)x([1-9]\d*)(?:x(\d+))?(?:@(\d+|(?:#[a-fA-F0-9]{3,8}[,;|\/]?)+))?/);
-
-  if (m && m[1] && m[2]) {
-    pdata.w = parseInt(m[1],10);
-    pdata.h = parseInt(m[2],10);
+  var m = source.match(/(?:!|\/\/|\/\*)?\s*([1-9]\d*|0)x([1-9]\d*|0)(?:x(\d+))?(?:@(\d+|(?:#[a-fA-F0-9]{3,8}[,;|\/]?)+))?/);
+console.log(m)
+  if (m) { // 0x0 can be used for size autodetect, when applicable
+    pdata.w = parseInt(m[1],10)||pdata.w;
+    pdata.h = parseInt(m[2],10)||pdata.h;
     pdata.frames = m[3] ? parseInt(m[3],10) : 0;
     pdata.bpp = m[4] ? detectPalette(m[4], pdata) : 1;
     pdata.ambiguous = false;
@@ -597,6 +652,8 @@ function arrayInitializerContent(statement) {
   return statement;
 }
 
+const MONOPAL = [ [0,0,0,0], [255,255,255,255] ]
+const MONOMAP = MONOPAL.map(e => e[0])
 
 const GS5PAL = [ [0,0,0,0], [85,85,85,255], [128,128,128,255], [170,170,170,255], [255,255,255,255] ]
 const GS5MAP = GS5PAL.map(e => e[0])
@@ -657,7 +714,7 @@ PixelData.codeToPif = loadCode
 PixelData.loadPif = loadPif
 
 PixelData.util = {
-  cleanComments, arrayInitializerContent
+  cleanComments, arrayInitializerContent, rgba2bitmap
 }
 
 /*

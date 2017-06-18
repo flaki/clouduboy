@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>A-Frame Invaders</title>
+    <meta name="description" content="A-frame Invaders - A-Frame">
+    <script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>
+    <script src="orbit-controls.js"></script>
+    <script>
+      AFRAME.registerComponent('pixel-sprite', {
+        schema: {
+          sprite: {type: 'string', default: ''}
+        },
+        update() {
+          console.log(this.data.sprite)
+
+          // remove pixels
+          while (this.el.firstElementChild) this.el.removeChild(this.el.firstElementChild)
+
+          const img = this.data.sprite
+          const pixEntity = this.el
+
+          const pix = img.replace(/[^\.#]/g,' ').trim().split(/\r?\n|\s+/).map(r=>r.split('').map(i=>i==='#'?1:0))
+          const width = pix[0].length
+          const height = pix.length
+
+          pix.forEach((r,y) => {
+            //console.log(r,y)
+            r.forEach((c,x) => {
+              if (c) {
+                let pixel = document.createElement('a-box')
+                pixel.setAttribute('position', { x: width/-2+x, y: height/2-y, z: 0 })
+                pixel.setAttribute('scale', { x: .95, y: .95, z: .95 })
+                pixel.setAttribute('color', `#EEEEEE`)
+                pixEntity.appendChild(pixel)
+              }
+            })
+          })
+        }
+      });
+
+      function swing() {
+        document.querySelector('a-entity[pixel-sprite]').insertAdjacentHTML('beforeend','<a-animation attribute="position" from="-2 5 -10" to="2 5 -10" repeat="indefinite" direction="alternate"></a-animation>')
+      }
+    </script>
+  </head>
+  <body>
+    <a-scene>
+      <a-assets>
+        <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg">
+        <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg">
+      </a-assets>
+
+      <a-entity id="pix">
+      </a-entity>
+      <!--<a-box position="0 5 -5" rotation="0 0 0" color="#EEEEEE"></a-box>-->
+
+
+      <a-entity id="sky" geometry="primitive: sphere; thetaLength: 90; radius: 30" material="side: back; height: 2048; width: 2048; src: #skyTexture; shader: flat"></a-entity>
+
+      <a-entity
+        position="0 5 -10"
+        pixel-sprite="sprite:
+          ! invader 9x8
+          .........
+          ..#...#..
+          ...#.#...
+          .#######.
+          ##.###.##
+          #########
+          #.#.#.#.#
+          .........
+        "></a-entity>
+
+      <a-entity light="type: ambient; color: #555"></a-entity>
+      <a-entity light="type: point; color: #fff" position="0 10 0"></a-entity>
+
+      <a-entity id="ground" geometry="primitive: plane; height: 100; width: 100"
+                material="src: #groundTexture; shader: flat" rotation="-90 0 0"></a-entity>
+
+      <a-entity id="acamera" camera look-controls-alt orbit-controls></a-entity>
+    </a-scene>
+  </body>
+</html>

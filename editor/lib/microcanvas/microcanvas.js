@@ -73,7 +73,8 @@
         ctx.$buttons.A = true;
       }
 
-      console.log(e)
+      //console.log(e)
+      e.preventDefault()
     })
     window.addEventListener('touchend', e => {
       const eX = Math.floor(e.changedTouches[0].clientX / window.innerWidth * 100);
@@ -92,7 +93,8 @@
       }
 
 
-      console.log(e)
+      //console.log(e)
+      e.preventDefault()
     })
 
     // default fillStyle

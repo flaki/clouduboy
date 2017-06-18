@@ -30,6 +30,9 @@ CFG.APP_DIR = __dirname;
 // Root directory for the served content
 CFG.WEB_DIR = CFG.ROOT_DIR + '/editor';
 
+// Root directory for the built-in templates
+CFG.TEMPLATES_DIR = CFG.ROOT_DIR + '/templates';
+
 // MIME Types
 CFG.MIME = {
   ARDUINO: 'text/x-arduino; charset=utf-8'

@@ -56,12 +56,12 @@ function all(req, res) {
 
     // Copy build source
     let build = new Build(req.$session);
-    let buildSources = Build.sources( path.join( CFG.ROOT_DIR, source.src) );
+    let buildSources = Build.sources( path.join( CFG.TEMPLATES_DIR, source.src) );
     console.log('New Build Sources: ', buildSources);
 
     return build.init(
       template,
-      path.join(CFG.ROOT_DIR, source.src),
+      path.join(CFG.TEMPLATES_DIR, source.src),
       arduboyLib //TODO: selection UI & setting for Arduboy lib version
     )
   })

@@ -36,7 +36,7 @@ function post(req, res) {
     // Initialize build sources (async)
     return build.init(
       DEFAULT_TEMPLATE.id,
-      path.join(CFG.ROOT_DIR, 'templates', DEFAULT_TEMPLATE.src),
+      path.join(CFG.TEMPLATES_DIR, DEFAULT_TEMPLATE.src),
       DEFAULT_ARDUBOY //TODO: selection UI & setting for Arduboy lib version
     );
 

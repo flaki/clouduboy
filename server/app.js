@@ -82,7 +82,7 @@ let sesslog = log.bind(log,'session');
 cdb.use(cdbSession.cookieHandler);
 
 // Serve templates dir
-cdb.use('/templates', express.static(CFG.ROOT_DIR + '/templates'));
+cdb.use('/templates', express.static(CFG.TEMPLATES_DIR));
 
 // Check for saved beta keys (if limited access is enabled via config.json)
 if (CFG.BETA_KEYS) {

@@ -43,9 +43,10 @@ Object.assign(CFG, {
   ]
 });
 
+// https://github.com/Arduboy/Arduboy/archive/1.1.1.tar.gz
 // TODO: deprecate/rethink this, or query build server
 Object.assign(CFG, {
-  'ARDUBOY_LIBS': [ 'Arduboy-1.0' ]
+  'ARDUBOY_LIBS': [ 'Arduboy-1.1.1' ]
 })
 
 
@@ -70,16 +71,17 @@ let r = fs.readdirSync(templatesDir)
 // TODO: figure out metadata and sorting
 let examples = r.filter(dir => dir[0] !== '.' && dir !== 'README.md').map(d => {
   return ({
-    id: d,
+    id: 'examples/'+d,
     src: `${d}/${d}.js`,
-    name: d.split('-').map(w => w[0].toUpperCase()+w.substring(1)).join(' '),
+    title: d.split('-').map(w => w[0].toUpperCase()+w.substring(1)).join(' '),
     group: 'examples'
   })
 })
 
-
+// there is just one group by default
 Object.assign(CFG, {
-  'SOURCE_LIST': examples
+  'SOURCE_GROUPS': [ { id: 'examples', title: 'Examples' } ],
+  'SOURCE_LIST': examples,
 })
 
 jsonfile.writeFileSync(configFile, CFG, { spaces: 2 })

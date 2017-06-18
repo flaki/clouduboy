@@ -1,6 +1,5 @@
 node_modules
 .DS_Store
-sources/*
 npm-debug.log
 .pioenvs
 
@@ -11,4 +10,4 @@ server/data/*.db
 /config*.json
 
 # Generated build files
-dist
+/editor/dist

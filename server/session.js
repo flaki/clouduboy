@@ -160,7 +160,7 @@ Session.create = function(sid) {
       // try again a few more times with different id-s before giving up
       Storage.insert(session, function(err) {
         if (err) {
-          console.log("ERR:", err, retries);
+          console.log(`ERR: ${err.message} (${retries} more retries)`);
           // Try again
           if (--retries) {
             return tryCreate();

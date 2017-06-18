@@ -12,7 +12,7 @@ const templatesDir = path.join(__dirname, '../templates')
 
 
 // Config file already exists, no need to reconfigure
-if (fs.existsSync(configFile)) return;
+if (fs.existsSync(configFile)) throw new Error('[!] config.json already exists!');
 
 
 // config.json defaults

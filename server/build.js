@@ -69,7 +69,7 @@ function init(templateId, mainSource, aboylib) {
           return require('fs-promise').copy( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib/') );
         }
 
-        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib') );
+        return fs.symlink( path.join(ROOTDIR, 'build/lib/', aboylib), path.join(builder.dir, 'lib', aboylib) );
       }
     })
 
@@ -90,7 +90,7 @@ function init(templateId, mainSource, aboylib) {
       //builder.src = src; // TODO: deprecated
       // Template ID from config.json (<template-group>/<template-name>)
       builder.template = templateId;
-      builder.templatePath = path.join(ROOTDIR, templateId);
+      builder.templatePath = path.join(ROOTDIR, 'templates', templateId);
 
       // Main source (arduino .ino file)
       Object.defineProperty(builder, 'ino', { get: function() {

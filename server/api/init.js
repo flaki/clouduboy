@@ -36,7 +36,7 @@ function post(req, res) {
     // Initialize build sources (async)
     return build.init(
       DEFAULT_TEMPLATE.id,
-      path.join(CFG.ROOT_DIR, DEFAULT_TEMPLATE.src),
+      path.join(CFG.ROOT_DIR, 'templates', DEFAULT_TEMPLATE.src),
       DEFAULT_ARDUBOY //TODO: selection UI & setting for Arduboy lib version
     );
 
@@ -61,8 +61,11 @@ function post(req, res) {
 
   // Session creation error
   }).catch(function(err) {
+    // TODO: handle 'violates unique constraint' case
+    // TODO: clean up session id when creation failed
+
     Session.log('[!] Failed to create session! ', err.stack);
 
-    res.send('Cannot create session: '+err.toString()).sendStatus(500);
+    res.status(500).send('Cannot create session: '+err.message);
   });
 }

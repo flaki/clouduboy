@@ -68,10 +68,10 @@ if (fs.readdirSync(templatesDir).length < 3) {
 // enumerate templates
 let r = fs.readdirSync(templatesDir)
 // TODO: figure out metadata and sorting
-let examples = r.filter(dir => dir[0] !== '.').map(d => {
+let examples = r.filter(dir => dir[0] !== '.' && dir !== 'README.md').map(d => {
   return ({
     id: d,
-    src: templatesDir+`/${d}/${d}.js`,
+    src: `${d}/${d}.js`,
     name: d.split('-').map(w => w[0].toUpperCase()+w.substring(1)).join(' '),
     group: 'examples'
   })

@@ -184,6 +184,10 @@ cdb.all('/compile/info', require('./api/compile.js').info.all);
 cdb.all('/compile/convert', require('./api/compile.js').convert.all);
 
 
+// Bitmaps
+cdb.all('/bitmaps', require('./api/bitmaps.js').all);
+
+
 // Session debugging
 cdb.get('/S', function(req, res) {
   req.$session.load().then(function() {

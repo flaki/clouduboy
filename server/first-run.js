@@ -7,8 +7,10 @@ const jsonfile = require('jsonfile')
 
 const configFile = path.join(__dirname, '../config.json')
 const exampleFile = path.join(__dirname, '../examples.tar.gz')
+const bitmapFile = path.join(__dirname, '../bitmaps.tar.gz')
 
-const templatesDir = path.join(__dirname, '../templates')
+const TEMPLATES_DIR = path.join(__dirname, '../templates')
+const BITMAPS_DIR = path.join(__dirname, '../bitmaps')
 
 
 // Config file already exists, no need to reconfigure
@@ -50,24 +52,28 @@ Object.assign(CFG, {
 })
 
 
+// TEMPLATES (MICROCANVAS EXAMPLES)
+
 // if for some reason the templates directory doesn't exist, create it
-if (!fs.existsSync(templatesDir)) {
-  fs.mkdirSync(templatesDir)
+if (!fs.existsSync(TEMPLATES_DIR)) {
+  fs.mkdirSync(TEMPLATES_DIR)
 }
 
 // if there are no templates, extract and include built-in examples
 // by default there are two files (.gitignore, README.md) in there
-if (fs.readdirSync(templatesDir).length < 3) {
+if (fs.readdirSync(TEMPLATES_DIR).length < 3) {
+  console.log(' - extracting MicroCanvas examples...')
+
   // TODO: maybe fetch these from a server? or just include them in the repo
   tar.x({
     sync: true, gzip: true,
-    cwd: templatesDir, strip: 1,
+    cwd: TEMPLATES_DIR, strip: 1,
     file: exampleFile
   })
 }
 
 // enumerate templates
-let r = fs.readdirSync(templatesDir)
+let r = fs.readdirSync(TEMPLATES_DIR)
 // TODO: figure out metadata and sorting
 let examples = r.filter(dir => dir[0] !== '.' && dir !== 'README.md').map(d => {
   return ({
@@ -83,6 +89,28 @@ Object.assign(CFG, {
   'SOURCE_GROUPS': [ { id: 'examples', title: 'Examples' } ],
   'SOURCE_LIST': examples,
 })
+
+
+// BITMAPS (PIF - PIXELSPRITE EXAMPLES)
+
+// if for some reason the templates directory doesn't exist, create it
+if (!fs.existsSync(BITMAPS_DIR)) {
+  fs.mkdirSync(BITMAPS_DIR)
+}
+
+// if there are no examples, extract and include built-in examples
+// by default there are two files (.gitignore, README.md) in there
+if (fs.readdirSync(BITMAPS_DIR).length < 3) {
+  console.log(' - extracting PIF bitmap examples...')
+
+  // TODO: maybe fetch these from a server? or just include them in the repo
+  tar.x({
+    sync: true, gzip: true,
+    cwd: BITMAPS_DIR, strip: 1,
+    file: bitmapFile
+  })
+}
+
 
 jsonfile.writeFileSync(configFile, CFG, { spaces: 2 })
 // DEBUG: console.log(require('fs').readFileSync(configFile).toString())

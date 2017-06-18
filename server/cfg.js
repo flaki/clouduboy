@@ -22,16 +22,19 @@ CFG.DIST = (process.argv.indexOf("--dist") >= 0);
 
 
 // Root directory
-CFG.ROOT_DIR = path.normalize( __dirname + '/..' );
+CFG.ROOT_DIR = path.join(__dirname, '..');
 
 // Root directory for the webapp
 CFG.APP_DIR = __dirname;
 
 // Root directory for the served content
-CFG.WEB_DIR = CFG.ROOT_DIR + '/editor';
+CFG.WEB_DIR = path.join(CFG.ROOT_DIR, 'editor');
 
 // Root directory for the built-in templates
-CFG.TEMPLATES_DIR = CFG.ROOT_DIR + '/templates';
+CFG.TEMPLATES_DIR = path.join(CFG.ROOT_DIR, 'templates');
+
+// Root directory for the built-in bitmaps
+CFG.BITMAPS_DIR = path.join(CFG.ROOT_DIR, 'bitmaps');
 
 // MIME Types
 CFG.MIME = {
@@ -45,10 +48,10 @@ if (!CFG.DIST) {
 }
 
 // Session storage (use separate session file for dev/prod)
-CFG.SESSION_FILE = CFG.APP_DIR + '/data/session' +(CFG.DIST?'.dist':'')+ '.db';
+CFG.SESSION_FILE = path.join(CFG.APP_DIR, 'data', `session${CFG.DIST?'.live':''}.db`);
 
 // Build directory (use separate for dev/prod)
-CFG.BUILD_DIR = CFG.ROOT_DIR + '/build' +(CFG.DIST?'/dist':'');
+CFG.BUILD_DIR = path.join(CFG.ROOT_DIR, 'build' +(CFG.DIST?'/dist':''));
 
 
 // Expose configuration object

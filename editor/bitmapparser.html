@@ -42,7 +42,7 @@
     <script>(function(){
       'use strict'
 
-      fetch('/dist/bitmaps.json').then(r => r.json()).then(examples => {
+      fetch('/bitmaps').then(r => r.json()).then(examples => {
         window.examples = examples
 
         document.querySelector('select').innerHTML = (

@@ -5,8 +5,15 @@ const CFG = {};
 const path = require('path')
 const jsonfile = require('jsonfile')
 
+// Explicitly running in dev mode
+const DEVMODE = process.argv.indexOf('--dev')
+
 // Copy app configuration from config.json
-Object.assign(CFG, jsonfile.readFileSync(path.join(__dirname, '../config.json'), { throws: false }));
+Object.assign(CFG, jsonfile.readFileSync(path.join(__dirname, '../config.json'), {
+  // In dev mode the config.json might be missing, this is okay, we'll generate
+  // one from scratch with some sane defaults
+  throws: !DEVMODE
+}));
 
 // If config.json doesn't exist generate one with sensible defaults
 if (!CFG.SOURCE_LIST) {

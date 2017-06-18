@@ -24,10 +24,11 @@ function init() {
   // Find session id if supplied
   slh.param('sid', function(req, res, next, sid) {
     // Microcanvas demo shortcuts
+    // TODO: move these to template metadata/config.json & auto-generate
     if (sid === 'firefox') res.redirect('http://'+CFG.SERVER_HOST+'/templates/splendidfox/');
     if (sid === 'ruhrjs') res.redirect('http://'+CFG.SERVER_HOST+'/templates/rjs/');
-    if (sid === 'happycodefriends') res.redirect('http://'+CFG.SERVER_HOST+'/templates/hci/');
-    if (sid === 'invaders') res.redirect('http://'+CFG.SERVER_HOST+'/templates/hci/');
+    if (sid === 'happycodefriends') res.redirect('http://'+CFG.SERVER_HOST+'/templates/code-invaders/');
+    if (sid === 'invaders') res.redirect('http://'+CFG.SERVER_HOST+'/templates/code-invaders/');
 
     // Check if a valid sid
     // TODO: more thorough checks

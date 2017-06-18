@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server/app.js",
     "start:prod": "node server/app.js --dist",
-
+    "dev": "babel-node server/app.js",
     "flasher": "electron flasher/app",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:transpile": "babel editor/js -d editor/dist/js",

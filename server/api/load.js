@@ -23,7 +23,7 @@ function all(req, res) {
 
   req.$session.load().then(function() {
     // Check for posted template source existence
-    template = req.body && req.body.load;
+    template = req.body && req.body.activeTemplate;
     let source = template && CFG.SOURCE_LIST.find(i => i.id===template);
 
     // No source or invalid source file requested
@@ -86,7 +86,12 @@ function all(req, res) {
 
     //res.type('application/javascript').download( path.join( req.$session.builddir, 'editor', req.$session.buildFile ), req.$session.buildFile);
     // TODO: make this return the main file of the template, designated by SRC in config.json, handle different filetypes
-    res.redirect('/edit');
+    //res.redirect('/edit');
+    res.json({
+      activeTemplate: req.$session.activeTemplate,
+      files: Build.files(req.$session.builddir),
+      activeFile: req.$session.activeFile
+    })
   })
 
   // Error

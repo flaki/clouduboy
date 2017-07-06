@@ -7,6 +7,18 @@ const uiComponents = [
     id: 'uicCodeEditor',
     config: {}
   },
+  {
+    id: 'uicFiles',
+    config: {}
+  },
+  {
+    id: 'uicTargets',
+    config: {}
+  },
+  {
+    id: 'uicExamples',
+    config: {}
+  },
 ]
 
 const uiComponentMetadata = {}
@@ -16,6 +28,9 @@ uiComponents.forEach(c => uiComponentMetadata[c.id] = c)
 // TODO: load all UI components automatically,
 // tree-shake out what we don't need based on UI config passed to init()
 import * as uicCodeEditor from './ui-component-code-editor.js'
+import * as uicFiles      from './ui-component-files.js'
+import * as uicTargets    from './ui-component-targets.js'
+import * as uicExamples   from './ui-component-examples.js'
 
 
 
@@ -23,38 +38,11 @@ import * as uicCodeEditor from './ui-component-code-editor.js'
 export function init(uiComponents) {
   return Promise.all([
     uicCodeEditor.init(uiComponentMetadata.uicCodeEditor['config']),
+    uicFiles.init(uiComponentMetadata.uicFiles['config']),
+    uicTargets.init(uiComponentMetadata.uicTargets['config']),
+    uicExamples.init(uiComponentMetadata.uicExamples['config']),
   ])
 
-    // Init the "targets" dropdown
-//    .then(initTargets)
-
-    // Init UI "sources" dropdown
-//    .then(initSources)
-
-    // Init UI "files" dropdown
-//    .then(initFiles)
-
     // Run post-init callbacks
-    .then( data => emit('init', data) )
-}
-
-// Fetch last build source
-export function load(response) {
-  // Use provided response, or fetch last edited source
-  const p = response ? Promise.resolve(response) : API.fetch("/edit")
-
-  return p
-    // Parse out current filename and store it
-    .then(storeCurrentFilename) //TODO: rename to switchToFile
-
-    // Listen for changes & compile
-    .then(() => {
-      // Execute "contentchanged" callbacks whenever editor contents change
-      editor.on("changes", (ed, changes) => {
-        emit('contentchanged', changes);
-      });
-    })
-
-    // Run registerd post-load callbacks
-    .then( data => emit('load', data) );
+    .then( data => emit('Initilized', data) )
 }

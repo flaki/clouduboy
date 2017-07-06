@@ -23,6 +23,9 @@ export function off(e, callback) {
 // Run callbacks for a specified event
 // All callbacks receive the optional "data" parameter, if specified
 export function emit(e, data) {
+  // DEBUG:
+  console.info('<'+e+'>')
+
   // Callbacks may return promises in which case
   // RunCallbacksFor resolves when all those promise is settled
   // (that is, the returned value is either a primitive value,

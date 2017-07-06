@@ -1,4 +1,5 @@
 import * as API from './api.js'
+import * as S from './state.js'
 import * as UI from './ui.js'
 
 
@@ -12,6 +13,11 @@ export default function Clouduboy() {
   }
 
   inited = true
+}
+
+// Debugging
+Clouduboy.dumpState = function() {
+  console.log(S.get())
 }
 
 // Create instance, initialize & load

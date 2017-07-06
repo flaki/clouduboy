@@ -18,6 +18,7 @@ function all(req, res) {
     let gen = bundle.generate({
       format: 'umd',
       sourceMap: 'inline',
+      sourceMapFile: './editor/src/bundle.js',
       moduleName: 'Clouduboy'
     })
 

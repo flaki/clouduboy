@@ -4,7 +4,7 @@
 */
 module.exports = {
   get: all,
-  post: [ require('body-parser').urlencoded({ extended: true }), post ],
+  post: [ require('body-parser').json(), post ],
 };
 
 
@@ -15,7 +15,7 @@ const Build = require('../build.js');
 
 
 function post(req, res) {
-  let newtarget = req.body.target;
+  let newtarget = req.body.activeTarget;
 
   // Update target
   if (newtarget) {

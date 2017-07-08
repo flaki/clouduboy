@@ -13,6 +13,9 @@ let cmOptions = {
   lineWrapping: true,
 }
 
+// Type throttling
+let typeDelay = 300
+
 
 // Use CodeMirror for editing
 export let editor;
@@ -22,6 +25,11 @@ export function init(config) {
   // CodeMirror element ID
   if (config.uiElement) {
     uiElement = config.uiElement
+  }
+
+  // CodeMirror element ID
+  if (typeof config.typeDelay !== 'undefined') {
+    typeDelay = config.typeDelay
   }
 
   // If CodeMirror options are specified, they override the defaults
@@ -43,6 +51,12 @@ export function init(config) {
     switchTo(data.activeFile)
   })
 
+  // Emit editor content changes as change event (but throttle them)
+  editor.on("changes", (ed, changes) => {
+    contentChanged(changes, typeDelay)
+  })
+
+
   // DEBUG:
   Object.defineProperty(window, 'ClouduboyEditor', { get: function() { return editor } })
 }
@@ -60,6 +74,14 @@ export function switchTo(file) {
 }
 
 
+function contentChanged(content, delay = 0) {
+  // Update state with changed editor contents
+  S.set({ [S.get('activeFile')]: editor.getValue() }, 'fileContents')
+
+  // Notify other components of the change
+  Events.emitThrottled(delay, "CodeEditorContentChanged", content)
+}
+
 // Update editor
 function setEditorContents(v) {
   // Remove extra carriage-returns
@@ -70,7 +92,7 @@ function setEditorContents(v) {
   editor.refresh()
 
   // Run callbacks for plugins
-  Events.emit("ContentLoaded", v)
+  contentChanged(v, 33)
 }
 
 function updateEditorContents(r) {

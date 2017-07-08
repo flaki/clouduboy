@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Sprites Demo</title>
+    <title>MicroCanvas</title>
     <style>
     canvas {
       image-rendering: -moz-crisp-edges;         /* Firefox */
@@ -23,18 +23,48 @@
     canvas {
       width: 60vw;
     }
+
+    button {
+      position: absolute;
+      width: 8vw;
+      height: 6vw;
+      top: 0;
+
+      margin: 2vw;
+      padding: 0;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button {
+      right: 10vw;
+    }
+    button + button {
+      right: 0;
+    }
+
+    button {
+      border: none;
+      background-color: rgba(153, 119, 255, .8);
+      color: rgba(255,255,255, .95);
+    }
+    button:hover {
+      background-color: #97F;
+    }
+
+    svg {
+      width: 4vw;
+      height: 4vw;
+      fill: currentColor;
+    }
     </style>
   </head>
   <body>
     <canvas class="microcanvas" width="128" height="64"></canvas>
 
-    <script src="/js/util.js"></script>
-    <script src="/js/synth.js"></script>
-    <script src="/js/score.js"></script>
     <script src="/lib/microcanvas/microcanvas.js"></script>
-    <script src="/lib/pif/lib.js"></script>
-
-    <script src="/edit/"></script>
-    <script src="/js/interframe.js"></script>
+    <script src="/lib/microcanvas-pixeldata/pixeldata.js"></script>
   </body>
 </html>

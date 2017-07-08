@@ -113,14 +113,24 @@ iframe.preview {
 	position: fixed;
 	z-index: 1000;
 	border: 1px solid #444;
-	top: 1em;
-	right: 1em;
 	box-shadow: -.5em -.5em .75em black;
 
-  width: 66vw;
-  height: 33vw;
+  top: 1em;
   left: 50vw;
   margin-left: -33vw;
+  width: 66vw;
+  height: 33vw;
+}
+
+body.fullscreen-preview iframe.preview {
+  top: 0;
+  left: 0;
+  margin-left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+body.fullscreen-preview {
+  overflow: hidden
 }
 
 iframe.preview::hover {

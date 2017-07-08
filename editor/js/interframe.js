@@ -1,11 +1,30 @@
-window.addEventListener('keypress', e => {
-  let msg = {
-    source: 'microcanvas_preview',
-    type: 'keypress',
-    value: e.key,
-  };
+(function() {
+  'use strict'
 
-  if (window.parent) {
-    window.parent.postMessage(msg, '*');
+  const SRC = 'microcanvas_preview'
+  window.addEventListener('keypress', e => {
+    let msg = {
+      source: SRC,
+      type: 'keypress',
+      value: e.key,
+    }
+
+    if (window.parent) {
+      window.parent.postMessage(msg, '*')
+      console.log(msg)
+    }
+  })
+
+  window.ClouduboyMessage = function(type, value) {
+    let msg = {
+      source: SRC,
+      type: type,
+      value: value,
+    }
+
+    if (window.parent) {
+      window.parent.postMessage(msg, '*')
+      console.log(msg)
+    }
   }
-});
+})()

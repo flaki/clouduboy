@@ -136,6 +136,9 @@ cdb.get('/sources', require('./api/sources.js').all);
 // JavaScript bundle for the editor
 cdb.get('/editor-bundle', require('./api/editor-bundle.js').all);
 
+// Previews
+cdb.get('/microcanvas', require('./pages/microcanvas.js').all);
+
 
 // Sprite Editor
 cdb.get('/editor/painter', require('./api/editor.js').painter.all);

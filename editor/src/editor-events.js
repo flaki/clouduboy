@@ -45,3 +45,32 @@ export function emit(e, data) {
     return ret;
   }
 }
+
+// Emit an event throttled to a minimum timeout
+//import throttle from './util.js'
+
+let throttledEvents = {}
+export function emitThrottled(timeout, e, data) {
+  let tEvt = throttledEvents[e] || {}
+  let now = new Date().getTime()
+
+  // Schedule emit callback
+  tEvt.time = now+timeout
+  tEvt.data = data
+  setTimeout(throttleCallback.bind(null, e), timeout)
+
+  throttledEvents[e] = tEvt
+}
+
+function throttleCallback(e) {
+  // Nothing to emit
+  if (typeof throttledEvents[e].time == 'undefined') {
+    return
+  }
+
+  // Timer passed, execute emit()
+  if (throttledEvents[e].time <= new Date().getTime()) {
+    emit(e, throttledEvents[e].data)
+    throttledEvents[e].time = undefined
+  }
+}

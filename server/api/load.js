@@ -90,6 +90,7 @@ function all(req, res) {
     res.json({
       activeTemplate: req.$session.activeTemplate,
       files: Build.files(req.$session.builddir),
+      fileContents: {},
       activeFile: req.$session.activeFile
     })
   })

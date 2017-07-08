@@ -6,8 +6,24 @@ let S = {}
 
 
 // Append/override active state
-export function set(newstate) {
-  Object.assign(S, newstate)
+export function set(newstate, path) {
+  // Path inside of state specified
+  if (path) {
+    let pathElements = path.split('/')
+    if (pathElements.length > 1) {
+      // TODO: ...
+    } else {
+      if (!S[path] || typeof S[path] != 'object') {
+        S[path] = {}
+      }
+
+      Object.assign(S[path], newstate)
+    }
+
+  // No path, toplevel assign
+  } else {
+    Object.assign(S, newstate)
+  }
 }
 
 // Return current state or key
@@ -39,6 +55,13 @@ export function get(key, fallback) {
 export function sync(uri, postData, force = false) {
   let req
 
+  // if PostData is a string it's a state key
+  if (typeof postData == 'string') {
+    // TODO: multiple keys split (e.g. "foo/bar/contents")
+    let key = postData
+    postData = { [key]: get(key) }
+  }
+
   // POST data provided (two-way sync)
   if (typeof postData == 'object') {
     req = API.fetch(uri, {
@@ -67,6 +90,6 @@ export function sync(uri, postData, force = false) {
 }
 
 // Same as above but allways reloads local data from the server
-export function reload(uri) {
-  return sync(uri, true)
+export function reload(uri, postData) {
+  return sync(uri, postData, true)
 }

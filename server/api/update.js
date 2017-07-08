@@ -3,7 +3,7 @@
 /* Save edited document data and rebuild project
 */
 module.exports = {
-  all: all
+  all: [ require('body-parser').json(), post ]
 };
 
 
@@ -11,55 +11,35 @@ module.exports = {
 const CFG = require('../cfg.js');
 
 const Build = require('../build.js');
-const Formidable = require('formidable');
 const FS = require('fs'); // TODO: make this fs-extra or fs-promise
 const path = require('path');
 
-function all(req, res) {
-  let fd;
-
-  // parse a file upload
-  (new Promise(function(resolve, reject) {
-    var form = new Formidable.IncomingForm();
-
-    form.parse(req, function(err, fields, files) {
-      // Rejected with an error
-      if (err) return reject(err);
-
-      resolve({
-        fields: fields,
-        files: files
-      });
-    });
-  }))
-
-  // Store formdata
-  .then(function(formdata) {
-    fd = formdata
-  })
-
+function post(req, res) {
   // Load session data
-  .then(req.$session.load.bind(req.$session))
+  req.$session.load()
 
   // Write file changes
   .then(function() {
-    let filename = fd.fields.filename || req.$session.activeFile;
+    let updates = Object.keys(req.body.fileContents)
     let files = Build.files(req.$session.builddir, req.$session.activeFile);
 
-    // No such file exists in the current source
-    if (!filename || files.indexOf(filename)===-1) {
-      return res.sendStatus(403);
-    };
+    updates.forEach(filename => {
+      // No such file exists in the current source
+      if (!filename || files.indexOf(filename)===-1) {
+        return res.sendStatus(403);
+      };
 
-    // write file
-    const outFile = path.join(req.$session.builddir, 'editor', filename)
-    FS.writeFileSync(outFile, fd.fields.code)
-    // TODO: also, make this async
+      // write file
+      const outFile = path.join(req.$session.builddir, 'editor', filename)
+      FS.writeFileSync(outFile, req.body.fileContents[filename]) // TODO: make async
+    })
 
     // Configure build process
+    // TODO: break of lint & build processes
     const builder = new Build(req.$session)
 
-    return builder.from(outFile)
+    const buildFile = path.join(req.$session.builddir, 'editor', req.$session.buildFile)
+    return builder.from(buildFile)
   })
 
   // Rebuild project

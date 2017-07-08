@@ -19,6 +19,18 @@ const uiComponents = [
     id: 'uicExamples',
     config: {}
   },
+  {
+    id: 'uicAutosave',
+    config: {}
+  },
+  {
+    id: 'uicMcPreview',
+    config: {}
+  },
+  {
+    id: 'uicMcTranslate',
+    config: {}
+  },
 ]
 
 const uiComponentMetadata = {}
@@ -31,6 +43,9 @@ import * as uicCodeEditor from './ui-component-code-editor.js'
 import * as uicFiles      from './ui-component-files.js'
 import * as uicTargets    from './ui-component-targets.js'
 import * as uicExamples   from './ui-component-examples.js'
+import * as uicAutosave   from './ui-component-autosave.js'
+import * as uicMcPreview  from './ui-component-mc-preview.js'
+import * as uicMcTranslate from './ui-component-mc-translate.js'
 
 
 
@@ -41,6 +56,9 @@ export function init(uiComponents) {
     uicFiles.init(uiComponentMetadata.uicFiles['config']),
     uicTargets.init(uiComponentMetadata.uicTargets['config']),
     uicExamples.init(uiComponentMetadata.uicExamples['config']),
+    uicAutosave.init(uiComponentMetadata.uicAutosave['config']),
+    uicMcPreview.init(uiComponentMetadata.uicMcPreview['config']),
+    uicMcTranslate.init(uiComponentMetadata.uicMcTranslate['config']),
   ])
 
     // Run post-init callbacks

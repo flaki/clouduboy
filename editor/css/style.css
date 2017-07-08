@@ -40,6 +40,14 @@ body {
   background-color: yellow;
 }
 
+button svg {
+  fill: currentColor;
+}
+.toolbar button svg {
+  margin: .25em;
+  vertical-align: bottom;
+}
+
 
 /* Sprite placeholder */
 .CodeMirror-code .sprite,
@@ -131,11 +139,6 @@ body.fullscreen-preview iframe.preview {
 }
 body.fullscreen-preview {
   overflow: hidden
-}
-
-iframe.preview::hover {
-  width: 80vw;
-  height: 40vw;
 }
 
 

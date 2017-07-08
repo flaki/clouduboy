@@ -63,4 +63,12 @@ export function init(uiComponents) {
 
     // Run post-init callbacks
     .then( data => emit('Initilized', data) )
+
+    // Display icons
+    // TODO: find better place for this / maybe run in pre-compile
+    .then( _=> {
+      Array.from(document.querySelectorAll('[data-pif-icon]')).forEach(element => {
+        element.insertAdjacentHTML('beforeend', (new PixelData(element.dataset.pifIcon).svg()))
+      })
+    })
 }

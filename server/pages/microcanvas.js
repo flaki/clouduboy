@@ -20,55 +20,27 @@ function all(req, res) {
 
     // Buttons
     contents = contents.replace('</body>', `
-<button name="toggle-fullscreen"><svg viewBox="0 0 5 5" xmlns="http://www.w3.org/2000/svg">
-<g>
-  <rect height="1" width="1" x="2" y="0" />
-  <rect height="1" width="1" x="3" y="0" />
-  <rect height="1" width="1" x="4" y="0" />
-  <rect height="1" width="1" x="4" y="1" />
-  <rect height="1" width="1" x="4" y="2" />
-
-  <rect height="1" width="1" x="0" y="2" />
-  <rect height="1" width="1" x="0" y="3" />
-  <rect height="1" width="1" x="0" y="4" />
-  <rect height="1" width="1" x="1" y="4" />
-  <rect height="1" width="1" x="2" y="4" />
-</g>
-</svg></button>
-<button name="close"><svg viewBox="0 0 5 5" xmlns="http://www.w3.org/2000/svg">
-<g>
-  <rect height="1" width="1" y="2" x="2" />
-
-  <rect height="1" width="1" y="0" x="0" />
-  <rect height="1" width="1" y="1" x="1" />
-  <rect height="1" width="1" y="3" x="3" />
-  <rect height="1" width="1" y="4" x="4" />
-
-  <rect height="1" width="1" y="4" x="0" />
-  <rect height="1" width="1" y="3" x="1" />
-  <rect height="1" width="1" y="1" x="3" />
-  <rect height="1" width="1" y="0" x="4" />
-</g>
-</svg></button>
-<script>
-// Wait until scripts are loaded
-setTimeout(function() {
-  if (window.ClouduboyMessage) {
-    document.querySelector('button[name=toggle-fullscreen]').addEventListener('click', e => {
-      ClouduboyMessage('command', 'toggle-fullscreen')
-    })
-    document.querySelector('button[name=close]').addEventListener('click', e => {
-      ClouduboyMessage('command', 'close')
-    })
-  }
-},1)
-</script>
-</body>
-    `)
-
-    // Fix body
-    contents = contents.replace('</body>', `
+<aside class="buttons">
+<button
+  name="toggle-fullscreen"
+  data-pif-icon="! ui_expand 5x5
+  ..###
+  ....#
+  #...#
+  #....
+  ###..
+"></button>
+<button
+  name="close"
+  data-pif-icon="! ui_close 5x5
+  #...#
+  .#.#.
+  ..#..
+  .#.#.
+  #...#
+"></button>
 <script src="/js/interframe.js"></script>
+<script src="/js/microcanvas-preview.js"></script>
 <script>
   /* TODO: MicroCanvas sound handling */
   /* TODO: Fit MicroCanvas to current target setup (eg screen dimensions, colors) */

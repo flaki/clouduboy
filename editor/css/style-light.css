@@ -1,12 +1,14 @@
+@font-face {
+  font-family: 'Minecraft';
+  src: url('/res/Minecraft.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
 body {
   background: #9CF;
   color: #72C;
-}
-select {
-  color: inherit;
-  border: none;
-  border-radius: .5em;
-  padding: .3em .2em;
 }
 
 .cm-s-neat .CodeMirror-gutters {
@@ -20,16 +22,38 @@ select {
 
 
 /* Toolbar */
+.toolbar {
+  display: flex;
+  color: white;
+}
 .toolbar button {
   border-color: #FFF;
   background: #97F linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.5));
   box-shadow: none;
-  color: white;*/
+
+  border: 1px solid #aaf;
+  border-radius: 0;
+  color: inherit;
+  height: auto;
 }
 
 .toolbar button:hover {
   background-color: orange;
 }
+
+select {
+  -moz-appearance: none;
+
+  color: inherit;
+  border: 1px solid #aaf;
+  border-radius: 0;
+  padding: .3em .2em;
+  margin: .2em;
+
+  font-family: Minecraft, sans-serif;
+  background: #97F linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.5));
+}
+
 
 
 /* Sidebar */

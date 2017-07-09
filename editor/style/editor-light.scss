@@ -1,0 +1,105 @@
+@font-face {
+  font-family: 'Minecraft';
+  src: url('/res/Minecraft.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body.light {
+  background: #9CF;
+  color: #72C;
+
+
+  .cm-s-neat .CodeMirror-gutters {
+    background: #DDF;
+    color: white;
+    border-right-color: #CCC;
+  }
+  .cm-s-neat .CodeMirror-linenumber {
+      color: #999;
+  }
+
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    color: white;
+  }
+  .toolbar button {
+    border-color: #FFF;
+    background: #97F linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.5));
+    box-shadow: none;
+
+    border: 1px solid #aaf;
+    border-radius: 0;
+    color: inherit;
+    height: auto;
+  }
+
+  .toolbar button:hover {
+    background-color: orange;
+  }
+
+  select {
+    -moz-appearance: none;
+
+    color: inherit;
+    border: 1px solid #aaf;
+    border-radius: 0;
+    padding: .3em .2em;
+
+    font-family: Minecraft, sans-serif;
+    background: #97F linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.5));
+
+    padding-bottom: 0;
+    font-size: 1.25em;
+  }
+
+
+
+  /* Sidebar */
+  .sidebar > .logs {
+    font-family: monospace;
+    line-height: 1.5;
+    font-size: 8pt;
+    overflow-y: auto;
+  }
+  .sidebar > .logs > * {
+    white-space: pre-wrap;
+    margin-bottom: .5em;
+  }
+  .sidebar > .logs .error {
+    color: #f22;
+  }
+  .sidebar > .logs .notice {
+    color: yellow;
+  }
+
+  .build-error {
+    background: #A00;
+    display: inline-block;
+    padding: .25em .5em 0.1em;
+    color: white;
+    font-style: italic;
+    font-family: sans-serif;
+    font-size: 10pt;
+    border-radius: .5em;
+    margin: 0 1em 1em;
+    border: 1px solid #000;
+  }
+
+
+  /* Layout */
+  main > .sidebar > * {
+    background: #EEE;
+    border-color: #CCF;
+  }
+
+  main canvas {
+    background-color: rgb(250, 240, 230);
+    border-color: rgb(250, 240, 230);
+    color: black;
+
+    box-shadow: 0 0 .5em .2em rgba(64,64,64,.15);
+  }
+}

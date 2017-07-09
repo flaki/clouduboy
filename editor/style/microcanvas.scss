@@ -1,0 +1,17 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow:hidden;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  width: 60vw;
+}
+
+@import "components/iframe-titlebar";
+@import "components/mc";

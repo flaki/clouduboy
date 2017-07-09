@@ -1,0 +1,43 @@
+.sidebar > .logs {
+  font-family: monospace;
+  line-height: 1.5;
+  font-size: 8pt;
+  overflow-y: auto;
+}
+.sidebar > .logs > * {
+  white-space: pre-wrap;
+  margin-bottom: .5em;
+}
+.sidebar > .logs .error {
+  color: #f22;
+}
+.sidebar > .logs .notice {
+  color: yellow;
+}
+
+.build-error {
+  background: #A00;
+  display: inline-block;
+  padding: .25em .5em 0.1em;
+  color: white;
+  font-style: italic;
+  font-family: sans-serif;
+  font-size: 10pt;
+  border-radius: .5em;
+  margin: 0 1em 1em;
+  border: 1px solid #000;
+}
+
+
+/* PixelSprite preview */
+.pspreview {
+  display: block;
+  margin: auto;
+
+  border: 1px solid #fff;
+  background: black;
+
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: crisp-edges;
+}

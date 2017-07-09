@@ -1,0 +1,37 @@
+@import "pif-icons";
+
+button {
+  position: absolute;
+  width: 8vw;
+  height: 6vw;
+  top: 0;
+
+  margin: 2vw;
+  padding: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  right: 10vw;
+}
+button + button {
+  right: 0;
+}
+
+button {
+  border: none;
+  background-color: rgba(153, 119, 255, .4);
+  color: rgba(255,255,255, .8);
+}
+button:hover {
+  background-color: #97F;
+  color: white;
+}
+
+button > svg {
+  width: 4vw;
+  height: 4vw;
+}

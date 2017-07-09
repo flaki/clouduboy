@@ -1,0 +1,52 @@
+@import "/lib/codemirror/codemirror.css";
+@import "/lib/codemirror/night.css";
+@import "/lib/codemirror/neat.css";
+
+.CodeMirror {
+  height: 100%;
+}
+
+.cm-s-night .CodeMirror-gutters {
+  background: #00000a;
+  border-right: 1px solid #100040;
+}
+.cm-s-night .CodeMirror-linenumber {
+    color: #669;
+}
+
+
+/* TODO: move to sprite/tune etc editor component */
+/* Sprite placeholder */
+.CodeMirror-code .sprite,
+.CodeMirror-code .tune {
+  position: relative;
+  padding: 0 0.2em;
+  margin: 0 0.2em;
+  cursor: pointer;
+}
+.CodeMirror-code .sprite:before {
+  content: "👾";
+}
+.CodeMirror-code .tune:before {
+  content: "🔊";
+}
+
+/* Playback animation */
+.tune.play {
+  border: 1px solid white;
+  border-radius: 10%;
+}
+
+.tune.play>.bg {
+  background: purple;
+  position: absolute;
+  top: 0; left: 0;
+  bottom: 0; right: 100%;
+  z-index: -1;
+  transition: 2s all linear;
+}
+
+.tune.play>.bg.playing {
+  background: #e7e;
+  right: 0;
+}

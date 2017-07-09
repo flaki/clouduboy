@@ -29,11 +29,12 @@
     "fs-promise": "^0.4.1",
     "jsonfile": "^3.0.0",
     "nedb": "^1.7.4",
-    "tar": "^3.1.5",
+    "node-sass": "^4.5.3",
+    "rollup": "^0.43.0",
     "shelljs": "^0.7.7",
+    "tar": "^3.1.5",
     "vhost": "^3.0.2",
-    "whatwg-fetch": "^2.0.3",
-    "rollup": "^0.43.0"
+    "whatwg-fetch": "^2.0.3"
   },
   "devDependencies": {
     "babel-cli": "^6.5.1",

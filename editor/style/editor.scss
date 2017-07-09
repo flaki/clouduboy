@@ -1,0 +1,67 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  background: #080010;
+  color: white;
+
+  padding: 0;
+  margin: 0;
+}
+
+
+/* Layout */
+main {
+	display: flex;
+}
+
+main > .editor {
+  flex: 1.5;
+}
+
+main > .sidebar {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+}
+
+main > .sidebar > * {
+  background: #112;
+  margin: 0.5em;
+  padding: 0.5em 0.75em;
+  border: 1px solid #225;
+}
+
+
+/* Toolbar */
+@import "components/pif-icons";
+
+.toolbar button,
+.toolbar select {
+  margin: .5vw .5vw .5vw 0;
+}
+.toolbar button {
+  padding: 0;
+
+  width: 3em;
+  height: 2em;
+  border: .1em solid #222;
+  border-radius: .5em;
+  background: #222 linear-gradient(to bottom, rgba(100,0,176,0), rgba(100,0,176,1));
+  transition: color .4s ease;
+  box-shadow: 0 0 6px rgba(150,0,255,.5) inset;
+  cursor: pointer;
+  color: white; font-weight: bold;
+}
+
+.toolbar button:hover {
+  background-color: yellow;
+}
+
+.toolbar button > svg {
+  margin: .25em;
+  vertical-align: bottom;
+  max-width: 1.25em;
+}

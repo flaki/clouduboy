@@ -133,8 +133,9 @@ cdb.get('/:sid?/editor', require('./api/editor.js').all);
 // List installed sources/source groups/arduboy lib versions
 cdb.get('/sources', require('./api/sources.js').all);
 
-// JavaScript bundle for the editor
-cdb.get('/editor-bundle', require('./api/editor-bundle.js').all);
+// Resource bundles
+cdb.get('/scripts', require('./pages/scripts.js').all);
+cdb.get('/styles', require('./pages/styles.js').all);
 
 // Previews
 cdb.get('/microcanvas', require('./pages/microcanvas.js').all);

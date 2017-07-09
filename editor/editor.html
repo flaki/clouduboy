@@ -5,26 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Clouduboy Editor</title>
 
-    <link rel="stylesheet" href="/lib/codemirror/codemirror.css">
-
-    <!-- Default (Dark) theme -->
-    <link rel="stylesheet" href="/lib/codemirror/night.css">
-    <link rel="stylesheet" href="/css/style.css">
-
-    <!-- Light theme -->
-    <link rel="stylesheet" href="/lib/codemirror/neat.css">
-    <link rel="stylesheet" href="/css/style-light.css">
-
-    <link rel="stylesheet" href="/css/painter.css">
+    <link rel="stylesheet" href="/styles?q=editor,ui/code-editor,ui/mc-preview,editor-light">
   </head>
 
-  <body>
+  <body class="light">
     <aside class="toolbar">
-      <button name="convert" title="Convert">💱</button>
-      <button name="compile-and-flash" title="Compile &amp; flash">⚡️</button>
-      <button name="download" title="Download sketch...">💾</button>
-      <button name="flash" title="Remote flash via connected Flasher">🌠</button>
-      <button name="preview" title="Preview">👁</button>
+      <button name="convert"
+        title="Build low-level MicroCanvas code"
+        data-pif-icon="! ui_convert
+        ..###
+        ..#.#
+        #####
+        #..#.
+        ####.
+      "></button>
+<!--      <button name="compile-and-flash" title="Compile &amp; flash">⚡️</button>-->
+      <button name="download"
+        title="Download flashable/installable device image..."
+        data-pif-icon="! ui_download 5x5
+        ..#..
+        ..#..
+        #####
+        .###.
+        ..#..
+      "></button>
+      <button name="flash"
+        title="Flash directly onto device..."
+        data-pif-icon="! ui_flash 5x5
+        ..##
+        .##.
+        #####
+        ..##.
+        .##..
+      "></button>
+      <button name="preview"
+        title="Preview in browser"
+        data-pif-icon="! ui_preview 5x5
+        ..##.
+        .#..#
+        .#..#
+        ####.
+        ##...
+      "></button>
+
       <select name="load">
         <option value="" default>---</option>
       </select>
@@ -54,23 +77,7 @@
 
     <script src="/lib/microcanvas-pixeldata/pixeldata.js"></script>
 
-    <script src="/editor-bundle"></script>
+    <script src="/scripts?q=editor"></script>
     <script>Clouduboy()</script>
-<!--    <script src="/js/main.js"></script>
-    <script src="/js/util.js"></script>
-
-    <script src="/js/codeplugin.js"></script>
-
-    <script src="/js/linter.js"></script>
-
-    <script src="/js/sprites.js"></script>
-
-    <script src="/js/synth.js"></script>
-    <script src="/js/score.js"></script>
-    <script src="/js/tunes.js"></script>
-
-    <script src="/js/flasher.js"></script>
-    <script src="/js/microcanvas.js"></script>
-  -->
   </body>
 </html>

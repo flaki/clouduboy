@@ -6,15 +6,26 @@
 
 
   function init () {
-    document.querySelector('.toolbar button[name="convert"]')
-      .addEventListener('click', buildMicroCanvas);
+    let emt
 
-    document.querySelector('.toolbar button[name="compile-and-flash"]')
-      .addEventListener('click', flashMicroCanvas);
+    emt = document.querySelector('.toolbar button[name="convert"]')
+    if (emt) {
+      emt.removeEventListener('click', buildMicroCanvas);
+      emt.addEventListener('click', buildMicroCanvas);
+    }
 
-    document.querySelector('.toolbar button[name="preview"]')
-      .addEventListener('click', showPreview);
+    emt = document.querySelector('.toolbar button[name="compile-and-flash"]')
+    if (emt) {
+      emt.removeEventListener('click', flashMicroCanvas);
+      emt.addEventListener('click', flashMicroCanvas);
+    }
 
+    emt = document.querySelector('.toolbar button[name="preview"]')
+    if (emt) {
+      emt.addEventListener('click', showPreview);
+    }
+
+    window.removeEventListener("message", iframeEventHandler);
     window.addEventListener("message", iframeEventHandler, false);
   }
 
@@ -43,6 +54,8 @@
 
 
   function buildMessages(r) {
+    sidebar.clearLog();
+
     // Arduino compiler messages
     if (r.compiler) {
       let targetKey = (Object.keys(r.compiler).filter(k => k.match(/\.arduboy\.ino$/)))[0];
@@ -60,6 +73,11 @@
       sidebar.log(out, 'error');
     }
 
+    // TODO: MicroCanvas compiler messages
+    if (r.microcanvas) {
+      r.microcanvas.forEach(e => sidebar.log(`[${e.lvl}] ${e.msg}`))
+    }
+
     // Arduino build results
     if (r.memory && 'program' in r.memory) {
       sidebar.log(`
@@ -67,9 +85,6 @@
         Data size: ${r.memory.data.bytes}+' bytes / ${r.memory.data.used}%
       `, 'notice');
     }
-
-    // TODO: MicroCanvas compiler messages
-    if (r.microcanvas) {}
 
     return r
   }

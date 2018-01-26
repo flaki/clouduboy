@@ -40,19 +40,20 @@ function compile(req) {
   }
 
   // Compile with MicroCanvas builder
-  const microCanvasBuild = require(CFG.ROOT_DIR+'/microcanvas/build.js');
+  const microCanvasBuild = require(CFG.ROOT_DIR+'/../clouduboy-compiler/build.js');
 
   let source = require('fs').readFileSync( path.join(builddir, 'editor', sourceFile) );
 
   req.$session.fileToBuild = sourceFile.replace('.js','.arduboy.ino');
   let outFile = path.join(builddir, 'editor', req.$session.fileToBuild);
 
-  let game = microCanvasBuild('arduboy', source, req.$session.activeFile);
-  require('fs').writeFileSync( outFile, game.ino);
-  console.log(outFile, game.ino);
+  return microCanvasBuild('arduboy', source, req.$session.activeFile).then(game => {
+    require('fs').writeFileSync( outFile, game.ino);
+    console.log(outFile, game.ino);
 
-  console.log('Compilation finished: ', outFile);
-  return { info: game, outFile: outFile };
+    console.log('Compilation finished: ', outFile);
+    return { info: game, outFile: outFile };
+  })
 }
 
 function compileInfo(req, res) {
@@ -70,11 +71,15 @@ function convert(req, res) {
     .then(compile.bind(null, req))
 
     .then(compile => {
-      res.json({ result: 'ok', file: {
-        filename: path.basename(compile.outFile),
-        contentType: CFG.MIME.ARDUINO,
-        contents: compile.info.ino
-      } })
+      res.json({
+        result: 'ok',
+        microcanvas: compile.info.compileLog.filter(m => m.lvl === 'error' || m.lvl === 'warn'),
+        file: {
+          filename: path.basename(compile.outFile),
+          contentType: CFG.MIME.ARDUINO,
+          contents: compile.info.ino
+        }
+      })
     })
     .catch(JSONError.bind(res));
 }

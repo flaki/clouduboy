@@ -22,7 +22,7 @@ function build_all(req, res) {
         return res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/tinyarcade/firmware.bin', 'build.bin');
 
       default:
-        res.type('application/octet-stream').download(req.$session.builddir+'/.pioenvs/leonardo/firmware.hex', 'build.hex');
+        res.type('application/octet-stream').download(require('path').join(CFG.ROOT_DIR, '../clouduboy-platforms/lib/Arduboy-1.1.1/test/.pioenvs/leonardo/firmware.hex'));
     }
   })
 

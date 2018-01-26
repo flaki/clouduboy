@@ -131,7 +131,12 @@ function build(buildfile) {
   //  Data:       1275 bytes (49.8% Full)
   //  (.data + .bss + .noinit)
 
-  let cmd = 'platformio run --disable-auto-clean --project-dir "' + path.normalize(builder.dir).replace(/\\/g,'\\\\') + '"';
+  let PLATFORMPATH = path.join(ROOTDIR, '../clouduboy-platforms/lib/Arduboy-1.1.1/')
+  let PLATFORMSOURCES = path.join(PLATFORMPATH, 'test')
+  fs.ensureDirSync(PLATFORMSOURCES)
+  fs.copyFileSync(this.fileToBuild, path.join(PLATFORMSOURCES, 'src/test.ino'))
+
+  let cmd = 'platformio run --disable-auto-clean --project-dir "' + path.normalize(PLATFORMSOURCES).replace(/\\/g,'\\\\') + '"';
 
   return exec(cmd)
     .catch(function(failed) {
